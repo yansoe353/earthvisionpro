@@ -59,6 +59,49 @@ html, body, #root {
   overflow-y: auto;
   flex: 1;
   padding-right: 0.75rem;
+  scroll-behavior: smooth;
+  scroll-padding-top: 20px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.facts > div {
+  scroll-margin-top: 20px;
+}
+
+.facts h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 1.5rem 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+.facts p {
+  margin: 0.75rem 0;
+}
+
+.facts strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.facts em {
+  color: #64B5F6;
+  font-style: italic;
+}
+
+.facts ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+  color: #64B5F6;
+}
+
+.facts li {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .captured-image-container {
@@ -127,6 +170,17 @@ html, body, #root {
   letter-spacing: 0.02em;
 }
 
+.loading-text.analysis-loading {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
 .search-form {
   margin-bottom: 1.5rem;
   width: 100%;
@@ -165,6 +219,98 @@ html, body, #root {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
+}
+
+.analysis-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.analysis-buttons.dynamic-buttons {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+}
+
+.analysis-button {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  margin: 0rem;
+  color: white;
+}
+
+.analysis-button.environmental {
+  background-color: rgba(46, 204, 113, 0.6);
+}
+
+.analysis-button.economic {
+  background-color: rgba(52, 152, 219, 0.6);
+}
+
+.analysis-button.cultural {
+  background-color: rgba(231, 76, 60, 0.6);
+}
+
+.analysis-button.dynamic-0 {
+  background-color: rgba(155, 89, 182, 0.6);
+}
+
+.analysis-button.dynamic-1 {
+  background-color: rgba(241, 196, 15, 0.6);
+}
+
+.analysis-button.dynamic-2 {
+  background-color: rgba(230, 126, 34, 0.6);
+}
+
+.analysis-button.dynamic-3 {
+  background-color: rgba(52, 73, 94, 0.6);
+}
+
+.analysis-button.dynamic-4 {
+  background-color: rgba(26, 188, 156, 0.6);
+}
+
+.analysis-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+.analysis-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.analysis-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  scroll-margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.analysis-section:first-of-type {
+  margin-top: 1.5rem;
+  border-top: none;
+}
+
+.analysis-section h2 {
+  display: inline-block;
+  padding: 0.25rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-size: 1.3rem;
+  margin: 0 0 1rem;
 }
 
 /* Custom scrollbar */
