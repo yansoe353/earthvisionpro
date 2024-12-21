@@ -84,58 +84,14 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Based on the location "${location}", generate 5 highly specific analysis themes. Focus on unique, distinctive aspects that make this location special. Consider these categories:
-
-1. Scientific & Research Value
-   - Unique geological formations
-   - Endemic species habitats
-   - Archaeological discoveries
-   - Climate research stations
-   - Astronomical observation points
-
-2. Indigenous & Traditional Knowledge
-   - Ancient farming techniques
-   - Traditional navigation methods
-   - Sacred sites and rituals
-   - Local medicinal practices
-   - Traditional resource management
-
-3. Modern Development & Innovation
-   - Smart city initiatives
-   - Renewable energy projects
-   - Urban planning solutions
-   - Technology hubs
-   - Sustainable architecture
-
-4. Strategic & Geopolitical Aspects
-   - Trade route significance
-   - Border dynamics
-   - Resource disputes
-   - Military importance
-   - International agreements
-
-5. Social & Future Trends
-   - Population movement patterns
-   - Educational institutions
-   - Tourism development
-   - Cultural preservation efforts
-   - Climate adaptation strategies
-
-Format your response as a JSON array with 'name' and 'prompt' for each theme:
-[
-  {
-    "name": "Very Specific Theme Name (3-5 words)",
-    "prompt": "Detailed analysis prompt focusing on unique aspects of this specific location"
-  }
-]
-
-Requirements:
-- Make each theme HIGHLY specific to this exact location
-- Avoid generic topics that could apply anywhere
-- Include precise geographical or historical references
-- Focus on unique features or phenomena
-- Consider current events or ongoing developments
-- Reference specific projects or initiatives if relevant`
+            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes that would be particularly interesting or relevant for this region. Each theme should be different from general categories like environmental, economic, or cultural analysis. Format your response as a JSON array with 'name' and 'prompt' for each theme. Example format:
+            [
+              {
+                "name": "Theme Name",
+                "prompt": "Analysis prompt"
+              }
+            ]
+            Make the themes highly specific to the region's unique characteristics, history, or significance.`
           }
         ],
         model: 'llama-3.2-90b-vision-preview',
