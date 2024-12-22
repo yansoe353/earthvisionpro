@@ -40,6 +40,8 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
+  const [themeRefreshing, setThemeRefreshing] = useState(false);
+  const [refreshCooldown, setRefreshCooldown] = useState(false);
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ function App() {
           }
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.8,
+        temperature: 0.95,
         max_tokens: 1000,
       });
 
@@ -139,7 +141,7 @@ function App() {
             content: prompt
           }
         ],
-        model: 'llama-3.2-90b-vision-preview',
+        model: "llama-3.3-70b-versatile",
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -153,6 +155,22 @@ function App() {
       setFacts(prevFacts => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
       setAnalysisLoading(false);
+    }
+  };
+
+  const refreshDynamicThemes = async () => {
+    if (currentLocation && !themeRefreshing && !refreshCooldown) {
+      setThemeRefreshing(true);
+      setRefreshCooldown(true);
+      try {
+        await generateDynamicThemes(currentLocation);
+      } finally {
+        setThemeRefreshing(false);
+        // Start the 5-second cooldown
+        setTimeout(() => {
+          setRefreshCooldown(false);
+        }, 5000);
+      }
     }
   };
 
@@ -186,9 +204,9 @@ function App() {
                 type: 'text',
                 text: `Examine the image and identify the location visible. Then provide a rich, engaging analysis of this region. Your response should:
 
-First line: Clearly state the location name.
+First line: Clearly state the location name as a title.
 
-Then provide fascinating insights about this region, including:
+Then, provide fascinating insights about this region, including (if it makes sense):
 • Remarkable geographical features and natural phenomena
 • Rich historical significance and cultural heritage
 • Notable landmarks and architectural wonders
@@ -215,7 +233,7 @@ Make each point engaging and insightful, focusing on what makes this location tr
           }
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
+        temperature: 0.5,
         max_tokens: 1000,
       });
 
@@ -270,7 +288,7 @@ Make each point engaging and insightful, focusing on what makes this location tr
               <p className="loading-text analysis-loading">Generating additional analysis...</p>
             )}
             {facts && !loading && (
-              <>
+              <div>
                 <div className="analysis-buttons">
                   <button 
                     onClick={() => analyzeWithPerspective('Environmental Factors')}
@@ -296,19 +314,28 @@ Make each point engaging and insightful, focusing on what makes this location tr
                 </div>
                 {dynamicThemes.length > 0 && (
                   <div className="analysis-buttons dynamic-buttons">
+                    {currentLocation && (
+                      <button
+                        className="analysis-button refresh-button"
+                        onClick={refreshDynamicThemes}
+                        disabled={themeRefreshing || refreshCooldown}
+                      >
+                        {themeRefreshing ? 'Refreshing Themes...' : refreshCooldown ? 'Wait 5 Seconds' : 'Refresh Themes'}
+                      </button>
+                    )}
                     {dynamicThemes.map((theme, index) => (
                       <button
-                        key={index}
-                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        key={theme.name}
                         className={`analysis-button dynamic-${index}`}
-                        disabled={analysisLoading}
+                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        disabled={analysisLoading || themeRefreshing}
                       >
                         {theme.name}
                       </button>
                     ))}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}
