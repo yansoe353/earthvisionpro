@@ -53,8 +53,6 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
-  const [themeRefreshing, setThemeRefreshing] = useState(false);
-  const [refreshCooldown, setRefreshCooldown] = useState(false);
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
@@ -187,6 +185,9 @@ function App() {
 
       setCapturedImage(dataUrl);
 
+      // Convert data URL to base64
+      const base64Image = dataUrl.split(',')[1];
+
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
@@ -196,13 +197,7 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Examine the image and identify the location visible...`,
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: dataUrl,
-            },
+            content: `Examine the following base64 image and identify the location visible: ${base64Image}`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
@@ -293,9 +288,9 @@ function App() {
                       <button
                         className="analysis-button refresh-button"
                         onClick={() => generateDynamicThemes(currentLocation)}
-                        disabled={themeRefreshing || refreshCooldown}
+                        disabled={translating}
                       >
-                        {themeRefreshing ? 'Refreshing Themes...' : refreshCooldown ? 'Wait 5 Seconds' : 'Refresh Themes'}
+                        Refresh Themes
                       </button>
                     )}
                     {dynamicThemes.map((theme, index) => (
@@ -303,7 +298,7 @@ function App() {
                         key={theme.name}
                         className={`analysis-button dynamic-${index}`}
                         onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
-                        disabled={analysisLoading || themeRefreshing}
+                        disabled={analysisLoading || translating}
                       >
                         {theme.name}
                       </button>
