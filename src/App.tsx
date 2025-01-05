@@ -3,7 +3,6 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import imageCompression from 'browser-image-compression'; // For image compression
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -16,16 +15,6 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     console.error('Translation error:', error);
     return text; // Return original text if translation fails
   }
-};
-
-// Image compression utility
-const compressImage = async (file: File) => {
-  const options = {
-    maxSizeMB: 1, // Maximum size in MB
-    maxWidthOrHeight: 1024, // Maximum width or height
-    useWebWorker: true, // Use a web worker for better performance
-  };
-  return await imageCompression(file, options);
 };
 
 const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
@@ -188,37 +177,39 @@ function App() {
     setDynamicThemes([]);
 
     try {
+      // Capture the Earth view as a data URL
       const dataUrl = await toPng(earthContainerRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         quality: 1,
       });
 
-      // Convert data URL to a File object
-      const file = await fetch(dataUrl).then((res) => res.blob());
-
-      // Compress the image
-      const compressedFile = await compressImage(file);
-
-      // Convert compressed file to base64
-      const base64Image = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result?.toString().split(',')[1]);
-        reader.readAsDataURL(compressedFile);
-      });
-
+      // Set the captured image for display
       setCapturedImage(dataUrl);
 
+      // Initialize Groq client
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
 
+      // Send the image URL directly to Groq's vision API
       const completion = await groq.chat.completions.create({
         messages: [
           {
             role: 'user',
-            content: `Identify the location in this image: ${base64Image}`,
+            content: [
+              {
+                type: 'text',
+                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: dataUrl, // Directly use the data URL
+                },
+              },
+            ],
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
