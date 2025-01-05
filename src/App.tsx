@@ -280,6 +280,22 @@ function App() {
     earthRef.current?.handleSearch(lng, lat);
   };
 
+  // Save analysis to a file
+  const saveAnalysis = () => {
+    const content = `=== Analysis Report ===\n\n` +
+      `Location: ${currentLocation}\n\n` +
+      `=== English Analysis ===\n${facts}\n\n` +
+      `=== Translated Analysis (${language}) ===\n${translatedFacts}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analysis_report_${new Date().toISOString()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -358,6 +374,14 @@ function App() {
                     ))}
                   </div>
                 )}
+                {/* Save Analysis Button */}
+                <button
+                  onClick={saveAnalysis}
+                  className="save-analysis-button"
+                  disabled={!facts || translating || analysisLoading}
+                >
+                  Save Analysis
+                </button>
               </div>
             )}
           </div>
