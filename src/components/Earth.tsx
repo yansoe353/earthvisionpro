@@ -3,7 +3,7 @@ import Map, { MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Using Mapbox's satellite imagery
-const MAPBOX_STYLE = 'mapbox://styles/pais0/cm4yfwja7006501s9hdgh1goe';
+const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
 const Earth = forwardRef(({ onCaptureView }: { onCaptureView: () => void }, ref) => {
   const mapRef = useRef<MapRef>(null);
