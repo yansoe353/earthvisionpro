@@ -151,6 +151,9 @@ function App() {
       // Force language to English before analysis
       setLanguage('en');
 
+      // Clear previous translated content
+      setTranslatedFacts('');
+
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
