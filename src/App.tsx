@@ -6,11 +6,22 @@ import ReactMarkdown from 'react-markdown';
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(text)}`;
+  // Split the text into sentences
+  const sentences = text.split(/(?<=[.!?])\s+/);
+
   try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-    return data[0][0][0]; // Return translated text
+    // Translate each sentence individually
+    const translatedSentences = await Promise.all(
+      sentences.map(async (sentence) => {
+        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        return data[0][0][0]; // Return translated sentence
+      })
+    );
+
+    // Combine the translated sentences into a single string
+    return translatedSentences.join(' ');
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Return original text if translation fails
