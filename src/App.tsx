@@ -144,7 +144,13 @@ function App() {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
+    // Save the current language
+    const currentLang = language;
+
     try {
+      // Force language to English before analysis
+      setLanguage('en');
+
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
@@ -158,14 +164,11 @@ function App() {
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
 
-      // Force analysis in English
-      const englishPrompt = `Provide the analysis in English. ${prompt}`;
-
       const completion = await groq.chat.completions.create({
         messages: [
           {
             role: 'user',
-            content: englishPrompt,
+            content: prompt,
           },
         ],
         model: 'llama-3.3-70b-versatile',
@@ -176,19 +179,21 @@ function App() {
       if (completion.choices && completion.choices[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
 
-        // Translate the analysis if the selected language is not English
-        let finalAnalysis = newAnalysis;
-        if (language !== 'en') {
-          finalAnalysis = await translateText(newAnalysis, language);
-        }
-
         // Update the facts state with the new analysis
-        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${finalAnalysis}`);
+        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+
+        // Translate the analysis if the current language is not English
+        if (currentLang !== 'en') {
+          const translatedText = await translateText(newAnalysis, currentLang);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+        }
       }
     } catch (error) {
       console.error('Error during analysis:', error);
       setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
+      // Restore the original language
+      setLanguage(currentLang);
       setAnalysisLoading(false);
     }
   };
