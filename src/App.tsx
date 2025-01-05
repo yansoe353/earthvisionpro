@@ -189,6 +189,9 @@ function App() {
         if (currentLang !== 'en') {
           const translatedText = await translateText(newAnalysis, currentLang);
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+        } else {
+          // If the language is English, set the translatedFacts to the new analysis
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
         }
       }
     } catch (error) {
@@ -256,6 +259,14 @@ function App() {
           await generateDynamicThemes(location);
         }
         setFacts(content);
+
+        // Translate the facts if the current language is not English
+        if (language !== 'en') {
+          const translatedText = await translateText(content, language);
+          setTranslatedFacts(translatedText);
+        } else {
+          setTranslatedFacts(content);
+        }
       }
     } catch (error) {
       console.error('Detailed error:', error);
