@@ -4,6 +4,19 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 
+// Translation function using the free Google Translate endpoint
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+  const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(text)}`;
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    return data[0][0][0]; // Return translated text
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // Return original text if translation fails
+  }
+};
+
 const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
   const [searchText, setSearchText] = useState('');
 
@@ -42,6 +55,10 @@ function App() {
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
   const [themeRefreshing, setThemeRefreshing] = useState(false);
   const [refreshCooldown, setRefreshCooldown] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
+  const [translatedFacts, setTranslatedFacts] = useState<string>('');
+  const [translating, setTranslating] = useState(false);
+
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
@@ -54,17 +71,27 @@ function App() {
     }
   }, [facts]);
 
+  // Handle language change
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedFacts(facts); // Show original English text
+    } else {
+      const translatedText = await translateText(facts, newLanguage);
+      setTranslatedFacts(translatedText);
+    }
+    setTranslating(false);
+  };
+
   const MarkdownContent = ({ content }: { content: string }) => {
     const sections = content.split('\n\n## ');
-    
     return (
       <>
-        <ReactMarkdown>
-          {sections[0]}
-        </ReactMarkdown>
+        <ReactMarkdown>{sections[0]}</ReactMarkdown>
         {sections.slice(1).map((section, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             ref={index === sections.length - 2 ? lastAnalysisRef : undefined}
             className="analysis-section"
           >
@@ -79,36 +106,24 @@ function App() {
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true
+        dangerouslyAllowBrowser: true,
       });
 
       const completion = await groq.chat.completions.create({
         messages: [
           {
             role: 'user',
-            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes that would be particularly interesting or relevant for this region. Each theme should be different from general categories like environmental, economic, or cultural analysis. Format your response as a JSON array with 'name' and 'prompt' for each theme. Example format:
-            [
-              {
-                "name": "Theme Name",
-                "prompt": "Analysis prompt"
-              }
-            ]
-            Make the themes highly specific to the region's unique characteristics, history, or significance.`
-          }
+            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes...`,
+          },
         ],
         model: 'llama-3.2-90b-vision-preview',
         temperature: 0.95,
-        max_tokens: 1000,
+        max_tokens: 5000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        try {
-          const themes = JSON.parse(completion.choices[0].message.content);
-          setDynamicThemes(themes);
-        } catch (e) {
-          console.error('Error parsing dynamic themes:', e);
-          setDynamicThemes([]);
-        }
+        const themes = JSON.parse(completion.choices[0].message.content);
+        setDynamicThemes(themes);
       }
     } catch (error) {
       console.error('Error generating dynamic themes:', error);
@@ -123,13 +138,13 @@ function App() {
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true
+        dangerouslyAllowBrowser: true,
       });
 
       const defaultPromptMap = {
-        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, including climate patterns, ecosystems, biodiversity, and conservation challenges.`,
-        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, including key industries, market strengths, trade advantages, and resource management.`,
-        'Cultural Notions': `Based on the location "${currentLocation}", provide additional analysis about its cultural heritage, including historical aspects, traditions, architectural significance, and social evolution through time.`
+        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects...`,
+        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance...`,
+        'Myanmar Language': `Based on the location "${currentLocation}", provide additional analysis with Myanmar Language...`,
       };
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
@@ -138,50 +153,32 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: prompt
-          }
+            content: prompt,
+          },
         ],
-        model: "llama-3.3-70b-versatile",
+        model: 'llama-3.3-70b-versatile',
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 5000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
-        setFacts(prevFacts => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
       }
     } catch (error) {
       console.error('Error during analysis:', error);
-      setFacts(prevFacts => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
+      setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
       setAnalysisLoading(false);
-    }
-  };
-
-  const refreshDynamicThemes = async () => {
-    if (currentLocation && !themeRefreshing && !refreshCooldown) {
-      setThemeRefreshing(true);
-      setRefreshCooldown(true);
-      try {
-        await generateDynamicThemes(currentLocation);
-      } finally {
-        setThemeRefreshing(false);
-        // Start the 5-second cooldown
-        setTimeout(() => {
-          setRefreshCooldown(false);
-        }, 5000);
-      }
     }
   };
 
   const captureView = async () => {
     if (!earthContainerRef.current) return;
     setLoading(true);
-    setDynamicThemes([]); // Reset dynamic themes when capturing new view
+    setDynamicThemes([]);
 
     try {
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      
       const dataUrl = await toPng(earthContainerRef.current, {
         cacheBust: true,
         pixelRatio: 2,
@@ -192,64 +189,36 @@ function App() {
 
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true
+        dangerouslyAllowBrowser: true,
       });
 
       const completion = await groq.chat.completions.create({
         messages: [
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Examine the image and identify the location visible. Then provide a rich, engaging analysis of this region. Your response should:
-
-First line: Clearly state the location name as a title.
-
-Then, provide fascinating insights about this region, including (if it makes sense):
-• Remarkable geographical features and natural phenomena
-• Rich historical significance and cultural heritage
-• Notable landmarks and architectural wonders
-• Unique ecological characteristics
-• Important economic or strategic significance
-• Fascinating local traditions or customs
-• Current challenges or transformations
-
-Format your response using:
-• **Bold** for key terms, places, and significant concepts
-• *Italics* for descriptive phrases and cultural terms
-• Well-spaced bullet points for clear organization
-• Natural flow between related topics
-
-Make each point engaging and insightful, focusing on what makes this location truly special.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl
-                }
-              }
-            ]
-          }
+            content: `Examine the image and identify the location visible...`,
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: dataUrl,
+            },
+          },
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.5,
-        max_tokens: 1000,
+        temperature: 0.95,
+        max_tokens: 8000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
         const content = completion.choices[0].message.content;
-        // Try to extract location from the first line
         const locationMatch = content.match(/^[^•\n]+/);
         if (locationMatch) {
           const location = locationMatch[0].trim();
           setCurrentLocation(location);
-          // Generate dynamic themes based on the location
           await generateDynamicThemes(location);
         }
         setFacts(content);
-      } else {
-        setFacts('No facts available for this region.');
       }
     } catch (error) {
       console.error('Detailed error:', error);
@@ -270,46 +239,52 @@ Make each point engaging and insightful, focusing on what makes this location tr
       </div>
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
+        <div className="language-buttons">
+          <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
+            English
+          </button>
+          <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
+            Myanmar
+          </button>
+          <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
+            Thai
+          </button>
+          {translating && <p>Translating...</p>}
+        </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
           <div className="facts" ref={factsContainerRef}>
             {capturedImage && (
               <div className="captured-image-container">
-                <img 
-                  src={capturedImage} 
-                  alt="Captured view" 
-                  className="captured-image"
-                />
+                <img src={capturedImage} alt="Captured view" className="captured-image" />
               </div>
             )}
-            <MarkdownContent content={facts || 'Click anywhere on the Earth to learn about that region!'} />
-            {analysisLoading && (
-              <p className="loading-text analysis-loading">Generating additional analysis...</p>
-            )}
+            <MarkdownContent content={language === 'en' ? facts : translatedFacts} />
+            {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
               <div>
                 <div className="analysis-buttons">
-                  <button 
+                  <button
                     onClick={() => analyzeWithPerspective('Environmental Factors')}
                     className="analysis-button environmental"
                     disabled={analysisLoading}
                   >
                     Environmental Factors and Biodiversity
                   </button>
-                  <button 
+                  <button
                     onClick={() => analyzeWithPerspective('Economic Areas')}
                     className="analysis-button economic"
                     disabled={analysisLoading}
                   >
                     Economic Areas and Market Strengths
                   </button>
-                  <button 
-                    onClick={() => analyzeWithPerspective('Cultural Notions')}
+                  <button
+                    onClick={() => analyzeWithPerspective('Myanmar Language')}
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Cultural Notions and Historical Aspects
+                    Analysis with Myanmar Language
                   </button>
                 </div>
                 {dynamicThemes.length > 0 && (
@@ -317,7 +292,7 @@ Make each point engaging and insightful, focusing on what makes this location tr
                     {currentLocation && (
                       <button
                         className="analysis-button refresh-button"
-                        onClick={refreshDynamicThemes}
+                        onClick={() => generateDynamicThemes(currentLocation)}
                         disabled={themeRefreshing || refreshCooldown}
                       >
                         {themeRefreshing ? 'Refreshing Themes...' : refreshCooldown ? 'Wait 5 Seconds' : 'Refresh Themes'}
