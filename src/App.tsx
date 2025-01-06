@@ -3,7 +3,6 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -58,131 +57,6 @@ const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void 
   );
 };
 
-const LoginForm = ({ onLogin }: { onLogin: (token: string) => void }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      // Step 1: Authenticate the user and get the JWT token
-      const authResponse = await fetch('https://waloneai.com/wp-json/jwt-auth/v1/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
-
-      const authData = await authResponse.json();
-      if (!authResponse.ok) {
-        setError(authData.message || 'Login failed');
-        return;
-      }
-
-      const token = authData.token;
-
-      // Step 2: Fetch the user's role using the token
-      const userResponse = await fetch('https://waloneai.com/wp-json/wp/v2/users/me', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const userData = await userResponse.json();
-      if (!userResponse.ok) {
-        setError('Failed to fetch user details');
-        return;
-      }
-
-      // Step 3: Check if the user has the 'proglobe' role
-      if (userData.roles.includes('proglobe')) {
-        onLogin(token); // Save the JWT token and allow access
-      } else {
-        setError('Access restricted to proglobe users only.');
-      }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="login-form">
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-        className="login-input"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        className="login-input"
-      />
-      <button type="submit" className="login-button">
-        Login
-      </button>
-      {error && <p className="login-error">{error}</p>}
-    </form>
-  );
-};
-
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const token = localStorage.getItem('token');
-  const [isProglobeUser, setIsProglobeUser] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch the user's role using the token
-        const userResponse = await fetch('https://your-wordpress-site.com/wp-json/wp/v2/users/me', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const userData = await userResponse.json();
-        if (userResponse.ok && userData.roles.includes('proglobe')) {
-          setIsProglobeUser(true);
-        }
-      } catch (error) {
-        console.error('Error fetching user role:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkUserRole();
-  }, [token]);
-
-  if (loading) {
-    return <p>Loading...</p>; // Show a loading spinner
-  }
-
-  if (!token || !isProglobeUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
-
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -217,16 +91,6 @@ function App() {
       setTranslatedFacts(translatedText);
     }
     setTranslating(false);
-  };
-
-  // Handle login
-  const handleLogin = (token: string) => {
-    localStorage.setItem('token', token);
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem('token');
   };
 
   const MarkdownContent = ({ content }: { content: string }) => {
@@ -433,116 +297,97 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/login"
-          element={<LoginForm onLogin={handleLogin} />}
-        />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <div className="app">
-                <div className="earth-container" ref={earthContainerRef}>
-                  <Earth ref={earthRef} onCaptureView={captureView} />
-                </div>
-                <div className="info-panel">
-                  <SearchBar onSearch={handleSearch} />
-                  <div className="language-buttons">
-                    <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
-                      English
-                    </button>
-                    <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
-                      Myanmar
-                    </button>
-                    <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
-                      Thai
-                    </button>
-                    {translating && <p>Translating...</p>}
-                  </div>
-                  {loading ? (
-                    <p className="loading-text">Analyzing view...</p>
-                  ) : (
-                    <div className="facts" ref={factsContainerRef}>
-                      {capturedImage && (
-                        <div className="captured-image-container">
-                          <img src={capturedImage} alt="Captured view" className="captured-image" />
-                        </div>
-                      )}
-                      <MarkdownContent content={language === 'en' ? facts : translatedFacts} />
-                      {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
-                      {facts && !loading && (
-                        <div>
-                          <div className="analysis-buttons">
-                            <button
-                              onClick={() => analyzeWithPerspective('Environmental Factors')}
-                              className="analysis-button environmental"
-                              disabled={analysisLoading}
-                            >
-                              Environmental Factors and Biodiversity
-                            </button>
-                            <button
-                              onClick={() => analyzeWithPerspective('Economic Areas')}
-                              className="analysis-button economic"
-                              disabled={analysisLoading}
-                            >
-                              Economic Areas and Market Strengths
-                            </button>
-                            <button
-                              onClick={() => analyzeWithPerspective('Myanmar Language')}
-                              className="analysis-button cultural"
-                              disabled={analysisLoading}
-                            >
-                              Analysis with Myanmar Language
-                            </button>
-                          </div>
-                          {dynamicThemes.length > 0 && (
-                            <div className="analysis-buttons dynamic-buttons">
-                              {currentLocation && (
-                                <button
-                                  className="analysis-button refresh-button"
-                                  onClick={() => generateDynamicThemes(currentLocation)}
-                                  disabled={translating}
-                                >
-                                  Refresh Themes
-                                </button>
-                              )}
-                              {dynamicThemes.map((theme, index) => (
-                                <button
-                                  key={theme.name}
-                                  className={`analysis-button dynamic-${index}`}
-                                  onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
-                                  disabled={analysisLoading || translating}
-                                >
-                                  {theme.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {/* Save Analysis Button */}
-                          <button
-                            onClick={saveAnalysis}
-                            className="save-analysis-button"
-                            disabled={!facts || translating || analysisLoading}
-                          >
-                            Save Analysis
-                          </button>
-                          {/* Logout Button */}
-                          <button onClick={handleLogout} className="logout-button">
-                            Logout
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+    <div className="app">
+      <div className="earth-container" ref={earthContainerRef}>
+        <Earth ref={earthRef} onCaptureView={captureView} />
+      </div>
+      <div className="info-panel">
+        <SearchBar onSearch={handleSearch} />
+        <div className="language-buttons">
+          <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
+            English
+          </button>
+          <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
+            Myanmar
+          </button>
+          <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
+            Thai
+          </button>
+          {translating && <p>Translating...</p>}
+        </div>
+        {loading ? (
+          <p className="loading-text">Analyzing view...</p>
+        ) : (
+          <div className="facts" ref={factsContainerRef}>
+            {capturedImage && (
+              <div className="captured-image-container">
+                <img src={capturedImage} alt="Captured view" className="captured-image" />
               </div>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+            )}
+            <MarkdownContent content={language === 'en' ? facts : translatedFacts} />
+            {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
+            {facts && !loading && (
+              <div>
+                <div className="analysis-buttons">
+                  <button
+                    onClick={() => analyzeWithPerspective('Environmental Factors')}
+                    className="analysis-button environmental"
+                    disabled={analysisLoading}
+                  >
+                    Environmental Factors and Biodiversity
+                  </button>
+                  <button
+                    onClick={() => analyzeWithPerspective('Economic Areas')}
+                    className="analysis-button economic"
+                    disabled={analysisLoading}
+                  >
+                    Economic Areas and Market Strengths
+                  </button>
+                  <button
+                    onClick={() => analyzeWithPerspective('Myanmar Language')}
+                    className="analysis-button cultural"
+                    disabled={analysisLoading}
+                  >
+                    Analysis with Myanmar Language
+                  </button>
+                </div>
+                {dynamicThemes.length > 0 && (
+                  <div className="analysis-buttons dynamic-buttons">
+                    {currentLocation && (
+                      <button
+                        className="analysis-button refresh-button"
+                        onClick={() => generateDynamicThemes(currentLocation)}
+                        disabled={translating}
+                      >
+                        Refresh Themes
+                      </button>
+                    )}
+                    {dynamicThemes.map((theme, index) => (
+                      <button
+                        key={theme.name}
+                        className={`analysis-button dynamic-${index}`}
+                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        disabled={analysisLoading || translating}
+                      >
+                        {theme.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Save Analysis Button */}
+                <button
+                  onClick={saveAnalysis}
+                  className="save-analysis-button"
+                  disabled={!facts || translating || analysisLoading}
+                >
+                  Save Analysis
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
