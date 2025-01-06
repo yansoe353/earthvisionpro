@@ -69,7 +69,7 @@ const LoginForm = ({ onLogin }: { onLogin: (token: string) => void }) => {
 
     try {
       // Step 1: Authenticate the user and get the JWT token
-      const authResponse = await fetch('https://your-wordpress-site.com/wp-json/jwt-auth/v1/token', {
+      const authResponse = await fetch('https://waloneai.com/wp-json/jwt-auth/v1/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
