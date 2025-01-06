@@ -89,7 +89,7 @@ const LoginForm = ({ onLogin }: { onLogin: (token: string) => void }) => {
       const token = authData.token;
 
       // Step 2: Fetch the user's role using the token
-      const userResponse = await fetch('https://your-wordpress-site.com/wp-json/wp/v2/users/me', {
+      const userResponse = await fetch('https://waloneai.com/wp-json/wp/v2/users/me', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
