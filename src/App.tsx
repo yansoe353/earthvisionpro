@@ -193,7 +193,6 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -223,13 +222,11 @@ function App() {
   // Handle login
   const handleLogin = (token: string) => {
     localStorage.setItem('token', token);
-    setIsLoggedIn(true);
   };
 
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsLoggedIn(false);
   };
 
   const MarkdownContent = ({ content }: { content: string }) => {
