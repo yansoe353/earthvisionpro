@@ -5,13 +5,7 @@ import LoginForm from './components/LoginForm';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 
-function App() {
-  return (
-    <div className="App">
-      <LoginForm />
-    </div>
-  );
-}
+
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
