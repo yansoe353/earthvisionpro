@@ -5,38 +5,23 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Using Mapbox's satellite imagery
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
-interface EarthProps {
-  onCaptureView: () => void; // Callback for capturing the view
-  onClick: (lat: number, lng: number) => void; // Callback for map clicks (reverse geocoding)
-  onAddMarker: (lat: number, lng: number) => void; // Callback for adding markers
-}
-
-const Earth = forwardRef(({ onCaptureView, onClick, onAddMarker }: EarthProps, ref) => {
+const Earth = forwardRef(({ onCaptureView }: { onCaptureView: () => void }, ref) => {
   const mapRef = useRef<MapRef>(null);
 
-  // Handle map click
-  const handleMapClick = useCallback(
-    (event: any) => {
-      const { lng, lat } = event.lngLat;
-      onClick(lat, lng); // Trigger reverse geocoding
-      onAddMarker(lat, lng); // Add a marker if marker mode is active
-      onCaptureView(); // Trigger capture view
-    },
-    [onClick, onAddMarker, onCaptureView]
-  );
+  const handleClick = useCallback(() => {
+    onCaptureView();
+  }, [onCaptureView]);
 
-  // Fly to a specific location
   const handleSearch = useCallback((lng: number, lat: number) => {
     mapRef.current?.flyTo({
       center: [lng, lat],
       zoom: 5,
-      duration: 2000,
+      duration: 2000
     });
   }, []);
 
-  // Expose methods to parent component
   useImperativeHandle(ref, () => ({
-    handleSearch,
+    handleSearch
   }));
 
   return (
@@ -49,10 +34,10 @@ const Earth = forwardRef(({ onCaptureView, onClick, onAddMarker }: EarthProps, r
           latitude: 20,
           zoom: 1,
           bearing: 0,
-          pitch: 0,
+          pitch: 0
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        onClick={handleMapClick}
+        onClick={handleClick}
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
@@ -61,7 +46,7 @@ const Earth = forwardRef(({ onCaptureView, onClick, onAddMarker }: EarthProps, r
         fog={{
           range: [1, 10],
           color: '#242B4B',
-          'horizon-blend': 0.2,
+          'horizon-blend': 0.2
         }}
         attributionControl={false}
       />
