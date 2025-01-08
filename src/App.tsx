@@ -27,15 +27,12 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
 const fetchRealTimeData = async (location: string, lat: number, lng: number) => {
   try {
     const [weatherResponse, trafficResponse, newsResponse] = await Promise.all([
-      // Fetch weather data
       fetch(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
       ),
-      // Fetch traffic data (using TomTom Traffic API)
       fetch(
         `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${lat},${lng}&key=${import.meta.env.VITE_TOMTOM_API_KEY}`
       ),
-      // Fetch news data
       fetch(
         `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&apiKey=${import.meta.env.VITE_NEWSAPI_API_KEY}`
       ),
