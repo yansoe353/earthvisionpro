@@ -277,14 +277,19 @@ function App() {
   };
 
   // Handle search for a location
-  const handleSearch = async (location: string) => {
+  const handleSearch = async (lng: number, lat: number) => {
+    earthRef.current?.handleSearch(lng, lat);
+  };
+
+  // Function to handle search by location name (used for voice commands)
+  const handleSearchByName = async (location: string) => {
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
     const data = await response.json();
     if (data.features && data.features.length > 0) {
       const [lng, lat] = data.features[0].center;
-      earthRef.current?.handleSearch(lng, lat);
+      handleSearch(lng, lat); // Call the updated handleSearch function
     }
   };
 
@@ -349,11 +354,11 @@ function App() {
       setVoiceCommandFeedback('Rotating right.');
     } else if (command.includes('search for')) {
       const location = command.split('search for ')[1];
-      handleSearch(location);
+      handleSearchByName(location); // Use handleSearchByName for location search
       setVoiceCommandFeedback(`Searching for ${location}.`);
     } else if (command.includes('tell me about')) {
       const location = command.split('tell me about ')[1];
-      handleSearch(location);
+      handleSearchByName(location); // Use handleSearchByName for location search
       setVoiceCommandFeedback(`Fetching information about ${location}.`);
     } else {
       setVoiceCommandFeedback('Command not recognized.');
@@ -366,7 +371,7 @@ function App() {
         <Earth ref={earthRef} onCaptureView={captureView} />
       </div>
       <div className="info-panel">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={handleSearch} /> {/* Pass the correct handleSearch function */}
         <div className="language-buttons">
           <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
             English
