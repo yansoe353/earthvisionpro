@@ -1,57 +1,97 @@
-import { useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import Map, { MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Using Mapbox's satellite imagery
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
-const Earth = forwardRef(({ onCaptureView }: { onCaptureView: () => void }, ref) => {
-  const mapRef = useRef<MapRef>(null);
+const Earth = forwardRef(
+  (
+    { onCaptureView, weatherData }: { onCaptureView: () => void; weatherData: any },
+    ref
+  ) => {
+    const mapRef = useRef<MapRef>(null);
+    const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
 
-  const handleClick = useCallback(() => {
-    onCaptureView();
-  }, [onCaptureView]);
+    // Handle click on the map
+    const handleClick = useCallback((event: any) => {
+      const { lngLat } = event;
+      setClickedLocation(lngLat); // Store the clicked location
+      onCaptureView(); // Trigger the capture view function
+    }, [onCaptureView]);
 
-  const handleSearch = useCallback((lng: number, lat: number) => {
-    mapRef.current?.flyTo({
-      center: [lng, lat],
-      zoom: 5,
-      duration: 2000
-    });
-  }, []);
+    // Handle search for a location
+    const handleSearch = useCallback((lng: number, lat: number) => {
+      mapRef.current?.flyTo({
+        center: [lng, lat],
+        zoom: 5,
+        duration: 2000,
+      });
+      setClickedLocation({ lng, lat }); // Update the clicked location
+    }, []);
 
-  useImperativeHandle(ref, () => ({
-    handleSearch
-  }));
+    // Expose handleSearch to the parent component
+    useImperativeHandle(ref, () => ({
+      handleSearch,
+    }));
 
-  return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Map
-        ref={mapRef}
-        mapStyle={MAPBOX_STYLE}
-        initialViewState={{
-          longitude: 0,
-          latitude: 20,
-          zoom: 1,
-          bearing: 0,
-          pitch: 0
-        }}
-        mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        onClick={handleClick}
-        style={{ width: '100%', height: '100%' }}
-        maxZoom={20}
-        minZoom={1}
-        projection={{ name: 'globe' }}
-        terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
-        fog={{
-          range: [1, 10],
-          color: '#242B4B',
-          'horizon-blend': 0.2
-        }}
-        attributionControl={false}
-      />
-    </div>
-  );
-});
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <Map
+          ref={mapRef}
+          mapStyle={MAPBOX_STYLE}
+          initialViewState={{
+            longitude: 0,
+            latitude: 20,
+            zoom: 1,
+            bearing: 0,
+            pitch: 0,
+          }}
+          mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+          onClick={handleClick}
+          style={{ width: '100%', height: '100%' }}
+          maxZoom={20}
+          minZoom={1}
+          projection={{ name: 'globe' }}
+          terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
+          fog={{
+            range: [1, 10],
+            color: '#242B4B',
+            'horizon-blend': 0.2,
+          }}
+          attributionControl={false}
+        />
+
+        {/* Weather Overlay */}
+        {clickedLocation && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: '10px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              zIndex: 1,
+            }}
+          >
+            <h3>Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})</h3>
+            {weatherData ? (
+              <>
+                <img src={weatherData.weatherIcon} alt="Weather Icon" style={{ width: '50px', height: '50px' }} />
+                <p>Temperature: {weatherData.temperature}°C</p>
+                <p>Humidity: {weatherData.humidity}%</p>
+                <p>Wind Speed: {weatherData.windSpeed} m/s</p>
+              </>
+            ) : (
+              <p>Loading weather data...</p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 export default Earth;
