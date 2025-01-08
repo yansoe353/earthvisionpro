@@ -496,32 +496,35 @@ html, body, #root {
 
 /* Virtual Tour Panel */
 .virtual-tour-panel {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+  position: fixed; /* Use fixed positioning for better control */
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%); /* Center the panel */
+  background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white background */
   backdrop-filter: blur(10px); /* Frosted glass effect */
   padding: 20px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for depth */
+  border: 1px solid rgba(0, 0, 0, 0.1); /* Light border for depth */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1;
+  z-index: 1000; /* Ensure it appears above other elements */
   max-width: 400px;
   max-height: 80vh;
   overflow-y: auto; /* Enable scrolling for long content */
+  color: #000; /* Black text color */
+  cursor: grab; /* Indicate that the panel is movable */
 }
 
 .virtual-tour-panel h3 {
   margin: 0 0 10px 0;
   font-size: 18px;
   font-weight: 600; /* Bold text for headings */
-  color: #333;
+  color: #000; /* Black text color */
 }
 
 .virtual-tour-panel p {
   margin: 5px 0;
   font-size: 14px;
-  color: #555;
+  color: #000; /* Black text color */
 }
 
 .virtual-tour-panel img {
@@ -535,9 +538,9 @@ html, body, #root {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: none;
-  border: none;
-  color: #333;
+  background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  border: 1px solid rgba(0, 0, 0, 0.1); /* Light border */
+  color: #000; /* Black text color */
   font-size: 16px;
   cursor: pointer;
   padding: 5px;
