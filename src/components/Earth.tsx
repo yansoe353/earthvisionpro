@@ -6,23 +6,26 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
 interface EarthProps {
-  onCaptureView: () => void;
-  onClick: (lat: number, lng: number) => void;
-  onAddMarker: (lat: number, lng: number) => void;
+  onCaptureView: () => void; // Callback for capturing the view
+  onClick: (lat: number, lng: number) => void; // Callback for map clicks (reverse geocoding)
+  onAddMarker: (lat: number, lng: number) => void; // Callback for adding markers
 }
 
 const Earth = forwardRef(({ onCaptureView, onClick, onAddMarker }: EarthProps, ref) => {
   const mapRef = useRef<MapRef>(null);
 
+  // Handle map click
   const handleMapClick = useCallback(
     (event: any) => {
       const { lng, lat } = event.lngLat;
       onClick(lat, lng); // Trigger reverse geocoding
       onAddMarker(lat, lng); // Add a marker if marker mode is active
+      onCaptureView(); // Trigger capture view
     },
-    [onClick, onAddMarker]
+    [onClick, onAddMarker, onCaptureView]
   );
 
+  // Fly to a specific location
   const handleSearch = useCallback((lng: number, lat: number) => {
     mapRef.current?.flyTo({
       center: [lng, lat],
@@ -31,6 +34,7 @@ const Earth = forwardRef(({ onCaptureView, onClick, onAddMarker }: EarthProps, r
     });
   }, []);
 
+  // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     handleSearch,
   }));
