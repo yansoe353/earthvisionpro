@@ -70,6 +70,8 @@ function App() {
   } | null>(null);
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
+  const [virtualTourContent, setVirtualTourContent] = useState<string>('');
+  const [isTourActive, setIsTourActive] = useState<boolean>(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -393,6 +395,36 @@ function App() {
     }
   };
 
+  // Generate virtual tour
+  const generateVirtualTour = async (location: string) => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a virtual tour for ${location}. Include historical facts, interesting trivia, and a step-by-step guide for visitors.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 2000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        setVirtualTourContent(completion.choices[0].message.content);
+        setIsTourActive(true); // Activate the virtual tour
+      }
+    } catch (error) {
+      console.error('Error generating virtual tour:', error);
+      setVirtualTourContent('Error generating virtual tour. Please try again.');
+    }
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -418,6 +450,21 @@ function App() {
         {voiceCommandFeedback && (
           <div className="voice-feedback">
             <p>{voiceCommandFeedback}</p>
+          </div>
+        )}
+        <button
+          onClick={() => generateVirtualTour(currentLocation)}
+          className="virtual-tour-button"
+          disabled={!currentLocation}
+        >
+          🚀 Start Virtual Tour
+        </button>
+        {isTourActive && (
+          <div className="virtual-tour-panel">
+            <button className="close-button" onClick={() => setIsTourActive(false)}>
+              &times; {/* Close icon (×) */}
+            </button>
+            <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
           </div>
         )}
         {loading ? (
