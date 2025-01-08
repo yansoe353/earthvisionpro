@@ -164,7 +164,7 @@ function App() {
       const defaultPromptMap = {
         'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects...`,
         'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance...`,
-        'Myanmar Language': `Based on the location "${currentLocation}", provide additional analysis with Myanmar Language...`,
+        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks,...`,
       };
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
@@ -346,11 +346,11 @@ function App() {
                     Economic Areas and Market Strengths
                   </button>
                   <button
-                    onClick={() => analyzeWithPerspective('Myanmar Language')}
+                    onClick={() => analyzeWithPerspective('Travel Destinations')}
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis with Myanmar Language
+                    Analysis of Travel locations
                   </button>
                 </div>
                 {dynamicThemes.length > 0 && (
