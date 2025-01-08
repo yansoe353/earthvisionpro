@@ -4,15 +4,11 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 
-
-
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  // Split the text into sentences
   const sentences = text.split(/(?<=[.!?])\s+/);
 
   try {
-    // Translate each sentence individually
     const translatedSentences = await Promise.all(
       sentences.map(async (sentence) => {
         const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
@@ -21,8 +17,6 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
         return data[0][0][0]; // Return translated sentence
       })
     );
-
-    // Combine the translated sentences into a single string
     return translatedSentences.join(' ');
   } catch (error) {
     console.error('Translation error:', error);
@@ -66,9 +60,10 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
-  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
+  const [locationHistory, setLocationHistory] = useState<Array<{ name: string; lat: number; lng: number }>>([]);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -93,6 +88,41 @@ function App() {
       setTranslatedFacts(translatedText);
     }
     setTranslating(false);
+  };
+
+  // Handle map click (reverse geocoding)
+  const handleMapClick = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const locationName = data.features[0].place_name;
+        setCurrentLocation(locationName);
+
+        // Update location history
+        setLocationHistory((prevHistory) => [
+          { name: locationName, lat, lng },
+          ...prevHistory.slice(0, 9), // Keep only the last 10 locations
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching location details:', error);
+    }
+  };
+
+  // Handle adding a marker
+  const handleAddMarker = (lat: number, lng: number) => {
+    const markerName = prompt('Enter a name for this marker:');
+    if (markerName) {
+      earthRef.current?.addMarker(lat, lng, markerName);
+    }
+  };
+
+  // Handle search (fly to location)
+  const handleSearch = (lng: number, lat: number) => {
+    earthRef.current?.handleSearch(lng, lat);
   };
 
   const MarkdownContent = ({ content }: { content: string }) => {
@@ -278,10 +308,6 @@ function App() {
     }
   };
 
-  const handleSearch = (lng: number, lat: number) => {
-    earthRef.current?.handleSearch(lng, lat);
-  };
-
   // Save analysis to a file
   const saveAnalysis = () => {
     const content = `=== Analysis Report ===\n\n` +
@@ -301,7 +327,12 @@ function App() {
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
-        <Earth ref={earthRef} onCaptureView={captureView} />
+        <Earth
+          ref={earthRef}
+          onCaptureView={captureView}
+          onClick={handleMapClick}
+          onAddMarker={handleAddMarker}
+        />
       </div>
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
