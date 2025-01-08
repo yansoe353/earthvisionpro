@@ -222,7 +222,7 @@ html, body, #root {
 }
 
 
-/* Weather Widget */
+/* Weather Widget - Default Styles */
 .weather-widget {
   position: absolute;
   top: 20px;
@@ -257,34 +257,30 @@ html, body, #root {
   color: rgba(255, 255, 255, 0.9); /* Slightly transparent white text */
 }
 
-/* Close Button */
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-}
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+  .weather-widget {
+    top: 10px; /* Adjust position for mobile */
+    right: 10px; /* Adjust position for mobile */
+    padding: 10px; /* Reduce padding for smaller size */
+    max-width: 150px; /* Reduce max width for mobile */
+  }
 
-.close-button:hover {
-  background-color: rgba(255, 255, 255, 0.2); /* Slightly opaque background on hover */
-}
+  .weather-widget h3 {
+    font-size: 14px; /* Smaller font size for mobile */
+    margin-bottom: 8px; /* Adjust margin for mobile */
+  }
 
-/* Weather Widget Hover Effect */
-.weather-widget:hover {
-  background-color: rgba(255, 255, 255, 0.3); /* Slightly more opaque on hover */
-  transition: background-color 0.3s ease; /* Smooth transition */
+  .weather-widget img {
+    width: 30px; /* Smaller icon for mobile */
+    height: 30px; /* Smaller icon for mobile */
+    margin-bottom: 8px; /* Adjust margin for mobile */
+  }
+
+  .weather-widget p {
+    font-size: 12px; /* Smaller font size for mobile */
+    margin: 3px 0; /* Adjust margin for mobile */
+  }
 }
 
 /* Language Buttons */
