@@ -4,29 +4,22 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 
-
-
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  // Split the text into sentences
   const sentences = text.split(/(?<=[.!?])\s+/);
-
   try {
-    // Translate each sentence individually
     const translatedSentences = await Promise.all(
       sentences.map(async (sentence) => {
         const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
-        return data[0][0][0]; // Return translated sentence
+        return data[0][0][0];
       })
     );
-
-    // Combine the translated sentences into a single string
     return translatedSentences.join(' ');
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Return original text if translation fails
+    return text;
   }
 };
 
@@ -66,9 +59,11 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
-  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
+  const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
+  const [isListening, setIsListening] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -87,7 +82,7 @@ function App() {
     setTranslating(true);
     setLanguage(newLanguage);
     if (newLanguage === 'en') {
-      setTranslatedFacts(facts); // Show original English text
+      setTranslatedFacts(facts);
     } else {
       const translatedText = await translateText(facts, newLanguage);
       setTranslatedFacts(translatedText);
@@ -113,6 +108,7 @@ function App() {
     );
   };
 
+  // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
     try {
       const groq = new Groq({
@@ -142,6 +138,7 @@ function App() {
     }
   };
 
+  // Analyze with a specific perspective
   const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
@@ -206,6 +203,7 @@ function App() {
     }
   };
 
+  // Capture the current view of the globe
   const captureView = async () => {
     if (!earthContainerRef.current) return;
     setLoading(true);
@@ -278,8 +276,16 @@ function App() {
     }
   };
 
-  const handleSearch = (lng: number, lat: number) => {
-    earthRef.current?.handleSearch(lng, lat);
+  // Handle search for a location
+  const handleSearch = async (location: string) => {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
+    );
+    const data = await response.json();
+    if (data.features && data.features.length > 0) {
+      const [lng, lat] = data.features[0].center;
+      earthRef.current?.handleSearch(lng, lat);
+    }
   };
 
   // Save analysis to a file
@@ -296,6 +302,62 @@ function App() {
     link.download = `analysis_report_${new Date().toISOString()}.txt`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Voice command logic
+  const enableVoiceCommands = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Your browser does not support voice commands. Please use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+    setIsListening(true);
+
+    recognition.onresult = (event: any) => {
+      const command = event.results[0][0].transcript.toLowerCase();
+      handleVoiceCommand(command);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Voice recognition error:', event.error);
+      setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+  };
+
+  const handleVoiceCommand = (command: string) => {
+    if (command.includes('zoom in')) {
+      earthRef.current?.zoomIn();
+      setVoiceCommandFeedback('Zooming in.');
+    } else if (command.includes('zoom out')) {
+      earthRef.current?.zoomOut();
+      setVoiceCommandFeedback('Zooming out.');
+    } else if (command.includes('rotate left')) {
+      earthRef.current?.rotateLeft();
+      setVoiceCommandFeedback('Rotating left.');
+    } else if (command.includes('rotate right')) {
+      earthRef.current?.rotateRight();
+      setVoiceCommandFeedback('Rotating right.');
+    } else if (command.includes('search for')) {
+      const location = command.split('search for ')[1];
+      handleSearch(location);
+      setVoiceCommandFeedback(`Searching for ${location}.`);
+    } else if (command.includes('tell me about')) {
+      const location = command.split('tell me about ')[1];
+      handleSearch(location);
+      setVoiceCommandFeedback(`Fetching information about ${location}.`);
+    } else {
+      setVoiceCommandFeedback('Command not recognized.');
+    }
   };
 
   return (
@@ -317,6 +379,14 @@ function App() {
           </button>
           {translating && <p>Translating...</p>}
         </div>
+        <button onClick={enableVoiceCommands} className="voice-button">
+          {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
+        </button>
+        {voiceCommandFeedback && (
+          <div className="voice-feedback">
+            <p>{voiceCommandFeedback}</p>
+          </div>
+        )}
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
@@ -376,7 +446,6 @@ function App() {
                     ))}
                   </div>
                 )}
-                {/* Save Analysis Button */}
                 <button
                   onClick={saveAnalysis}
                   className="save-analysis-button"
