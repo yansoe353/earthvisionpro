@@ -4,10 +4,15 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 
+
+
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+  // Split the text into sentences
   const sentences = text.split(/(?<=[.!?])\s+/);
+
   try {
+    // Translate each sentence individually
     const translatedSentences = await Promise.all(
       sentences.map(async (sentence) => {
         const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
@@ -16,43 +21,12 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
         return data[0][0][0]; // Return translated sentence
       })
     );
+
+    // Combine the translated sentences into a single string
     return translatedSentences.join(' ');
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Return original text if translation fails
-  }
-};
-
-// Fetch real-time data (weather, traffic, news)
-const fetchRealTimeData = async (location: string, lat: number, lng: number) => {
-  try {
-    const [weatherResponse, trafficResponse, newsResponse] = await Promise.all([
-      // Fetch weather data
-      fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
-      ),
-      // Fetch traffic data (using TomTom Traffic API)
-      fetch(
-        `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${lat},${lng}&key=${import.meta.env.VITE_TOMTOM_API_KEY}`
-      ),
-      // Fetch news data
-      fetch(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&apiKey=${import.meta.env.VITE_NEWSAPI_API_KEY}`
-      ),
-    ]);
-
-    const weatherData = await weatherResponse.json();
-    const trafficData = await trafficResponse.json();
-    const newsData = await newsResponse.json();
-
-    return {
-      weather: weatherData,
-      traffic: trafficData,
-      news: newsData.articles.slice(0, 5), // Limit to 5 news articles
-    };
-  } catch (error) {
-    console.error('Error fetching real-time data:', error);
-    return null;
   }
 };
 
@@ -81,9 +55,6 @@ const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void 
         placeholder="Search for a place..."
         className="search-input"
       />
-      <button type="submit" className="search-button">
-        Search
-      </button>
     </form>
   );
 };
@@ -95,15 +66,9 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
-  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Language state
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [realTimeData, setRealTimeData] = useState<{
-    weather: any;
-    traffic: any;
-    news: any[];
-  } | null>(null);
-  const [realTimeLoading, setRealTimeLoading] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -129,24 +94,6 @@ function App() {
     }
     setTranslating(false);
   };
-
-  // Fetch real-time data when the location changes
-  useEffect(() => {
-    if (currentLocation && earthRef.current) {
-      const { lat, lng } = earthRef.current.getCenter();
-      setRealTimeLoading(true);
-      fetchRealTimeData(currentLocation, lat, lng)
-        .then((data) => {
-          setRealTimeData(data);
-        })
-        .catch((error) => {
-          console.error('Error fetching real-time data:', error);
-        })
-        .finally(() => {
-          setRealTimeLoading(false);
-        });
-    }
-  }, [currentLocation]);
 
   const MarkdownContent = ({ content }: { content: string }) => {
     const sections = content.split('\n\n## ');
@@ -186,13 +133,8 @@ function App() {
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        try {
-          const themes = JSON.parse(completion.choices[0].message.content);
-          setDynamicThemes(themes);
-        } catch (error) {
-          console.error('Error parsing themes:', error);
-          setDynamicThemes([]);
-        }
+        const themes = JSON.parse(completion.choices[0].message.content);
+        setDynamicThemes(themes);
       }
     } catch (error) {
       console.error('Error generating dynamic themes:', error);
@@ -337,7 +279,7 @@ function App() {
   };
 
   const handleSearch = (lng: number, lat: number) => {
-    earthRef.current?.setCenter([lng, lat]);
+    earthRef.current?.handleSearch(lng, lat);
   };
 
   // Save analysis to a file
@@ -345,11 +287,7 @@ function App() {
     const content = `=== Analysis Report ===\n\n` +
       `Location: ${currentLocation}\n\n` +
       `=== English Analysis ===\n${facts}\n\n` +
-      `=== Translated Analysis (${language}) ===\n${translatedFacts}\n\n` +
-      `=== Real-Time Data ===\n` +
-      `Weather: ${JSON.stringify(realTimeData?.weather, null, 2)}\n\n` +
-      `Traffic: ${JSON.stringify(realTimeData?.traffic, null, 2)}\n\n` +
-      `News: ${JSON.stringify(realTimeData?.news, null, 2)}`;
+      `=== Translated Analysis (${language}) ===\n${translatedFacts}`;
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -389,32 +327,6 @@ function App() {
               </div>
             )}
             <MarkdownContent content={language === 'en' ? facts : translatedFacts} />
-            {realTimeLoading && <p className="loading-text">Fetching real-time data...</p>}
-            {realTimeData && (
-              <div className="real-time-data">
-                <h3>Real-Time Data</h3>
-                <div>
-                  <h4>Weather</h4>
-                  <pre>{JSON.stringify(realTimeData.weather, null, 2)}</pre>
-                </div>
-                <div>
-                  <h4>Traffic</h4>
-                  <pre>{JSON.stringify(realTimeData.traffic, null, 2)}</pre>
-                </div>
-                <div>
-                  <h4>News</h4>
-                  <ul>
-                    {realTimeData.news.map((article, index) => (
-                      <li key={index}>
-                        <a href={article.url} target="_blank" rel="noopener noreferrer">
-                          {article.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
               <div>
