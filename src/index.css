@@ -221,27 +221,26 @@ html, body, #root {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
 }
 
-
 /* Weather Widget - Default Styles */
 .weather-widget {
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
-  backdrop-filter: blur(10px); /* Adds a blur effect for a modern look */
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   padding: 15px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for depth */
+  border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 1;
   max-width: 200px;
-  color: #fff; /* White text for better contrast */
+  color: #fff;
 }
 
 .weather-widget h3 {
   margin: 0 0 10px 0;
   font-size: 18px;
-  font-weight: 600; /* Bold text for headings */
+  font-weight: 600;
   color: #fff;
 }
 
@@ -254,33 +253,7 @@ html, body, #root {
 .weather-widget p {
   margin: 5px 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9); /* Slightly transparent white text */
-}
-
-/* Mobile Styles */
-@media screen and (max-width: 768px) {
-  .weather-widget {
-    top: 10px; /* Adjust position for mobile */
-    right: 10px; /* Adjust position for mobile */
-    padding: 10px; /* Reduce padding for smaller size */
-    max-width: 150px; /* Reduce max width for mobile */
-  }
-
-  .weather-widget h3 {
-    font-size: 14px; /* Smaller font size for mobile */
-    margin-bottom: 8px; /* Adjust margin for mobile */
-  }
-
-  .weather-widget img {
-    width: 30px; /* Smaller icon for mobile */
-    height: 30px; /* Smaller icon for mobile */
-    margin-bottom: 8px; /* Adjust margin for mobile */
-  }
-
-  .weather-widget p {
-    font-size: 12px; /* Smaller font size for mobile */
-    margin: 3px 0; /* Adjust margin for mobile */
-  }
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Language Buttons */
@@ -492,35 +465,35 @@ html, body, #root {
 
 /* Virtual Tour Panel */
 .virtual-tour-panel {
-  position: fixed; /* Use fixed positioning for better control */
-  top: 50%; /* Center vertically */
-  left: 50%; /* Center horizontally */
-  transform: translate(-50%, -50%); /* Center the panel */
-  background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white background */
-  backdrop-filter: blur(10px); /* Frosted glass effect */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   padding: 20px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1); /* Light border for depth */
+  border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* Ensure it appears above other elements */
+  z-index: 1000;
   max-width: 400px;
   max-height: 80vh;
-  overflow-y: auto; /* Enable scrolling for long content */
-  color: #000; /* Black text color */
-  cursor: grab; /* Indicate that the panel is movable */
+  overflow-y: auto;
+  color: #000;
+  cursor: grab;
 }
 
 .virtual-tour-panel h3 {
   margin: 0 0 10px 0;
   font-size: 18px;
-  font-weight: 600; /* Bold text for headings */
-  color: #000; /* Black text color */
+  font-weight: 600;
+  color: #000;
 }
 
 .virtual-tour-panel p {
   margin: 5px 0;
   font-size: 14px;
-  color: #000; /* Black text color */
+  color: #000;
 }
 
 .virtual-tour-panel img {
@@ -534,9 +507,9 @@ html, body, #root {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
-  border: 1px solid rgba(0, 0, 0, 0.1); /* Light border */
-  color: #000; /* Black text color */
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #000;
   font-size: 16px;
   cursor: pointer;
   padding: 5px;
@@ -550,12 +523,12 @@ html, body, #root {
 }
 
 .virtual-tour-panel .close-button:hover {
-  background-color: rgba(0, 0, 0, 0.1); /* Slightly opaque background on hover */
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Virtual Tour Button */
 .virtual-tour-button {
-  background-color: #007bff; /* Blue background */
+  background-color: #007bff;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -567,32 +540,18 @@ html, body, #root {
 }
 
 .virtual-tour-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
+  background-color: #0056b3;
 }
 
 .virtual-tour-button:disabled {
-  background-color: #ccc; /* Grayed out when disabled */
+  background-color: #ccc;
   cursor: not-allowed;
 }
-
-@media screen and (max-width: 768px) {
-  .earth-container {
-    height: 30vh; /* Reduce height for mobile */
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .info-panel {
-    overflow-y: auto; /* Ensure scrolling works */
-    padding: 0.5rem; /* Reduce padding for more space */
-  }
-}
-
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
-    flex-direction: column !important;
+    flex-direction: column;
     height: 100vh;
     overflow: hidden;
   }
@@ -607,16 +566,100 @@ html, body, #root {
   .info-panel {
     flex: 1;
     width: 100%;
-    height: auto;
+    height: 60vh;
     max-width: none;
+    padding: 1rem;
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .search-form {
+    margin-bottom: 0.5rem;
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    padding: 0.5rem 0;
   }
 
   .search-input {
     font-size: 1rem;
     padding: 0.875rem 1.25rem;
+  }
+
+  .language-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .language-buttons button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .voice-button {
+    width: 100%;
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+  }
+
+  .virtual-tour-button {
+    width: 100%;
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+  }
+
+  .facts {
+    padding-right: 0;
+    font-size: 0.9rem;
+  }
+
+  .captured-image-container {
+    margin: 0.5rem 0;
+  }
+
+  .analysis-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .analysis-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .save-analysis-button {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+  }
+
+  .weather-widget {
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    max-width: 150px;
+  }
+
+  .weather-widget h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .weather-widget img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 8px;
+  }
+
+  .weather-widget p {
+    font-size: 12px;
+    margin: 3px 0;
   }
 }
 
