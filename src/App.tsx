@@ -62,8 +62,12 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
-  const [isListening, setIsListening] = useState(false);
+  const [weatherData, setWeatherData] = useState<{
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    weatherIcon: string;
+  } | null>(null);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -279,17 +283,27 @@ function App() {
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
+    await fetchWeatherData(lat, lng); // Fetch weather data for the selected region
   };
 
-  // Function to handle search by location name (used for voice commands)
-  const handleSearchByName = async (location: string) => {
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
-    );
-    const data = await response.json();
-    if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].center;
-      handleSearch(lng, lat); // Call the updated handleSearch function
+  // Fetch weather data
+  const fetchWeatherData = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (data) {
+        setWeatherData({
+          temperature: data.main.temp,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          weatherIcon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setWeatherData(null);
     }
   };
 
@@ -309,69 +323,13 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Voice command logic
-  const enableVoiceCommands = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Your browser does not support voice commands. Please use Chrome or Edge.');
-      return;
-    }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.start();
-    setIsListening(true);
-
-    recognition.onresult = (event: any) => {
-      const command = event.results[0][0].transcript.toLowerCase();
-      handleVoiceCommand(command);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Voice recognition error:', event.error);
-      setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-  };
-
-  const handleVoiceCommand = (command: string) => {
-    if (command.includes('zoom in')) {
-      earthRef.current?.zoomIn();
-      setVoiceCommandFeedback('Zooming in.');
-    } else if (command.includes('zoom out')) {
-      earthRef.current?.zoomOut();
-      setVoiceCommandFeedback('Zooming out.');
-    } else if (command.includes('rotate left')) {
-      earthRef.current?.rotateLeft();
-      setVoiceCommandFeedback('Rotating left.');
-    } else if (command.includes('rotate right')) {
-      earthRef.current?.rotateRight();
-      setVoiceCommandFeedback('Rotating right.');
-    } else if (command.includes('search for')) {
-      const location = command.split('search for ')[1];
-      handleSearchByName(location); // Use handleSearchByName for location search
-      setVoiceCommandFeedback(`Searching for ${location}.`);
-    } else if (command.includes('tell me about')) {
-      const location = command.split('tell me about ')[1];
-      handleSearchByName(location); // Use handleSearchByName for location search
-      setVoiceCommandFeedback(`Fetching information about ${location}.`);
-    } else {
-      setVoiceCommandFeedback('Command not recognized.');
-    }
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
-        <Earth ref={earthRef} onCaptureView={captureView} />
+        <Earth ref={earthRef} onCaptureView={captureView} weatherData={weatherData} />
       </div>
       <div className="info-panel">
-        <SearchBar onSearch={handleSearch} /> {/* Pass the correct handleSearch function */}
+        <SearchBar onSearch={handleSearch} />
         <div className="language-buttons">
           <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
             English
@@ -384,14 +342,6 @@ function App() {
           </button>
           {translating && <p>Translating...</p>}
         </div>
-        <button onClick={enableVoiceCommands} className="voice-button">
-          {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
-        </button>
-        {voiceCommandFeedback && (
-          <div className="voice-feedback">
-            <p>{voiceCommandFeedback}</p>
-          </div>
-        )}
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
