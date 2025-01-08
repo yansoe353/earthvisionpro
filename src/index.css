@@ -360,6 +360,29 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.voice-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+.voice-button:hover {
+  background-color: #0056b3;
+}
+
+.voice-feedback {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+}
+
+
+
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
