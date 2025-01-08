@@ -575,6 +575,20 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+@media screen and (max-width: 768px) {
+  .earth-container {
+    height: 30vh; /* Reduce height for mobile */
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .info-panel {
+    overflow-y: auto; /* Ensure scrolling works */
+    padding: 0.5rem; /* Reduce padding for more space */
+  }
+}
+
+
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
