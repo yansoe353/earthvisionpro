@@ -5,8 +5,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Using Mapbox's satellite imagery
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
-// ... (previous imports remain unchanged)
-
 const Earth = forwardRef(
   (
     { onCaptureView, weatherData }: { onCaptureView: () => void; weatherData: any },
@@ -14,11 +12,13 @@ const Earth = forwardRef(
   ) => {
     const mapRef = useRef<MapRef>(null);
     const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
+    const [showWeatherWidget, setShowWeatherWidget] = useState(true); // State to control widget visibility
 
     // Handle click on the map
     const handleClick = useCallback((event: any) => {
       const { lngLat } = event;
       setClickedLocation(lngLat); // Store the clicked location
+      setShowWeatherWidget(true); // Show the weather widget
       onCaptureView(); // Trigger the capture view function
     }, [onCaptureView]);
 
@@ -30,12 +30,18 @@ const Earth = forwardRef(
         duration: 2000,
       });
       setClickedLocation({ lng, lat }); // Update the clicked location
+      setShowWeatherWidget(true); // Show the weather widget
     }, []);
 
     // Expose handleSearch to the parent component
     useImperativeHandle(ref, () => ({
       handleSearch,
     }));
+
+    // Handle close button click
+    const handleClose = useCallback(() => {
+      setShowWeatherWidget(false); // Hide the weather widget
+    }, []);
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -65,8 +71,11 @@ const Earth = forwardRef(
         />
 
         {/* Weather Widget */}
-        {clickedLocation && (
+        {clickedLocation && showWeatherWidget && (
           <div className="weather-widget">
+            <button className="close-button" onClick={handleClose}>
+              &times; {/* Close icon (×) */}
+            </button>
             <h3>Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})</h3>
             {weatherData ? (
               <>
