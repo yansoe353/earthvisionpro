@@ -81,6 +81,9 @@ const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void 
         placeholder="Search for a place..."
         className="search-input"
       />
+      <button type="submit" className="search-button">
+        Search
+      </button>
     </form>
   );
 };
@@ -183,8 +186,13 @@ function App() {
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        const themes = JSON.parse(completion.choices[0].message.content);
-        setDynamicThemes(themes);
+        try {
+          const themes = JSON.parse(completion.choices[0].message.content);
+          setDynamicThemes(themes);
+        } catch (error) {
+          console.error('Error parsing themes:', error);
+          setDynamicThemes([]);
+        }
       }
     } catch (error) {
       console.error('Error generating dynamic themes:', error);
