@@ -220,6 +220,83 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
 }
+/* Weather Widget */
+.weather-widget {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  max-width: 200px;
+}
+
+.weather-widget h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.weather-widget img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+
+.weather-widget p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Language Buttons */
+.language-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.language-buttons button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.language-buttons button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.language-buttons button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+/* Save Analysis Button */
+.save-analysis-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+.save-analysis-button:hover {
+  background-color: #218838;
+}
+
+.save-analysis-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
 
 .analysis-buttons {
   display: flex;
