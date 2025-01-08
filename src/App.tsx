@@ -63,7 +63,6 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [locationHistory, setLocationHistory] = useState<Array<{ name: string; lat: number; lng: number }>>([]);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -100,12 +99,6 @@ function App() {
       if (data.features && data.features.length > 0) {
         const locationName = data.features[0].place_name;
         setCurrentLocation(locationName);
-
-        // Update location history
-        setLocationHistory((prevHistory) => [
-          { name: locationName, lat, lng },
-          ...prevHistory.slice(0, 9), // Keep only the last 10 locations
-        ]);
       }
     } catch (error) {
       console.error('Error fetching location details:', error);
