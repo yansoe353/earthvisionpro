@@ -225,18 +225,22 @@ html, body, #root {
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
+  backdrop-filter: blur(10px); /* Adds a blur effect for a modern look */
   padding: 15px;
-  border-radius: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for depth */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 1;
   max-width: 200px;
+  color: #fff; /* White text for better contrast */
 }
 
 .weather-widget h3 {
   margin: 0 0 10px 0;
   font-size: 18px;
-  color: #333;
+  font-weight: 600; /* Bold text for headings */
+  color: #fff;
 }
 
 .weather-widget img {
@@ -248,7 +252,13 @@ html, body, #root {
 .weather-widget p {
   margin: 5px 0;
   font-size: 14px;
-  color: #555;
+  color: rgba(255, 255, 255, 0.9); /* Slightly transparent white text */
+}
+
+/* Weather Widget Hover Effect */
+.weather-widget:hover {
+  background-color: rgba(255, 255, 255, 0.3); /* Slightly more opaque on hover */
+  transition: background-color 0.3s ease; /* Smooth transition */
 }
 
 /* Language Buttons */
