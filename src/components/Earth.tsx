@@ -5,6 +5,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Using Mapbox's satellite imagery
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
+// ... (previous imports remain unchanged)
+
 const Earth = forwardRef(
   (
     { onCaptureView, weatherData }: { onCaptureView: () => void; weatherData: any },
@@ -62,24 +64,13 @@ const Earth = forwardRef(
           attributionControl={false}
         />
 
-        {/* Weather Overlay */}
+        {/* Weather Widget */}
         {clickedLocation && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: '10px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-              zIndex: 1,
-            }}
-          >
+          <div className="weather-widget">
             <h3>Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})</h3>
             {weatherData ? (
               <>
-                <img src={weatherData.weatherIcon} alt="Weather Icon" style={{ width: '50px', height: '50px' }} />
+                <img src={weatherData.weatherIcon} alt="Weather Icon" />
                 <p>Temperature: {weatherData.temperature}°C</p>
                 <p>Humidity: {weatherData.humidity}%</p>
                 <p>Wind Speed: {weatherData.windSpeed} m/s</p>
