@@ -13,7 +13,9 @@
     "esModuleInterop": true, // Enable ES module interop
     "skipLibCheck": true, // Skip library checks
     "forceConsistentCasingInFileNames": true, // Ensure consistent file casing
-    "resolveJsonModule": true // Allow importing JSON files
+    "resolveJsonModule": true, // Allow importing JSON files
+    "allowImportingTsExtensions": true, // Allow importing .ts/.tsx extensions
+    "noEmit": true // Disable emitting JavaScript files (only type-checking)
   },
   "include": ["src"], // Include all files in the src directory
   "exclude": ["node_modules", "dist"] // Exclude node_modules and dist
