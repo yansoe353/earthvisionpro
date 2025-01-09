@@ -1,57 +1,3 @@
-import { useState, useRef, useEffect } from 'react';
-import { toPng } from 'html-to-image';
-import Earth from './components/Earth';
-import { Groq } from 'groq-sdk';
-import ReactMarkdown from 'react-markdown';
-
-// Translation function using the free Google Translate endpoint
-const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  try {
-    const translatedSentences = await Promise.all(
-      sentences.map(async (sentence) => {
-        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        return data[0][0][0];
-      })
-    );
-    return translatedSentences.join(' ');
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text;
-  }
-};
-
-const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
-  const [searchText, setSearchText] = useState('');
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchText)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
-    );
-    const data = await response.json();
-    if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].center;
-      onSearch(lng, lat);
-      setSearchText('');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSearch} className="search-form">
-      <input
-        type="text"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        placeholder="Search for a place..."
-        className="search-input"
-      />
-    </form>
-  );
-};
-
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -75,8 +21,6 @@ function App() {
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
-  const [isMeasurementMode, setIsMeasurementMode] = useState(false); // Measurement mode state
-  const [isAIAnalysisMode, setIsAIAnalysisMode] = useState(false); // AI analysis mode state
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -537,16 +481,6 @@ function App() {
     );
   };
 
-  // Handle AI analysis for a location
-  const handleAIAnalysis = async (location: { lng: number; lat: number }) => {
-    if (!isAIAnalysisMode) return;
-
-    console.log('Performing AI analysis for location:', location);
-
-    // Add your AI analysis logic here
-    // Example: Call an API or process data
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -554,9 +488,6 @@ function App() {
           ref={earthRef}
           onCaptureView={captureView}
           weatherData={weatherData}
-          isMeasurementMode={isMeasurementMode}
-          isAIAnalysisMode={isAIAnalysisMode}
-          onAIAnalysis={handleAIAnalysis}
         />
       </div>
       <div className="info-panel">
@@ -596,20 +527,6 @@ function App() {
             disabled={!currentLocation}
           >
             🚀 Start Virtual Tour
-          </button>
-          {/* Measurement Mode Button */}
-          <button
-            onClick={() => setIsMeasurementMode((prev) => !prev)}
-            className={`control-button ${isMeasurementMode ? 'active' : ''}`}
-          >
-            {isMeasurementMode ? 'Exit Measurement Mode' : 'Measurement Mode'}
-          </button>
-          {/* AI Analysis Mode Button */}
-          <button
-            onClick={() => setIsAIAnalysisMode((prev) => !prev)}
-            className={`control-button ${isAIAnalysisMode ? 'active' : ''}`}
-          >
-            {isAIAnalysisMode ? 'Exit AI Analysis Mode' : 'AI Analysis Mode'}
           </button>
         </div>
         {loading ? (
