@@ -75,6 +75,8 @@ function App() {
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
+  const [isMeasurementMode, setIsMeasurementMode] = useState(false); // Measurement mode state
+  const [isAIAnalysisMode, setIsAIAnalysisMode] = useState(false); // AI analysis mode state
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -535,10 +537,27 @@ function App() {
     );
   };
 
+  // Handle AI analysis for a location
+  const handleAIAnalysis = async (location: { lng: number; lat: number }) => {
+    if (!isAIAnalysisMode) return;
+
+    console.log('Performing AI analysis for location:', location);
+
+    // Add your AI analysis logic here
+    // Example: Call an API or process data
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
-        <Earth ref={earthRef} onCaptureView={captureView} weatherData={weatherData} />
+        <Earth
+          ref={earthRef}
+          onCaptureView={captureView}
+          weatherData={weatherData}
+          isMeasurementMode={isMeasurementMode}
+          isAIAnalysisMode={isAIAnalysisMode}
+          onAIAnalysis={handleAIAnalysis}
+        />
       </div>
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
@@ -577,6 +596,20 @@ function App() {
             disabled={!currentLocation}
           >
             🚀 Start Virtual Tour
+          </button>
+          {/* Measurement Mode Button */}
+          <button
+            onClick={() => setIsMeasurementMode((prev) => !prev)}
+            className={`control-button ${isMeasurementMode ? 'active' : ''}`}
+          >
+            {isMeasurementMode ? 'Exit Measurement Mode' : 'Measurement Mode'}
+          </button>
+          {/* AI Analysis Mode Button */}
+          <button
+            onClick={() => setIsAIAnalysisMode((prev) => !prev)}
+            className={`control-button ${isAIAnalysisMode ? 'active' : ''}`}
+          >
+            {isAIAnalysisMode ? 'Exit AI Analysis Mode' : 'AI Analysis Mode'}
           </button>
         </div>
         {loading ? (
