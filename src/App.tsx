@@ -72,7 +72,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [virtualTourContent, setVirtualTourContent] = useState<string>('');
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State to control menu visibility
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -451,48 +451,46 @@ function App() {
           ☰ Menu
         </button>
         {/* Button Panel (Hidden by Default) */}
-        {isMenuOpen && (
-          <div className="button-panel" ref={buttonPanelRef}>
-            <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
-              &times;
+        <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
+          <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
+            &times;
+          </button>
+          <div className="language-buttons">
+            <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
+              English
             </button>
-            <div className="language-buttons">
-              <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
-                English
-              </button>
-              <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
-                Myanmar
-              </button>
-              <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
-                Thai
-              </button>
-              {translating && <p>Translating...</p>}
-            </div>
-            <button onClick={enableVoiceCommands} className="voice-button">
-              {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
+            <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
+              Myanmar
             </button>
-            {voiceCommandFeedback && (
-              <div className="voice-feedback">
-                <p>{voiceCommandFeedback}</p>
-              </div>
-            )}
-            <button
-              onClick={() => generateVirtualTour(currentLocation)}
-              className="virtual-tour-button"
-              disabled={!currentLocation}
-            >
-              🚀 Start Virtual Tour
+            <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
+              Thai
             </button>
-            {isTourActive && (
-              <div className="virtual-tour-panel">
-                <button className="close-button" onClick={() => setIsTourActive(false)}>
-                  &times; {/* Close icon (×) */}
-                </button>
-                <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
-              </div>
-            )}
+            {translating && <p>Translating...</p>}
           </div>
-        )}
+          <button onClick={enableVoiceCommands} className="voice-button">
+            {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
+          </button>
+          {voiceCommandFeedback && (
+            <div className="voice-feedback">
+              <p>{voiceCommandFeedback}</p>
+            </div>
+          )}
+          <button
+            onClick={() => generateVirtualTour(currentLocation)}
+            className="virtual-tour-button"
+            disabled={!currentLocation}
+          >
+            🚀 Start Virtual Tour
+          </button>
+          {isTourActive && (
+            <div className="virtual-tour-panel">
+              <button className="close-button" onClick={() => setIsTourActive(false)}>
+                &times;
+              </button>
+              <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
+            </div>
+          )}
+        </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
