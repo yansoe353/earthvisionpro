@@ -548,6 +548,86 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+/* Button Panel Styles */
+.button-panel {
+  position: fixed;
+  top: 60px; /* Adjust based on your layout */
+  right: 20px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  z-index: 1000;
+  max-height: 70vh; /* Limit height to 70% of viewport */
+  overflow-y: auto; /* Make it scrollable */
+  width: 300px; /* Fixed width for desktop */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.button-panel.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+  .button-panel {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto; /* Full width on mobile */
+    max-height: 80vh; /* Adjust height for mobile */
+  }
+}
+
+/* Button Styles Inside Panel */
+.button-panel button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button-panel button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Close Button for Panel */
+.close-panel-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-panel-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
