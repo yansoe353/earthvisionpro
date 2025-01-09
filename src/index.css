@@ -626,8 +626,6 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.2);
 }
 
-
-
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
