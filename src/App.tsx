@@ -4,6 +4,26 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 import './index.css'; // Updated CSS file name
+import MusicPlayer from './components/MusicPlayer';
+import SearchBar from './components/SearchBar';
+
+const App = () => {
+  const [location, setLocation] = useState('');
+
+  const handleSearch = (searchLocation) => {
+    setLocation(searchLocation);
+  };
+
+  return (
+    <div className="app">
+      <SearchBar onSearch={handleSearch} />
+      {location && <MusicPlayer location={location} />}
+    </div>
+  );
+};
+
+
+
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
