@@ -3,13 +3,8 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import './index.css'; // Updated CSS file name
-
-
-
-
-
-
+import VirtualTour from './components/VirtualTour';
+import './index.css';
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -143,6 +138,8 @@ function App() {
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
+  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
+  const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -249,6 +246,7 @@ function App() {
     if (data.features && data.features.length > 0) {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
+      setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
     }
   };
@@ -634,11 +632,11 @@ function App() {
             </div>
           )}
           <button
-            onClick={() => generateVirtualTour(currentLocation)}
+            onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
             className="virtual-tour-button"
             disabled={!currentLocation}
           >
-            🚀 Start Virtual Tour
+            {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
           </button>
         </div>
         {loading ? (
@@ -739,40 +737,13 @@ function App() {
         )}
       </div>
       {/* Virtual Tour Panel */}
-      {isTourActive && (
+      {isVirtualTourActive && virtualTourLocation && (
         <div className="virtual-tour-backdrop">
           <div className="virtual-tour-panel">
-            <button className="close-button" onClick={() => setIsTourActive(false)}>
+            <button className="close-button" onClick={() => setIsVirtualTourActive(false)}>
               &times;
             </button>
-            {/* Language Dropdown */}
-            <div className="language-buttons">
-              <button
-                onClick={() => handleVirtualTourLanguageChange('en')}
-                disabled={language === 'en' || translating}
-              >
-                English
-              </button>
-              <button
-                onClick={() => handleVirtualTourLanguageChange('my')}
-                disabled={language === 'my' || translating}
-              >
-                Myanmar
-              </button>
-              <button
-                onClick={() => handleVirtualTourLanguageChange('th')}
-                disabled={language === 'th' || translating}
-              >
-                Thai
-              </button>
-              {translating && <p>Translating...</p>}
-            </div>
-            {/* Virtual Tour Content */}
-            <MarkdownContent
-              content={language === 'en' ? virtualTourContent : translatedVirtualTourContent}
-              language={language}
-              onRewrite={handleRewrittenContent} // Pass the rewrite handler
-            />
+            <VirtualTour location={virtualTourLocation} />
           </div>
         </div>
       )}
