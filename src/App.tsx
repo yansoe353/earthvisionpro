@@ -78,6 +78,19 @@ function App() {
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
+  const buttonPanelRef = useRef<HTMLDivElement>(null);
+
+  // Close panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (buttonPanelRef.current && !buttonPanelRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Scroll to the new analysis section when it's added
   useEffect(() => {
@@ -439,7 +452,10 @@ function App() {
         </button>
         {/* Button Panel (Hidden by Default) */}
         {isMenuOpen && (
-          <div className="button-panel">
+          <div className="button-panel" ref={buttonPanelRef}>
+            <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
+              &times;
+            </button>
             <div className="language-buttons">
               <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
                 English
