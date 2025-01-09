@@ -8,7 +8,7 @@ interface VirtualTourProps {
 const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!location) return;
