@@ -34,8 +34,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     useEffect(() => {
       if (!mapRef.current) return;
 
-      const map = mapRef.current.getMap();
-
       // Initialize Mapbox Draw
       drawRef.current = new MapboxDraw({
         displayControlsDefault: false, // Hide default controls
@@ -47,17 +45,17 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       });
 
       // Add the drawing tool to the map
-      map.addControl(drawRef.current);
+      mapRef.current.getMap().addControl(drawRef.current);
 
       // Handle drawing events
-      map.on('draw.create', updateMeasurement);
-      map.on('draw.update', updateMeasurement);
-      map.on('draw.delete', () => setMeasurement(''));
+      mapRef.current.getMap().on('draw.create', updateMeasurement);
+      mapRef.current.getMap().on('draw.update', updateMeasurement);
+      mapRef.current.getMap().on('draw.delete', () => setMeasurement(''));
 
       // Cleanup on unmount
       return () => {
         if (drawRef.current) {
-          map.removeControl(drawRef.current);
+          mapRef.current?.getMap().removeControl(drawRef.current);
         }
       };
     }, []);
@@ -65,8 +63,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     // Toggle measurement mode
     useEffect(() => {
       if (!mapRef.current || !drawRef.current) return;
-
-      const map = mapRef.current.getMap();
 
       if (isMeasurementMode) {
         // Show drawing controls
