@@ -1,31 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { fetchMapillaryImage } from '../services/VirtualTourService';
 
-const VirtualTour = ({ location }) => {
-  const [imageUrl, setImageUrl] = useState(null);
+interface Location {
+  lat: number;
+  lng: number;
+  name: string;
+}
+
+interface VirtualTourProps {
+  location: Location;
+}
+
+const VirtualTour = ({ location }: VirtualTourProps) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!location) return;
+
+    const abortController = new AbortController();
 
     const fetchVirtualTour = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const mapillaryUrl = await fetchMapillaryImage(location.lat, location.lng);
+        const mapillaryUrl = await fetchMapillaryImage(location.lat, location.lng, abortController.signal);
         setImageUrl(mapillaryUrl);
       } catch (error) {
-        console.error('Error fetching virtual tour:', error);
-        setError('Failed to fetch virtual tour. Please try again.');
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching virtual tour:', error);
+          setError('Failed to fetch virtual tour. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchVirtualTour();
+
+    return () => {
+      abortController.abort();
+    };
   }, [location]);
+
+  if (!location) {
+    return <p>No location provided. Please select a location to view the virtual tour.</p>;
+  }
 
   return (
     <div className="virtual-tour">
@@ -34,7 +56,7 @@ const VirtualTour = ({ location }) => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imageUrl ? (
         <div className="panorama-container">
-          <img src={imageUrl} alt="360 Virtual Tour" className="panorama-image" />
+          <img src={imageUrl} alt={`360 Virtual Tour for ${location.name}`} className="panorama-image" />
         </div>
       ) : (
         <p>No 360 image available for this location.</p>
