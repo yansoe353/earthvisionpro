@@ -71,6 +71,7 @@ function App() {
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [virtualTourContent, setVirtualTourContent] = useState<string>('');
+  const [translatedVirtualTourContent, setTranslatedVirtualTourContent] = useState<string>('');
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -99,7 +100,7 @@ function App() {
     }
   }, [facts]);
 
-  // Handle language change
+  // Handle language change for analysis content
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
@@ -108,6 +109,19 @@ function App() {
     } else {
       const translatedText = await translateText(facts, newLanguage);
       setTranslatedFacts(translatedText);
+    }
+    setTranslating(false);
+  };
+
+  // Handle language change for virtual tour content
+  const handleVirtualTourLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedVirtualTourContent(virtualTourContent);
+    } else {
+      const translatedText = await translateText(virtualTourContent, newLanguage);
+      setTranslatedVirtualTourContent(translatedText);
     }
     setTranslating(false);
   };
@@ -430,7 +444,17 @@ function App() {
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        setVirtualTourContent(completion.choices[0].message.content);
+        const content = completion.choices[0].message.content;
+        setVirtualTourContent(content);
+
+        // Set initial translated content
+        if (language === 'en') {
+          setTranslatedVirtualTourContent(content);
+        } else {
+          const translatedText = await translateText(content, language);
+          setTranslatedVirtualTourContent(translatedText);
+        }
+
         setIsTourActive(true); // Activate the virtual tour
       }
     } catch (error) {
@@ -561,7 +585,32 @@ function App() {
             <button className="close-button" onClick={() => setIsTourActive(false)}>
               &times;
             </button>
-            <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
+            {/* Language Dropdown */}
+            <div className="language-buttons">
+              <button
+                onClick={() => handleVirtualTourLanguageChange('en')}
+                disabled={language === 'en' || translating}
+              >
+                English
+              </button>
+              <button
+                onClick={() => handleVirtualTourLanguageChange('my')}
+                disabled={language === 'my' || translating}
+              >
+                Myanmar
+              </button>
+              <button
+                onClick={() => handleVirtualTourLanguageChange('th')}
+                disabled={language === 'th' || translating}
+              >
+                Thai
+              </button>
+              {translating && <p>Translating...</p>}
+            </div>
+            {/* Virtual Tour Content */}
+            <ReactMarkdown>
+              {language === 'en' ? virtualTourContent : translatedVirtualTourContent}
+            </ReactMarkdown>
           </div>
         </div>
       )}
