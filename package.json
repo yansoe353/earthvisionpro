@@ -18,7 +18,7 @@
     "groq-sdk": "^0.9.1",
     "html-to-image": "^1.11.11",
     "mapbox-gl": "^3.9.0",
-    "mapbox-gl-draw": "^1.4.1",  // Added mapbox-gl-draw
+    "mapbox-gl-draw": "^1.4.1", 
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-globe.gl": "^2.28.3",
