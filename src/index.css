@@ -661,6 +661,53 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* ... (previous styles) */
+
+.youtube-videos {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.youtube-videos h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.video-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.video-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.video-item iframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+}
+
+.video-item p {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+
 /* Mobile styles */
 @media screen and (max-width: 768px) {
   .app {
