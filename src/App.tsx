@@ -137,7 +137,6 @@ function App() {
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
-  const [rewrittenContent, setRewrittenContent] = useState<string>(''); // State for rewritten content
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -147,7 +146,6 @@ function App() {
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = (content: string) => {
-    setRewrittenContent(content);
     if (language === 'en') {
       setFacts(content); // Update facts if language is English
     } else {
