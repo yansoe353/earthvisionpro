@@ -25,19 +25,25 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
 };
 
 // MarkdownContent component with "Rewrite with AI" feature
-const MarkdownContent = ({ content, language }: { content: string; language: 'en' | 'my' | 'th' }) => {
+interface MarkdownContentProps {
+  content: string;
+  language: 'en' | 'my' | 'th';
+  onRewrite: (content: string) => void; // Callback for rewritten content
+}
+
+const MarkdownContent = ({ content, language, onRewrite }: MarkdownContentProps) => {
   const [isRewriting, setIsRewriting] = useState(false);
-  const [rewrittenContent, setRewrittenContent] = useState<string>('');
 
   const handleRewrite = async () => {
     setIsRewriting(true);
-    await rewriteContentWithAI(content);
+    const rewrittenContent = await rewriteContentWithAI(content);
+    onRewrite(rewrittenContent); // Pass rewritten content back to parent
     setIsRewriting(false);
   };
 
   return (
     <div className={`translated-content ${language}`}>
-      <ReactMarkdown>{rewrittenContent || content}</ReactMarkdown>
+      <ReactMarkdown>{content}</ReactMarkdown>
       <button
         onClick={handleRewrite}
         className="rewrite-button"
@@ -50,7 +56,7 @@ const MarkdownContent = ({ content, language }: { content: string; language: 'en
 };
 
 // Function to rewrite content with Groq API
-const rewriteContentWithAI = async (content: string) => {
+const rewriteContentWithAI = async (content: string): Promise<string> => {
   try {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -70,12 +76,12 @@ const rewriteContentWithAI = async (content: string) => {
     });
 
     if (completion.choices && completion.choices[0]?.message?.content) {
-      const rewrittenText = completion.choices[0].message.content.trim();
-      setRewrittenContent(rewrittenText);
+      return completion.choices[0].message.content.trim(); // Return rewritten content
     }
+    return content; // Fallback to original content
   } catch (error) {
     console.error('Error rewriting content with AI:', error);
-    setRewrittenContent('Error rewriting content. Please try again.');
+    return 'Error rewriting content. Please try again.'; // Return error message
   }
 };
 
@@ -131,12 +137,23 @@ function App() {
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
+  const [rewrittenContent, setRewrittenContent] = useState<string>(''); // State for rewritten content
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
+
+  // Handle rewritten content from MarkdownContent
+  const handleRewrittenContent = (content: string) => {
+    setRewrittenContent(content);
+    if (language === 'en') {
+      setFacts(content); // Update facts if language is English
+    } else {
+      translateText(content, language).then((translated) => setTranslatedFacts(translated)); // Translate if needed
+    }
+  };
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -629,7 +646,11 @@ function App() {
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
               </div>
             )}
-            <MarkdownContent content={language === 'en' ? facts : translatedFacts} language={language} />
+            <MarkdownContent
+              content={language === 'en' ? facts : translatedFacts}
+              language={language}
+              onRewrite={handleRewrittenContent} // Pass the rewrite handler
+            />
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
               <div>
@@ -746,6 +767,7 @@ function App() {
             <MarkdownContent
               content={language === 'en' ? virtualTourContent : translatedVirtualTourContent}
               language={language}
+              onRewrite={handleRewrittenContent} // Pass the rewrite handler
             />
           </div>
         </div>
