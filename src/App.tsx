@@ -133,9 +133,6 @@ function App() {
   } | null>(null);
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
-  const [virtualTourContent, setVirtualTourContent] = useState<string>('');
-  const [translatedVirtualTourContent, setTranslatedVirtualTourContent] = useState<string>('');
-  const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
@@ -523,72 +520,6 @@ function App() {
       const [lng, lat] = data.features[0].center;
       handleSearch(lng, lat); // Call the updated handleSearch function
     }
-  };
-
-  // Generate virtual tour
-  const generateVirtualTour = async (location: string) => {
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a virtual tour for ${location}. Include historical facts, interesting trivia, and a step-by-step guide for visitors.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const content = completion.choices[0].message.content;
-        setVirtualTourContent(content);
-
-        // Set initial translated content
-        if (language === 'en') {
-          setTranslatedVirtualTourContent(content);
-        } else {
-          const translatedText = await translateText(content, language);
-          setTranslatedVirtualTourContent(translatedText);
-        }
-
-        setIsTourActive(true); // Activate the virtual tour
-      }
-    } catch (error) {
-      console.error('Error generating virtual tour:', error);
-      setVirtualTourContent('Error generating virtual tour. Please try again.');
-    }
-  };
-
-  // Handle language change for analysis content
-  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
-    if (newLanguage === 'en') {
-      setTranslatedFacts(facts);
-    } else {
-      const translatedText = await translateText(facts, newLanguage);
-      setTranslatedFacts(translatedText);
-    }
-    setTranslating(false);
-  };
-
-  // Handle language change for virtual tour content
-  const handleVirtualTourLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
-    if (newLanguage === 'en') {
-      setTranslatedVirtualTourContent(virtualTourContent);
-    } else {
-      const translatedText = await translateText(virtualTourContent, newLanguage);
-      setTranslatedVirtualTourContent(translatedText);
-    }
-    setTranslating(false);
   };
 
   return (
