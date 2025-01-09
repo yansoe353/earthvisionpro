@@ -10,23 +10,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mapbox/mapbox-gl-draw": "^1.5.0", // Mapbox Draw for drawing tools
+    "@mapbox/mapbox-gl-draw": "^1.5.0", // Mapbox Draw for drawing t
     "@react-google-maps/api": "^2.20.3",
     "@react-three/drei": "^9.120.4",
     "@react-three/fiber": "^8.17.10",
-    "@turf/turf": "^6.7.0", // Turf.js for geospatial calculations
-    "@types/mapbox__mapbox-gl-draw": "^1.3.5", // TypeScript types for Mapbox Draw
+    "@turf/turf": "^6.7.0",
+    "@types/mapbox__mapbox-gl-draw": "^1.3.5",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@types/react-router-dom": "^5.3.3",
     "d3": "^7.9.0",
     "groq-sdk": "^0.9.1",
     "html-to-image": "^1.11.11",
-    "mapbox-gl": "^3.9.0", // Mapbox GL for rendering maps
+    "mapbox-gl": "^3.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-globe.gl": "^2.28.3",
-    "react-map-gl": "^7.1.8", // React wrapper for Mapbox GL
+    "react-map-gl": "^7.1.8", 
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.22.1",
     "three": "^0.171.0"
