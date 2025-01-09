@@ -837,16 +837,20 @@ html, body, #root {
     min-height: auto;
   }
 
-  .info-panel {
-    flex: 1;
-    width: 100%;
-    height: 60vh;
-    max-width: none;
-    padding: 1rem;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    overflow-y: auto;
-  }
+.info-panel {
+  flex: 1;
+  height: 100vh;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.6); /* Adjusted alpha value for more transparency */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-y: auto;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  max-width: 420px;
+}
 
   .search-form {
     margin-bottom: 0.5rem;
