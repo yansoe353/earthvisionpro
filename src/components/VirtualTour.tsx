@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchMapillaryImage } from '../services/VirtualTourService';
+import './VirtualTour.css';
 
 interface Location {
   lat: number;
@@ -9,9 +10,10 @@ interface Location {
 
 interface VirtualTourProps {
   location: Location;
+  onClose?: () => void;
 }
 
-const VirtualTour = ({ location }: VirtualTourProps) => {
+const VirtualTour = ({ location, onClose }: VirtualTourProps) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,15 +53,22 @@ const VirtualTour = ({ location }: VirtualTourProps) => {
 
   return (
     <div className="virtual-tour">
-      <h2>360 Virtual Tour for {location.name}</h2>
+      {/* Close Button */}
+      {onClose && (
+        <button className="close-button" onClick={onClose}>
+          &times;
+        </button>
+      )}
+
+      <h2>Virtual Tour for {location.name}</h2>
       {loading && <p>Loading virtual tour...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {imageUrl ? (
         <div className="panorama-container">
-          <img src={imageUrl} alt={`360 Virtual Tour for ${location.name}`} className="panorama-image" />
+          <img src={imageUrl} alt={`Virtual Tour for ${location.name}`} className="panorama-image" />
         </div>
       ) : (
-        <p>No 360 image available for this location.</p>
+        <p>No images available for this location.</p>
       )}
     </div>
   );
