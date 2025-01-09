@@ -1,18 +1,27 @@
 const MAPILLARY_API_KEY = import.meta.env.VITE_MAPILLARY_API_KEY;
 
 // Fetch Mapillary 360 image near a location
-export const fetchMapillaryImage = async (lat: number, lng: number): Promise<string | null> => {
+export const fetchMapillaryImage = async (lat, lng) => {
   try {
     const response = await fetch(
       `https://graph.mapillary.com/images?access_token=${MAPILLARY_API_KEY}&fields=thumb_1024_url&closeto=${lng},${lat}&limit=1`
     );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
+    console.log('Mapillary API Response:', data); // Debugging log
+
     if (data.data && data.data.length > 0) {
       return data.data[0].thumb_1024_url; // Return the 360 image URL
+    } else {
+      console.warn('No images found for the given location.'); // Debugging log
+      return null;
     }
-    return null;
   } catch (error) {
-    console.error('Error fetching Mapillary image:', error);
+    console.error('Error fetching Mapillary image:', error); // Debugging log
     return null;
   }
 };
