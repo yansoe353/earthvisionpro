@@ -1,27 +1,20 @@
 {
+  "extends": "./tsconfig.json", // Extend the base configuration
   "compilerOptions": {
-    "incremental": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Root directory for source files
+    "module": "ESNext", // Use ESNext modules
+    "target": "ESNext", // Target ESNext for modern JavaScript
+    "jsx": "react-jsx", // Use React JSX
+    "moduleResolution": "node", // Use Node.js module resolution
+    "allowJs": true, // Allow JavaScript files
+    "checkJs": true, // Check JavaScript files
+    "strict": true, // Enable strict type-checking
+    "esModuleInterop": true, // Enable ES module interop
+    "skipLibCheck": true, // Skip library checks
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file casing
+    "resolveJsonModule": true // Allow importing JSON files
   },
-  "include": ["src"]
+  "include": ["src"], // Include all files in the src directory
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist
 }
