@@ -29,7 +29,7 @@ const VirtualTour = ({ location }: VirtualTourProps) => {
         const mapillaryUrl = await fetchMapillaryImage(location.lat, location.lng, abortController.signal);
         setImageUrl(mapillaryUrl);
       } catch (error) {
-        if (error.name !== 'AbortError') {
+        if (error instanceof Error) {
           console.error('Error fetching virtual tour:', error);
           setError('Failed to fetch virtual tour. Please try again.');
         }
