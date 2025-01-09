@@ -1,14 +1,14 @@
 {
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types", "./src/types"], // Include custom type definitions
+    "baseUrl": ".", // Base directory for module resolution
+    "paths": {
+      "@/*": ["./src/*"] // Map @/ to the src directory
+    }
+  },
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./tsconfig.app.json" }, // Reference the app configuration
+    { "path": "./tsconfig.node.json" } // Reference the Node.js configuration
   ]
-}
-
-{
-  "compilerOptions": {
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "include": ["src"]
-  }
 }
