@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchMapillaryImage } from '../services/VirtualTourService';
 
-interface VirtualTourProps {
-  location: { lat: number; lng: number; name: string };
-}
-
-const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+const VirtualTour = ({ location }) => {
+  const [imageUrl, setImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
-const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!location) return;
@@ -18,7 +14,6 @@ const [error, setError] = useState<string | null>(null);
       setError(null);
 
       try {
-        // Fetch Mapillary 360 image
         const mapillaryUrl = await fetchMapillaryImage(location.lat, location.lng);
         setImageUrl(mapillaryUrl);
       } catch (error) {
@@ -37,10 +32,12 @@ const [error, setError] = useState<string | null>(null);
       <h2>360 Virtual Tour for {location.name}</h2>
       {loading && <p>Loading virtual tour...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {imageUrl && (
+      {imageUrl ? (
         <div className="panorama-container">
           <img src={imageUrl} alt="360 Virtual Tour" className="panorama-image" />
         </div>
+      ) : (
+        <p>No 360 image available for this location.</p>
       )}
     </div>
   );
