@@ -490,6 +490,51 @@ function App() {
     }
   };
 
+  // Handle language change for analysis content
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedFacts(facts);
+    } else {
+      const translatedText = await translateText(facts, newLanguage);
+      setTranslatedFacts(translatedText);
+    }
+    setTranslating(false);
+  };
+
+  // Handle language change for virtual tour content
+  const handleVirtualTourLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedVirtualTourContent(virtualTourContent);
+    } else {
+      const translatedText = await translateText(virtualTourContent, newLanguage);
+      setTranslatedVirtualTourContent(translatedText);
+    }
+    setTranslating(false);
+  };
+
+  // MarkdownContent component
+  const MarkdownContent = ({ content }: { content: string }) => {
+    const sections = content.split('\n\n## ');
+    return (
+      <>
+        <ReactMarkdown>{sections[0]}</ReactMarkdown>
+        {sections.slice(1).map((section, index) => (
+          <div
+            key={index}
+            ref={index === sections.length - 2 ? lastAnalysisRef : undefined}
+            className="analysis-section"
+          >
+            <ReactMarkdown>{`## ${section}`}</ReactMarkdown>
+          </div>
+        ))}
+      </>
+    );
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
