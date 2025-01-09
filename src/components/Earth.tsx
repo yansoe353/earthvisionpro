@@ -1,26 +1,98 @@
-import { useCallback, useRef, forwardRef, useImperativeHandle, useState } from 'react';
+import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
 import Map, { MapRef } from 'react-map-gl';
+import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 
 // Using Mapbox's satellite imagery
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
+interface EarthProps {
+  onCaptureView: () => void;
+  weatherData: any;
+  isMeasurementMode: boolean;
+  isAIAnalysisMode: boolean;
+  onAIAnalysis: (location: { lng: number; lat: number }) => void;
+}
+
 const Earth = forwardRef(
   (
-    { onCaptureView, weatherData }: { onCaptureView: () => void; weatherData: any },
+    { onCaptureView, weatherData, isMeasurementMode, isAIAnalysisMode, onAIAnalysis }: EarthProps,
     ref
   ) => {
     const mapRef = useRef<MapRef>(null);
+    const drawRef = useRef<MapboxDraw | null>(null);
     const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
-    const [showWeatherWidget, setShowWeatherWidget] = useState(true); // State to control widget visibility
+    const [showWeatherWidget, setShowWeatherWidget] = useState(true);
+    const [measurement, setMeasurement] = useState<string>('');
+
+    // Initialize the drawing tool
+    useEffect(() => {
+      if (!mapRef.current) return;
+
+      // Initialize Mapbox Draw
+      drawRef.current = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+          polygon: true, // Enable polygon drawing
+          line_string: true, // Enable line drawing
+          trash: true, // Enable delete tool
+        },
+      });
+
+      // Add the drawing tool to the map
+      mapRef.current.getMap().addControl(drawRef.current);
+
+      // Handle drawing events
+      const map = mapRef.current.getMap();
+      map.on('draw.create', updateMeasurement);
+      map.on('draw.update', updateMeasurement);
+      map.on('draw.delete', () => setMeasurement(''));
+
+      // Cleanup on unmount
+      return () => {
+        if (drawRef.current) {
+          map.removeControl(drawRef.current);
+        }
+      };
+    }, []);
+
+    // Update measurement when a shape is drawn or updated
+    const updateMeasurement = useCallback(() => {
+      if (!drawRef.current || !mapRef.current) return;
+
+      const data = drawRef.current.getAll();
+      if (data.features.length > 0) {
+        const feature = data.features[0];
+        if (feature.geometry.type === 'LineString') {
+          // Calculate distance for lines
+          const length = turf.length(feature);
+          setMeasurement(`Distance: ${(length * 1000).toFixed(2)} meters`);
+        } else if (feature.geometry.type === 'Polygon') {
+          // Calculate area for polygons
+          const area = turf.area(feature);
+          setMeasurement(`Area: ${(area / 1000000).toFixed(2)} km²`);
+        }
+      } else {
+        setMeasurement('');
+      }
+    }, []);
 
     // Handle click on the map
-    const handleClick = useCallback((event: any) => {
-      const { lngLat } = event;
-      setClickedLocation(lngLat); // Store the clicked location
-      setShowWeatherWidget(true); // Show the weather widget
-      onCaptureView(); // Trigger the capture view function
-    }, [onCaptureView]);
+    const handleClick = useCallback(
+      (event: any) => {
+        const { lngLat } = event;
+        setClickedLocation(lngLat); // Store the clicked location
+        setShowWeatherWidget(true); // Show the weather widget
+        onCaptureView(); // Trigger the capture view function
+
+        // Trigger AI analysis if in AI analysis mode
+        if (isAIAnalysisMode) {
+          onAIAnalysis(lngLat);
+        }
+      },
+      [onCaptureView, isAIAnalysisMode, onAIAnalysis]
+    );
 
     // Handle search for a location
     const handleSearch = useCallback((lng: number, lat: number) => {
@@ -87,6 +159,13 @@ const Earth = forwardRef(
             ) : (
               <p>Loading weather data...</p>
             )}
+          </div>
+        )}
+
+        {/* Measurement Display */}
+        {measurement && (
+          <div className="measurement-widget">
+            <p>{measurement}</p>
           </div>
         )}
       </div>
