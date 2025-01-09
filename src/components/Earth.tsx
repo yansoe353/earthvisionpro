@@ -10,7 +10,7 @@ const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 interface EarthProps {
   onCaptureView: () => void;
   weatherData: any;
-  isMeasurementMode: boolean;
+  isMeasurementMode: boolean; // Measurement mode prop
   isAIAnalysisMode: boolean;
   onAIAnalysis: (location: { lng: number; lat: number }) => void;
 }
@@ -38,7 +38,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
       // Initialize Mapbox Draw
       drawRef.current = new MapboxDraw({
-        displayControlsDefault: false,
+        displayControlsDefault: false, // Hide default controls
         controls: {
           polygon: true, // Enable polygon drawing
           line_string: true, // Enable line drawing
@@ -61,6 +61,22 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         }
       };
     }, []);
+
+    // Toggle measurement mode
+    useEffect(() => {
+      if (!mapRef.current || !drawRef.current) return;
+
+      const map = mapRef.current.getMap();
+
+      if (isMeasurementMode) {
+        // Show drawing controls
+        drawRef.current.changeMode('draw_line_string'); // Default to line drawing
+      } else {
+        // Clear drawings and hide controls
+        drawRef.current.deleteAll();
+        setMeasurement('');
+      }
+    }, [isMeasurementMode]);
 
     // Update measurement when a shape is drawn or updated
     const updateMeasurement = useCallback(() => {
