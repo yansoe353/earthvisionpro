@@ -19,7 +19,7 @@ export const fetchMapillaryImage = async (
     console.log('Mapillary API Response:', data);
 
     if (data.data && data.data.length > 0) {
-      return data.data[0].thumb_1024_url;
+      return data.data[0].thumb_1024_url; // Return the standard image URL
     } else {
       console.warn('No images found for the given location.');
       return null;
