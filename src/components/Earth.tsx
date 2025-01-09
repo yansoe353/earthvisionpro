@@ -10,6 +10,7 @@ const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 interface EarthProps {
   onCaptureView: () => void;
   weatherData: any;
+  isMeasurementMode: boolean;
   isAIAnalysisMode: boolean;
   onAIAnalysis: (location: { lng: number; lat: number }) => void;
 }
@@ -20,7 +21,7 @@ interface EarthRef {
 
 const Earth = forwardRef<EarthRef, EarthProps>(
   (
-    { onCaptureView, weatherData, isAIAnalysisMode, onAIAnalysis },
+    { onCaptureView, weatherData, isMeasurementMode, isAIAnalysisMode, onAIAnalysis },
     ref
   ) => {
     const mapRef = useRef<MapRef>(null);
@@ -29,24 +30,31 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [showWeatherWidget, setShowWeatherWidget] = useState(true);
     const [measurement, setMeasurement] = useState<string>('');
 
+    // Initialize the drawing tool
     useEffect(() => {
-      if (!mapRef.current || drawRef.current) return;
+      if (!mapRef.current) return;
 
       const map = mapRef.current.getMap();
+
+      // Initialize Mapbox Draw
       drawRef.current = new MapboxDraw({
         displayControlsDefault: false,
         controls: {
-          polygon: true,
-          line_string: true,
-          trash: true,
+          polygon: true, // Enable polygon drawing
+          line_string: true, // Enable line drawing
+          trash: true, // Enable delete tool
         },
       });
 
+      // Add the drawing tool to the map
       map.addControl(drawRef.current);
+
+      // Handle drawing events
       map.on('draw.create', updateMeasurement);
       map.on('draw.update', updateMeasurement);
       map.on('draw.delete', () => setMeasurement(''));
 
+      // Cleanup on unmount
       return () => {
         if (drawRef.current) {
           map.removeControl(drawRef.current);
@@ -54,6 +62,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       };
     }, []);
 
+    // Update measurement when a shape is drawn or updated
     const updateMeasurement = useCallback(() => {
       if (!drawRef.current || !mapRef.current) return;
 
@@ -61,9 +70,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       if (data.features.length > 0) {
         const feature = data.features[0];
         if (feature.geometry.type === 'LineString') {
+          // Calculate distance for lines
           const length = turf.length(feature);
           setMeasurement(`Distance: ${(length * 1000).toFixed(2)} meters`);
         } else if (feature.geometry.type === 'Polygon') {
+          // Calculate area for polygons
           const area = turf.area(feature);
           setMeasurement(`Area: ${(area / 1000000).toFixed(2)} km²`);
         }
@@ -72,13 +83,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       }
     }, []);
 
+    // Handle click on the map
     const handleClick = useCallback(
       (event: any) => {
         const { lngLat } = event;
-        setClickedLocation(lngLat);
-        setShowWeatherWidget(true);
-        onCaptureView();
+        setClickedLocation(lngLat); // Store the clicked location
+        setShowWeatherWidget(true); // Show the weather widget
+        onCaptureView(); // Trigger the capture view function
 
+        // Trigger AI analysis if in AI analysis mode
         if (isAIAnalysisMode) {
           onAIAnalysis(lngLat);
         }
@@ -86,22 +99,25 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       [onCaptureView, isAIAnalysisMode, onAIAnalysis]
     );
 
+    // Handle search for a location
     const handleSearch = useCallback((lng: number, lat: number) => {
       mapRef.current?.flyTo({
         center: [lng, lat],
         zoom: 5,
         duration: 2000,
       });
-      setClickedLocation({ lng, lat });
-      setShowWeatherWidget(true);
+      setClickedLocation({ lng, lat }); // Update the clicked location
+      setShowWeatherWidget(true); // Show the weather widget
     }, []);
 
+    // Expose handleSearch to the parent component
     useImperativeHandle(ref, () => ({
       handleSearch,
     }));
 
+    // Handle close button click
     const handleClose = useCallback(() => {
-      setShowWeatherWidget(false);
+      setShowWeatherWidget(false); // Hide the weather widget
     }, []);
 
     return (
@@ -131,10 +147,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           attributionControl={false}
         />
 
+        {/* Weather Widget */}
         {clickedLocation && showWeatherWidget && (
           <div className="weather-widget">
             <button className="close-button" onClick={handleClose}>
-              &times;
+              &times; {/* Close icon (×) */}
             </button>
             <h3>Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})</h3>
             {weatherData ? (
@@ -145,12 +162,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 <p>Wind Speed: {weatherData.windSpeed} m/s</p>
               </>
             ) : (
-              <p>No weather data available.</p>
+              <p>Loading weather data...</p>
             )}
           </div>
         )}
 
-        {measurement && (
+        {/* Measurement Display */}
+        {isMeasurementMode && measurement && (
           <div className="measurement-widget">
             <p>{measurement}</p>
           </div>
