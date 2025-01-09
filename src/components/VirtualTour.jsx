@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getGoogleStreetView, getMapillaryImage } from '../services/VirtualTourService';
+import { fetchMapillaryImage } from '../services/VirtualTourService';
 
 const VirtualTour = ({ location }) => {
   const [imageUrl, setImageUrl] = useState(null);
@@ -14,13 +14,9 @@ const VirtualTour = ({ location }) => {
       setError(null);
 
       try {
-        // Fetch Google Street View image
-        const streetViewUrl = getGoogleStreetView(location.lat, location.lng);
-        setImageUrl(streetViewUrl);
-
-        // Alternatively, fetch Mapillary image
-        // const mapillaryUrl = await getMapillaryImage(location.lat, location.lng);
-        // setImageUrl(mapillaryUrl);
+        // Fetch Mapillary 360 image
+        const mapillaryUrl = await fetchMapillaryImage(location.lat, location.lng);
+        setImageUrl(mapillaryUrl);
       } catch (error) {
         console.error('Error fetching virtual tour:', error);
         setError('Failed to fetch virtual tour. Please try again.');
