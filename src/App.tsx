@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import './App.css'; // Add custom styles for translated content
+import './index.css'; // Updated CSS file name
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -24,13 +24,59 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// MarkdownContent component with improved formatting
+// MarkdownContent component with "Rewrite with AI" feature
 const MarkdownContent = ({ content, language }: { content: string; language: 'en' | 'my' | 'th' }) => {
+  const [isRewriting, setIsRewriting] = useState(false);
+  const [rewrittenContent, setRewrittenContent] = useState<string>('');
+
+  const handleRewrite = async () => {
+    setIsRewriting(true);
+    await rewriteContentWithAI(content);
+    setIsRewriting(false);
+  };
+
   return (
     <div className={`translated-content ${language}`}>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown>{rewrittenContent || content}</ReactMarkdown>
+      <button
+        onClick={handleRewrite}
+        className="rewrite-button"
+        disabled={isRewriting}
+      >
+        {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
+      </button>
     </div>
   );
+};
+
+// Function to rewrite content with Groq API
+const rewriteContentWithAI = async (content: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${content}`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const rewrittenText = completion.choices[0].message.content.trim();
+      setRewrittenContent(rewrittenText);
+    }
+  } catch (error) {
+    console.error('Error rewriting content with AI:', error);
+    setRewrittenContent('Error rewriting content. Please try again.');
+  }
 };
 
 const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
