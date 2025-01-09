@@ -71,8 +71,8 @@ const rewriteContentWithAI = async (content: string): Promise<string> => {
         },
       ],
       model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 2000,
+      temperature: 0.95,
+      max_tokens: 7000,
     });
 
     if (completion.choices && completion.choices[0]?.message?.content) {
@@ -189,7 +189,7 @@ function App() {
         ],
         model: 'llama-3.2-90b-vision-preview',
         temperature: 0.7,
-        max_tokens: 100,
+        max_tokens: 5000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
