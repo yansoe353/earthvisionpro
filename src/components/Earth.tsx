@@ -1,4 +1,4 @@
-import { useCallback, useRef, forwardRef, useState, useEffect, useImperativeHandle } from 'react';
+import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
 import Map, { MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
