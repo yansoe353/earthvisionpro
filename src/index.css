@@ -707,6 +707,120 @@ html, body, #root {
   margin: 0;
 }
 
+/* Base styles for translated content */
+.translated-content {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+}
+
+/* Language-specific styles */
+.translated-content.en {
+  border-left: 4px solid #007bff; /* Blue for English */
+}
+
+.translated-content.my {
+  border-left: 4px solid #28a745; /* Green for Myanmar */
+}
+
+.translated-content.th {
+  border-left: 4px solid #dc3545; /* Red for Thai */
+}
+
+/* Markdown content styles */
+.translated-content .markdown-body {
+  font-size: 16px;
+  color: #333;
+}
+
+.translated-content .markdown-body h1,
+.translated-content .markdown-body h2,
+.translated-content .markdown-body h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #222;
+}
+
+.translated-content .markdown-body p {
+  margin-bottom: 1em;
+}
+
+.translated-content .markdown-body a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.translated-content .markdown-body a:hover {
+  text-decoration: underline;
+}
+
+/* Rewrite button styles */
+.rewrite-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.rewrite-button:hover {
+  background-color: #0056b3;
+}
+
+.rewrite-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Loading text for translation */
+.translated-content .loading-text {
+  font-style: italic;
+  color: #6c757d;
+  margin-top: 10px;
+}
+
+/* Additional styles for virtual tour content */
+.virtual-tour-panel .translated-content {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+
+.virtual-tour-panel .translated-content.en {
+  border-left: 4px solid #007bff; /* Blue for English */
+}
+
+.virtual-tour-panel .translated-content.my {
+  border-left: 4px solid #28a745; /* Green for Myanmar */
+}
+
+.virtual-tour-panel .translated-content.th {
+  border-left: 4px solid #dc3545; /* Red for Thai */
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .translated-content {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .rewrite-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+  }
+}
+
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
