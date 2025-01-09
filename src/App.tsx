@@ -72,7 +72,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [virtualTourContent, setVirtualTourContent] = useState<string>('');
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
-  const [isButtonPanelVisible, setIsButtonPanelVisible] = useState(false); // State for button panel visibility
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // State to control menu visibility
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -434,47 +434,49 @@ function App() {
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
         {/* Menu Button */}
-        <button className="menu-button" onClick={() => setIsButtonPanelVisible(!isButtonPanelVisible)}>
+        <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
-        {/* Button Panel */}
-        <div className={`button-panel ${isButtonPanelVisible ? 'active' : ''}`}>
-          <div className="language-buttons">
-            <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
-              English
-            </button>
-            <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
-              Myanmar
-            </button>
-            <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
-              Thai
-            </button>
-            {translating && <p>Translating...</p>}
-          </div>
-          <button onClick={enableVoiceCommands} className="voice-button">
-            {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
-          </button>
-          {voiceCommandFeedback && (
-            <div className="voice-feedback">
-              <p>{voiceCommandFeedback}</p>
-            </div>
-          )}
-          <button
-            onClick={() => generateVirtualTour(currentLocation)}
-            className="virtual-tour-button"
-            disabled={!currentLocation}
-          >
-            🚀 Start Virtual Tour
-          </button>
-          {isTourActive && (
-            <div className="virtual-tour-panel">
-              <button className="close-button" onClick={() => setIsTourActive(false)}>
-                &times; {/* Close icon (×) */}
+        {/* Button Panel (Hidden by Default) */}
+        {isMenuOpen && (
+          <div className="button-panel">
+            <div className="language-buttons">
+              <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
+                English
               </button>
-              <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
+              <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
+                Myanmar
+              </button>
+              <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
+                Thai
+              </button>
+              {translating && <p>Translating...</p>}
             </div>
-          )}
-        </div>
+            <button onClick={enableVoiceCommands} className="voice-button">
+              {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
+            </button>
+            {voiceCommandFeedback && (
+              <div className="voice-feedback">
+                <p>{voiceCommandFeedback}</p>
+              </div>
+            )}
+            <button
+              onClick={() => generateVirtualTour(currentLocation)}
+              className="virtual-tour-button"
+              disabled={!currentLocation}
+            >
+              🚀 Start Virtual Tour
+            </button>
+            {isTourActive && (
+              <div className="virtual-tour-panel">
+                <button className="close-button" onClick={() => setIsTourActive(false)}>
+                  &times; {/* Close icon (×) */}
+                </button>
+                <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        )}
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
