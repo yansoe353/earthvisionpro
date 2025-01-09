@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
+import './App.css'; // Add custom styles for translated content
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -21,6 +22,15 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     console.error('Translation error:', error);
     return text;
   }
+};
+
+// MarkdownContent component with improved formatting
+const MarkdownContent = ({ content, language }: { content: string; language: 'en' | 'my' | 'th' }) => {
+  return (
+    <div className={`translated-content ${language}`}>
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  );
 };
 
 const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
@@ -516,25 +526,6 @@ function App() {
     setTranslating(false);
   };
 
-  // MarkdownContent component
-  const MarkdownContent = ({ content }: { content: string }) => {
-    const sections = content.split('\n\n## ');
-    return (
-      <>
-        <ReactMarkdown>{sections[0]}</ReactMarkdown>
-        {sections.slice(1).map((section, index) => (
-          <div
-            key={index}
-            ref={index === sections.length - 2 ? lastAnalysisRef : undefined}
-            className="analysis-section"
-          >
-            <ReactMarkdown>{`## ${section}`}</ReactMarkdown>
-          </div>
-        ))}
-      </>
-    );
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -592,7 +583,7 @@ function App() {
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
               </div>
             )}
-            <MarkdownContent content={language === 'en' ? facts : translatedFacts} />
+            <MarkdownContent content={language === 'en' ? facts : translatedFacts} language={language} />
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
               <div>
@@ -706,9 +697,10 @@ function App() {
               {translating && <p>Translating...</p>}
             </div>
             {/* Virtual Tour Content */}
-            <ReactMarkdown>
-              {language === 'en' ? virtualTourContent : translatedVirtualTourContent}
-            </ReactMarkdown>
+            <MarkdownContent
+              content={language === 'en' ? virtualTourContent : translatedVirtualTourContent}
+              language={language}
+            />
           </div>
         </div>
       )}
