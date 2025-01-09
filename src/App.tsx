@@ -482,14 +482,6 @@ function App() {
           >
             🚀 Start Virtual Tour
           </button>
-          {isTourActive && (
-            <div className="virtual-tour-panel">
-              <button className="close-button" onClick={() => setIsTourActive(false)}>
-                &times;
-              </button>
-              <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
-            </div>
-          )}
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -562,6 +554,17 @@ function App() {
           </div>
         )}
       </div>
+      {/* Virtual Tour Panel */}
+      {isTourActive && (
+        <div className="virtual-tour-backdrop">
+          <div className="virtual-tour-panel">
+            <button className="close-button" onClick={() => setIsTourActive(false)}>
+              &times;
+            </button>
+            <ReactMarkdown>{virtualTourContent}</ReactMarkdown>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
