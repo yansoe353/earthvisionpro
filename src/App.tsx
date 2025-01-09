@@ -74,6 +74,7 @@ function App() {
   const [translatedVirtualTourContent, setTranslatedVirtualTourContent] = useState<string>('');
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -293,6 +294,7 @@ function App() {
           const location = locationMatch[0].trim();
           setCurrentLocation(location);
           await generateDynamicThemes(location);
+          await fetchYouTubeVideos(location); // Fetch YouTube videos
         }
         setFacts(content);
 
@@ -316,6 +318,7 @@ function App() {
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
     await fetchWeatherData(lat, lng); // Fetch weather data for the selected region
+    await fetchYouTubeVideos(currentLocation); // Fetch YouTube videos
   };
 
   // Fetch weather data
@@ -336,6 +339,29 @@ function App() {
     } catch (error) {
       console.error('Error fetching weather data:', error);
       setWeatherData(null);
+    }
+  };
+
+  // Fetch YouTube videos
+  const fetchYouTubeVideos = async (location: string) => {
+    try {
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          `${location} travel`
+        )}&type=video&maxResults=5&key=${apiKey}`
+      );
+      const data = await response.json();
+      if (data.items) {
+        const videos = data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+        }));
+        setYoutubeVideos(videos);
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube videos:', error);
+      setYoutubeVideos([]);
     }
   };
 
@@ -573,6 +599,28 @@ function App() {
                 >
                   Save Analysis
                 </button>
+              </div>
+            )}
+            {/* YouTube Videos Section */}
+            {youtubeVideos.length > 0 && (
+              <div className="youtube-videos">
+                <h2>Travel Videos for {currentLocation}</h2>
+                <div className="video-grid">
+                  {youtubeVideos.map((video) => (
+                    <div key={video.id} className="video-item">
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${video.id}`}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <p>{video.title}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
