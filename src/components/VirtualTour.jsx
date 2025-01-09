@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { fetchMapillaryImage } from '../services/VirtualTourService';
 
-const VirtualTour = ({ location }) => {
-  const [imageUrl, setImageUrl] = useState(null);
+interface VirtualTourProps {
+  location: { lat: number; lng: number; name: string };
+}
+
+const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!location) return;
