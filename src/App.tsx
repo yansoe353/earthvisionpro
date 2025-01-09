@@ -522,6 +522,19 @@ function App() {
     }
   };
 
+  // Handle language change
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedFacts(facts);
+    } else {
+      const translatedText = await translateText(facts, newLanguage);
+      setTranslatedFacts(translatedText);
+    }
+    setTranslating(false);
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
