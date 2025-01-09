@@ -101,48 +101,174 @@ function App() {
     }
   }, [facts]);
 
-  // Handle language change for analysis content
-  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
-    if (newLanguage === 'en') {
-      setTranslatedFacts(facts);
-    } else {
-      const translatedText = await translateText(facts, newLanguage);
-      setTranslatedFacts(translatedText);
+  // Generate YouTube search prompt using Groq API
+  const generateYouTubeSearchPrompt = async (location: string) => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 100,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+    } catch (error) {
+      console.error('Error generating YouTube search prompt:', error);
     }
-    setTranslating(false);
+    return null;
   };
 
-  // Handle language change for virtual tour content
-  const handleVirtualTourLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
-    if (newLanguage === 'en') {
-      setTranslatedVirtualTourContent(virtualTourContent);
-    } else {
-      const translatedText = await translateText(virtualTourContent, newLanguage);
-      setTranslatedVirtualTourContent(translatedText);
+  // Fetch YouTube videos using the generated prompt
+  const fetchYouTubeVideos = async (location: string) => {
+    try {
+      const searchPrompt = await generateYouTubeSearchPrompt(location);
+      if (!searchPrompt) {
+        console.error('Failed to generate YouTube search prompt.');
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          searchPrompt
+        )}&type=video&maxResults=5&key=${apiKey}`
+      );
+      const data = await response.json();
+      if (data.items) {
+        const videos = data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+        }));
+        setYoutubeVideos(videos);
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube videos:', error);
+      setYoutubeVideos([]);
     }
-    setTranslating(false);
   };
 
-  const MarkdownContent = ({ content }: { content: string }) => {
-    const sections = content.split('\n\n## ');
-    return (
-      <>
-        <ReactMarkdown>{sections[0]}</ReactMarkdown>
-        {sections.slice(1).map((section, index) => (
-          <div
-            key={index}
-            ref={index === sections.length - 2 ? lastAnalysisRef : undefined}
-            className="analysis-section"
-          >
-            <ReactMarkdown>{`## ${section}`}</ReactMarkdown>
-          </div>
-        ))}
-      </>
+  // Handle search for a location
+  const handleSearch = async (lng: number, lat: number) => {
+    earthRef.current?.handleSearch(lng, lat);
+    await fetchWeatherData(lat, lng);
+
+    // Fetch location name and YouTube videos
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
+    const data = await response.json();
+    if (data.features && data.features.length > 0) {
+      const locationName = data.features[0].place_name;
+      setCurrentLocation(locationName);
+      await fetchYouTubeVideos(locationName);
+    }
+  };
+
+  // Fetch weather data
+  const fetchWeatherData = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (data) {
+        setWeatherData({
+          temperature: data.main.temp,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          weatherIcon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setWeatherData(null);
+    }
+  };
+
+  // Capture the current view of the globe
+  const captureView = async () => {
+    if (!earthContainerRef.current) return;
+    setLoading(true);
+    setDynamicThemes([]);
+
+    try {
+      // Capture the Earth view as a data URL
+      const dataUrl = await toPng(earthContainerRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        quality: 1,
+      });
+
+      // Set the captured image for display
+      setCapturedImage(dataUrl);
+
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      // Send the image URL directly to Groq's vision API
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: dataUrl, // Directly use the data URL
+                },
+              },
+            ],
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 8000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const content = completion.choices[0].message.content;
+        const locationMatch = content.match(/^[^•\n]+/);
+        if (locationMatch) {
+          const location = locationMatch[0].trim();
+          setCurrentLocation(location);
+          await generateDynamicThemes(location);
+          await fetchYouTubeVideos(location); // Fetch YouTube videos
+        }
+        setFacts(content);
+
+        // Translate the facts if the current language is not English
+        if (language !== 'en') {
+          const translatedText = await translateText(content, language);
+          setTranslatedFacts(translatedText);
+        } else {
+          setTranslatedFacts(content);
+        }
+      }
+    } catch (error) {
+      console.error('Detailed error:', error);
+      setFacts('Error getting facts about this region. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Generate dynamic themes for analysis
@@ -237,131 +363,6 @@ function App() {
       // Restore the original language
       setLanguage(currentLang);
       setAnalysisLoading(false);
-    }
-  };
-
-  // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current) return;
-    setLoading(true);
-    setDynamicThemes([]);
-
-    try {
-      // Capture the Earth view as a data URL
-      const dataUrl = await toPng(earthContainerRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        quality: 1,
-      });
-
-      // Set the captured image for display
-      setCapturedImage(dataUrl);
-
-      // Initialize Groq client
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      // Send the image URL directly to Groq's vision API
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl, // Directly use the data URL
-                },
-              },
-            ],
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 8000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const content = completion.choices[0].message.content;
-        const locationMatch = content.match(/^[^•\n]+/);
-        if (locationMatch) {
-          const location = locationMatch[0].trim();
-          setCurrentLocation(location);
-          await generateDynamicThemes(location);
-          await fetchYouTubeVideos(location); // Fetch YouTube videos
-        }
-        setFacts(content);
-
-        // Translate the facts if the current language is not English
-        if (language !== 'en') {
-          const translatedText = await translateText(content, language);
-          setTranslatedFacts(translatedText);
-        } else {
-          setTranslatedFacts(content);
-        }
-      }
-    } catch (error) {
-      console.error('Detailed error:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle search for a location
-  const handleSearch = async (lng: number, lat: number) => {
-    earthRef.current?.handleSearch(lng, lat);
-    await fetchWeatherData(lat, lng); // Fetch weather data for the selected region
-    await fetchYouTubeVideos(currentLocation); // Fetch YouTube videos
-  };
-
-  // Fetch weather data
-  const fetchWeatherData = async (lat: number, lng: number) => {
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
-      );
-      const data = await response.json();
-      if (data) {
-        setWeatherData({
-          temperature: data.main.temp,
-          humidity: data.main.humidity,
-          windSpeed: data.wind.speed,
-          weatherIcon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      setWeatherData(null);
-    }
-  };
-
-  // Fetch YouTube videos
-  const fetchYouTubeVideos = async (location: string) => {
-    try {
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          `${location} travel`
-        )}&type=video&maxResults=5&key=${apiKey}`
-      );
-      const data = await response.json();
-      if (data.items) {
-        const videos = data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-        }));
-        setYoutubeVideos(videos);
-      }
-    } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]);
     }
   };
 
