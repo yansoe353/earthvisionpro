@@ -84,6 +84,16 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
+<Earth
+  ref={earthRef}
+  onCaptureView={captureView}
+  weatherData={weatherData}
+  isMeasurementMode={isMeasurementMode} // Pass the prop
+  isAIAnalysisMode={isAIAnalysisMode}
+  onAIAnalysis={handleAIAnalysis}
+/>
+  
+
   // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
