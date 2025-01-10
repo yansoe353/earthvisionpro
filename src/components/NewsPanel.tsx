@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+
 interface NewsPanelProps {
   newsArticles: Array<{ title: string; description: string; url: string }>;
   language: 'en' | 'my' | 'th';
@@ -59,3 +62,5 @@ const NewsPanel = ({ newsArticles, language, onTranslate, onClose }: NewsPanelPr
     </div>
   );
 };
+
+export default NewsPanel; // Add default export
