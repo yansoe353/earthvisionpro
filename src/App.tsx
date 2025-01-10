@@ -4,6 +4,7 @@ import Earth from './components/Earth';
 import ReactMarkdown from 'react-markdown';
 import VirtualTour from './components/VirtualTour';
 import './index.css';
+import './components/VirtualTour.css'; // Ensure this file exists
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -81,6 +82,8 @@ const rewriteContentWithAI = async (content: string): Promise<string> => {
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('DeepSeek API Error:', errorData);
       throw new Error(`DeepSeek API request failed with status ${response.status}`);
     }
 
