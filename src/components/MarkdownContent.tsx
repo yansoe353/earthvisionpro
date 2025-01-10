@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Groq } from 'groq-sdk';
 
 interface MarkdownContentProps {
   content: string;
