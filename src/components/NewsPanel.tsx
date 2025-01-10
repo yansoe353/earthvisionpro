@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-
 interface NewsPanelProps {
   newsArticles: Array<{ title: string; description: string; url: string }>;
   language: 'en' | 'my' | 'th';
@@ -55,9 +52,6 @@ const NewsPanel = ({ newsArticles, language, onTranslate, onClose }: NewsPanelPr
             <div key={index} className="news-article">
               <h3>{article.title}</h3>
               <ReactMarkdown>{article.description}</ReactMarkdown>
-              <a href={article.url} target="_blank" rel="noopener noreferrer">
-                Read more
-              </a>
             </div>
           ))}
         </div>
@@ -65,6 +59,3 @@ const NewsPanel = ({ newsArticles, language, onTranslate, onClose }: NewsPanelPr
     </div>
   );
 };
-
-export default NewsPanel;
-
