@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
+import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 import VirtualTour from './components/VirtualTour';
 import './index.css';
-import './components/VirtualTour.css'; // Ensure this file exists
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -56,40 +56,28 @@ const MarkdownContent = ({ content, language, onRewrite }: MarkdownContentProps)
   );
 };
 
-// Function to rewrite content with DeepSeek-V3 API
+// Function to rewrite content with Groq API
 const rewriteContentWithAI = async (content: string): Promise<string> => {
   try {
-    const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY; // Ensure this is set in your environment variables
-    const apiUrl = 'https://api.deepseek.com/v1/chat/completions'; // DeepSeek API endpoint
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat', // Specify the DeepSeek-V3 model
-        messages: [
-          {
-            role: 'user',
-            content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${content}`,
-          },
-        ],
-        temperature: 0.7, // Adjust creativity level
-        max_tokens: 2000, // Limit the response length
-      }),
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('DeepSeek API Error:', errorData);
-      throw new Error(`DeepSeek API request failed with status ${response.status}`);
-    }
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${content}`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.95,
+      max_tokens: 7000,
+    });
 
-    const data = await response.json();
-    if (data.choices && data.choices[0]?.message?.content) {
-      return data.choices[0].message.content.trim(); // Return rewritten content
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim(); // Return rewritten content
     }
     return content; // Fallback to original content
   } catch (error) {
@@ -184,38 +172,28 @@ function App() {
     }
   }, [facts]);
 
-  // Generate YouTube search prompt using DeepSeek API
+  // Generate YouTube search prompt using Groq API
   const generateYouTubeSearchPrompt = async (location: string) => {
     try {
-      const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'user',
-              content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 5000,
-        }),
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
       });
 
-      if (!response.ok) {
-        throw new Error(`DeepSeek API request failed with status ${response.status}`);
-      }
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
 
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        return data.choices[0].message.content.trim();
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
       }
     } catch (error) {
       console.error('Error generating YouTube search prompt:', error);
@@ -308,48 +286,38 @@ function App() {
       // Set the captured image for display
       setCapturedImage(dataUrl);
 
-      // Initialize DeepSeek client
-      const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-
-      // Send the image URL directly to DeepSeek's vision API
-      const completion = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: dataUrl, // Directly use the data URL
-                  },
-                },
-              ],
-            },
-          ],
-          temperature: 0.95,
-          max_tokens: 8000,
-        }),
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
       });
 
-      if (!completion.ok) {
-        throw new Error(`DeepSeek API request failed with status ${completion.status}`);
-      }
+      // Send the image URL directly to Groq's vision API
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: dataUrl, // Directly use the data URL
+                },
+              },
+            ],
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 8000,
+      });
 
-      const data = await completion.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        const content = data.choices[0].message.content;
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const content = completion.choices[0].message.content;
         const locationMatch = content.match(/^[^•\n]+/);
         if (locationMatch) {
           const location = locationMatch[0].trim();
@@ -378,35 +346,25 @@ function App() {
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
     try {
-      const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'user',
-              content: `Based on the location "${location}", suggest 3 unique and specific analysis themes...`,
-            },
-          ],
-          temperature: 0.95,
-          max_tokens: 5000,
-        }),
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
       });
 
-      if (!response.ok) {
-        throw new Error(`DeepSeek API request failed with status ${response.status}`);
-      }
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes...`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 5000,
+      });
 
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        const themes = JSON.parse(data.choices[0].message.content);
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const themes = JSON.parse(completion.choices[0].message.content);
         setDynamicThemes(themes);
       }
     } catch (error) {
@@ -430,8 +388,10 @@ function App() {
       // Clear previous translated content
       setTranslatedFacts('');
 
-      const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
 
       const defaultPromptMap = {
         'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects...`,
@@ -441,32 +401,20 @@ function App() {
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 5000,
-        }),
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 5000,
       });
 
-      if (!response.ok) {
-        throw new Error(`DeepSeek API request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.choices && data.choices[0]?.message?.content) {
-        const newAnalysis = data.choices[0].message.content;
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const newAnalysis = completion.choices[0].message.content;
 
         // Update the facts state with the new analysis
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
