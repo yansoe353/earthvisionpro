@@ -4,7 +4,10 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
-import NewsPanel from './components/NewsPanel'; // Import the NewsPanel component
+import NewsPanel from './components/NewsPanel';
+import SearchBar from './components/SearchBar';
+import MarkdownContent from './components/MarkdownContent';
+import VirtualTour from './components/VirtualTour';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -50,7 +53,7 @@ function App() {
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, url: string, description: string }>>([]);
-  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false); // State for News Panel
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
