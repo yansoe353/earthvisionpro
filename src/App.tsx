@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import axios from 'axios'; // Add axios for Pixel API
+import axios from 'axios';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -93,12 +93,16 @@ interface VirtualTourProps {
     lng: number;
     name: string;
   };
+  onClose: () => void; // Callback to close the panel
+  language: 'en' | 'my' | 'th'; // Current language
+  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>; // Translation function
 }
 
-const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
+const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, onTranslate }) => {
   const [description, setDescription] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRewriting, setIsRewriting] = useState<boolean>(false);
 
   // Initialize Groq client
   const groq = new Groq({
@@ -152,6 +156,38 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
     }
   };
 
+  // Rewrite content with AI
+  const handleRewrite = async () => {
+    setIsRewriting(true);
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${description}`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        setDescription(completion.choices[0].message.content.trim());
+      }
+    } catch (error) {
+      console.error('Error rewriting content:', error);
+    } finally {
+      setIsRewriting(false);
+    }
+  };
+
+  // Translate content
+  const handleTranslate = async (targetLanguage: 'en' | 'my' | 'th') => {
+    const translatedText = await onTranslate(description, targetLanguage);
+    setDescription(translatedText);
+  };
+
   // Fetch data when the component mounts or location changes
   useEffect(() => {
     setLoading(true);
@@ -161,20 +197,33 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
   }, [location]);
 
   return (
-    <div className="virtual-tour">
-      {loading ? (
-        <p>Loading virtual tour...</p>
-      ) : (
-        <>
-          <div className="image-container">
-            {imageUrl && <img src={imageUrl} alt={location.name} className="location-image" />}
-          </div>
-          <div className="description-container">
-            <h2>{location.name}</h2>
-            <p>{description}</p>
-          </div>
-        </>
-      )}
+    <div className="virtual-tour-backdrop">
+      <div className="virtual-tour-panel">
+        <button className="close-button" onClick={onClose}>
+          &times;
+        </button>
+        {loading ? (
+          <p>Loading virtual tour...</p>
+        ) : (
+          <>
+            <div className="image-container">
+              {imageUrl && <img src={imageUrl} alt={location.name} className="location-image" />}
+            </div>
+            <div className="description-container">
+              <h2>{location.name}</h2>
+              <ReactMarkdown>{description}</ReactMarkdown>
+              <div className="action-buttons">
+                <button onClick={handleRewrite} disabled={isRewriting}>
+                  {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
+                </button>
+                <button onClick={() => handleTranslate('en')}>Translate to English</button>
+                <button onClick={() => handleTranslate('my')}>Translate to Myanmar</button>
+                <button onClick={() => handleTranslate('th')}>Translate to Thai</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -777,14 +826,12 @@ function App() {
       </div>
       {/* Virtual Tour Panel */}
       {isVirtualTourActive && virtualTourLocation && (
-        <div className="virtual-tour-backdrop">
-          <div className="virtual-tour-panel">
-            <button className="close-button" onClick={() => setIsVirtualTourActive(false)}>
-              &times;
-            </button>
-            <VirtualTour location={virtualTourLocation} />
-          </div>
-        </div>
+        <VirtualTour
+          location={virtualTourLocation}
+          onClose={() => setIsVirtualTourActive(false)}
+          language={language}
+          onTranslate={translateText}
+        />
       )}
     </div>
   );
