@@ -958,6 +958,53 @@ html, body, #root {
   }
 }
 
+/* News Section */
+.news-section {
+  margin-top: 20px;
+}
+
+.news-section h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #ffffff; /* White text */
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.news-item {
+  background: #2c2c2c; /* Dark background for news items */
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
+}
+
+.news-item h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #ffffff; /* White text */
+}
+
+.news-item p {
+  font-size: 14px;
+  color: #cccccc; /* Light gray text */
+  margin-bottom: 10px;
+}
+
+.news-item a {
+  color: #007bff; /* Blue link */
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.news-item a:hover {
+  text-decoration: underline; /* Underline on hover */
+}
+
+
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
