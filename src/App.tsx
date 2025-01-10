@@ -4,6 +4,7 @@ import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
+import NewsPanel from './components/NewsPanel'; // Import the NewsPanel component
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -23,239 +24,6 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     console.error('Translation error:', error);
     return text;
   }
-};
-
-// MarkdownContent component with "Rewrite with AI" feature
-interface MarkdownContentProps {
-  content: string;
-  language: 'en' | 'my' | 'th';
-  onRewrite: (content: string) => void; // Callback for rewritten content
-}
-
-const MarkdownContent = ({ content, language, onRewrite }: MarkdownContentProps) => {
-  const [isRewriting, setIsRewriting] = useState(false);
-
-  const handleRewrite = async () => {
-    setIsRewriting(true);
-    const rewrittenContent = await rewriteContentWithAI(content);
-    onRewrite(rewrittenContent); // Pass rewritten content back to parent
-    setIsRewriting(false);
-  };
-
-  return (
-    <div className={`translated-content ${language}`}>
-      <ReactMarkdown>{content}</ReactMarkdown>
-      <button
-        onClick={handleRewrite}
-        className="rewrite-button"
-        disabled={isRewriting}
-      >
-        {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
-      </button>
-    </div>
-  );
-};
-
-// Function to rewrite content with Groq API
-const rewriteContentWithAI = async (content: string): Promise<string> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${content}`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.95,
-      max_tokens: 7000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim(); // Return rewritten content
-    }
-    return content; // Fallback to original content
-  } catch (error) {
-    console.error('Error rewriting content with AI:', error);
-    return 'Error rewriting content. Please try again.'; // Return error message
-  }
-};
-
-// VirtualTour Component
-interface VirtualTourProps {
-  location: {
-    lat: number;
-    lng: number;
-    name: string;
-  };
-  onClose: () => void; // Callback to close the panel
-  language: 'en' | 'my' | 'th'; // Current language
-  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>; // Translation function
-}
-
-const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, onTranslate }) => {
-  const [description, setDescription] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isRewriting, setIsRewriting] = useState<boolean>(false);
-
-  // Initialize Groq client
-  const groq = new Groq({
-    apiKey: import.meta.env.VITE_GROQ_API_KEY,
-    dangerouslyAllowBrowser: true,
-  });
-
-  // Fetch location description using Groq API
-  const fetchDescription = async () => {
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Provide a detailed description of ${location.name} as a travel destination. Include historical facts, popular attractions, and travel tips.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        setDescription(completion.choices[0].message.content.trim());
-      }
-    } catch (error) {
-      console.error('Error fetching description:', error);
-      setDescription('Unable to fetch description. Please try again.');
-    }
-  };
-
-  // Fetch location image using Pixel API (e.g., Pexels)
-  const fetchImage = async () => {
-    try {
-      const response = await axios.get('https://api.pexels.com/v1/search', {
-        headers: {
-          Authorization: import.meta.env.VITE_PIXEL_API_KEY,
-        },
-        params: {
-          query: location.name,
-          per_page: 1,
-        },
-      });
-
-      if (response.data.photos && response.data.photos.length > 0) {
-        setImageUrl(response.data.photos[0].src.large);
-      }
-    } catch (error) {
-      console.error('Error fetching image:', error);
-      setImageUrl(''); // Fallback to no image
-    }
-  };
-
-  // Rewrite content with AI
-  const handleRewrite = async () => {
-    setIsRewriting(true);
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${description}`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        setDescription(completion.choices[0].message.content.trim());
-      }
-    } catch (error) {
-      console.error('Error rewriting content:', error);
-    } finally {
-      setIsRewriting(false);
-    }
-  };
-
-  // Translate content
-  const handleTranslate = async (targetLanguage: 'en' | 'my' | 'th') => {
-    const translatedText = await onTranslate(description, targetLanguage);
-    setDescription(translatedText);
-  };
-
-  // Fetch data when the component mounts or location changes
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchDescription(), fetchImage()]).finally(() => {
-      setLoading(false);
-    });
-  }, [location]);
-
-  return (
-    <div className="virtual-tour-backdrop">
-      <div className="virtual-tour-panel">
-        <button className="close-button" onClick={onClose}>
-          &times;
-        </button>
-        {loading ? (
-          <p>Loading virtual tour...</p>
-        ) : (
-          <>
-            <div className="image-container">
-              {imageUrl && <img src={imageUrl} alt={location.name} className="location-image" />}
-            </div>
-            <div className="description-container">
-              <h2>{location.name}</h2>
-              <ReactMarkdown>{description}</ReactMarkdown>
-              <div className="action-buttons">
-                <button onClick={handleRewrite} disabled={isRewriting}>
-                  {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
-                </button>
-                <button onClick={() => handleTranslate('en')}>Translate to English</button>
-                <button onClick={() => handleTranslate('my')}>Translate to Myanmar</button>
-                <button onClick={() => handleTranslate('th')}>Translate to Thai</button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// SearchBar Component
-const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
-  const [searchText, setSearchText] = useState('');
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchText)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
-    );
-    const data = await response.json();
-    if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].center;
-      onSearch(lng, lat);
-      setSearchText('');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSearch} className="search-form">
-      <input
-        type="text"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        placeholder="Search for a place..."
-        className="search-input"
-      />
-    </form>
-  );
 };
 
 // App Component
@@ -281,7 +49,8 @@ function App() {
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
-  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, url: string, description: string }>>([]); // News state
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, url: string, description: string }>>([]);
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false); // State for News Panel
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -727,14 +496,17 @@ function App() {
           >
             {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
           </button>
+          {/* Read News Button */}
           <button
-    onClick={() => setIsNewsPanelActive(!isNewsPanelActive)}
-    className="news-button"
-    disabled={!currentLocation}
-  >
-    📰 Read News
-  </button>
-          
+            onClick={() => {
+              setIsNewsPanelActive(!isNewsPanelActive);
+              fetchNews(currentLocation);
+            }}
+            className="news-button"
+            disabled={!currentLocation}
+          >
+            📰 Read News
+          </button>
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -830,23 +602,6 @@ function App() {
                 </div>
               </div>
             )}
-            {/* News Section */}
-            {newsArticles.length > 0 && (
-              <div className="news-section">
-                <h2>Latest News for {currentLocation}</h2>
-                <div className="news-grid">
-                  {newsArticles.map((article, index) => (
-                    <div key={index} className="news-item">
-                      <h3>{article.title}</h3>
-                      <p>{article.description}</p>
-                      <a href={article.url} target="_blank" rel="noopener noreferrer">
-                        Read more
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -857,6 +612,15 @@ function App() {
           onClose={() => setIsVirtualTourActive(false)}
           language={language}
           onTranslate={translateText}
+        />
+      )}
+      {/* News Panel */}
+      {isNewsPanelActive && (
+        <NewsPanel
+          newsArticles={newsArticles}
+          language={language}
+          onTranslate={translateText}
+          onClose={() => setIsNewsPanelActive(false)}
         />
       )}
     </div>
