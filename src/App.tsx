@@ -52,7 +52,7 @@ function App() {
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
-  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, url: string, description: string }>>([]);
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
@@ -128,41 +128,35 @@ function App() {
     }
   };
 
-  // Fetch news articles based on location
-  const fetchNews = async (location: string) => {
-  if (!location) {
-    console.error('Location is undefined or empty.');
-    return;
-  }
+  // Generate news-like content using AI
+  const generateNewsWithAI = async (location: string): Promise<string> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
 
-  try {
-    const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Ensure this is set in your .env file
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a brief news summary about ${location}. Include recent events, cultural highlights, and interesting facts.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 500,
+      });
 
-    // Simplify the query by using only the city or region name
-    const simplifiedLocation = location.split(',')[0]; // Use only the first part of the location
-    const encodedLocation = encodeURIComponent(simplifiedLocation); // Encode the simplified location
-
-    const url = `https://newsapi.org/v2/everything?q=${encodedLocation}&apiKey=${apiKey}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'YourAppName/1.0', // Add a User-Agent header
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch news: ${response.status} ${response.statusText}`);
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+      return 'No news available at the moment.';
+    } catch (error) {
+      console.error('Error generating news with AI:', error);
+      return 'Error generating news. Please try again.';
     }
-
-    const data = await response.json();
-    if (data.articles) {
-      setNewsArticles(data.articles.slice(0, 5)); // Show top 5 articles
-    }
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    setNewsArticles([]);
-  }
-};
+  };
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
@@ -179,7 +173,6 @@ function App() {
       setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
-      await fetchNews(locationName); // Fetch news for the location
     }
   };
 
@@ -259,7 +252,6 @@ function App() {
           setCurrentLocation(location);
           await generateDynamicThemes(location);
           await fetchYouTubeVideos(location); // Fetch YouTube videos
-          await fetchNews(location); // Fetch news for the location
         }
         setFacts(content);
 
@@ -520,9 +512,10 @@ function App() {
           </button>
           {/* Read News Button */}
           <button
-            onClick={() => {
+            onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
-              fetchNews(currentLocation);
+              const newsContent = await generateNewsWithAI(currentLocation);
+              setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
             }}
             className="news-button"
             disabled={!currentLocation}
