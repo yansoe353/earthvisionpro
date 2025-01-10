@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Groq } from 'groq-sdk';
+import axios from 'axios';
 
 interface VirtualTourProps {
   location: {
