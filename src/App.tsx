@@ -54,6 +54,7 @@ function App() {
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
+  const [isNewsLoading, setIsNewsLoading] = useState(false); // Loading state for news
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -128,7 +129,7 @@ function App() {
     }
   };
 
-  // Generate news-like content using AI
+  // Generate location-based news using AI
   const generateNewsWithAI = async (location: string): Promise<string> => {
     try {
       const groq = new Groq({
@@ -140,7 +141,7 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Generate a brief news summary about ${location}. Include recent events, cultural highlights, and interesting facts.`,
+            content: `Generate a brief news summary about ${location}. Include cultural highlights, interesting facts, and notable events.`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
@@ -514,8 +515,10 @@ function App() {
           <button
             onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
+              setIsNewsLoading(true); // Show loading state
               const newsContent = await generateNewsWithAI(currentLocation);
               setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
+              setIsNewsLoading(false); // Hide loading state
             }}
             className="news-button"
             disabled={!currentLocation}
