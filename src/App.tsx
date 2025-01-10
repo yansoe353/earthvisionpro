@@ -122,7 +122,7 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, 
         ],
         model: 'llama-3.2-90b-vision-preview',
         temperature: 0.7,
-        max_tokens: 5000,
+        max_tokens: 500,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
@@ -168,8 +168,8 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, 
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.97,
-        max_tokens: 7000,
+        temperature: 0.7,
+        max_tokens: 500,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
@@ -281,6 +281,7 @@ function App() {
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, url: string, description: string }>>([]); // News state
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -288,89 +289,20 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
-  // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = (content: string) => {
-    if (language === 'en') {
-      setFacts(content); // Update facts if language is English
-    } else {
-      translateText(content, language).then((translated) => setTranslatedFacts(translated)); // Translate if needed
-    }
-  };
-
-  // Close panel when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (buttonPanelRef.current && !buttonPanelRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Scroll to the new analysis section when it's added
-  useEffect(() => {
-    if (lastAnalysisRef.current) {
-      lastAnalysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [facts]);
-
-  // Generate YouTube search prompt using Groq API
-  const generateYouTubeSearchPrompt = async (location: string) => {
+  // Fetch news articles based on location
+  const fetchNews = async (location: string) => {
     try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 5000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
-      }
-    } catch (error) {
-      console.error('Error generating YouTube search prompt:', error);
-    }
-    return null;
-  };
-
-  // Fetch YouTube videos using the generated prompt
-  const fetchYouTubeVideos = async (location: string) => {
-    try {
-      const searchPrompt = await generateYouTubeSearchPrompt(location);
-      if (!searchPrompt) {
-        console.error('Failed to generate YouTube search prompt.');
-        return;
-      }
-
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Add your NewsAPI key to .env
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
+        `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&apiKey=${apiKey}`
       );
       const data = await response.json();
-      if (data.items) {
-        const videos = data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-        }));
-        setYoutubeVideos(videos);
+      if (data.articles) {
+        setNewsArticles(data.articles.slice(0, 5)); // Show top 5 articles
       }
     } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]);
+      console.error('Error fetching news:', error);
+      setNewsArticles([]);
     }
   };
 
@@ -379,7 +311,7 @@ function App() {
     earthRef.current?.handleSearch(lng, lat);
     await fetchWeatherData(lat, lng);
 
-    // Fetch location name and YouTube videos
+    // Fetch location name, YouTube videos, and news
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
@@ -389,6 +321,7 @@ function App() {
       setCurrentLocation(locationName);
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
+      await fetchNews(locationName); // Fetch news for the location
     }
   };
 
@@ -468,6 +401,7 @@ function App() {
           setCurrentLocation(location);
           await generateDynamicThemes(location);
           await fetchYouTubeVideos(location); // Fetch YouTube videos
+          await fetchNews(location); // Fetch news for the location
         }
         setFacts(content);
 
@@ -816,6 +750,23 @@ function App() {
                         allowFullScreen
                       ></iframe>
                       <p>{video.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* News Section */}
+            {newsArticles.length > 0 && (
+              <div className="news-section">
+                <h2>Latest News for {currentLocation}</h2>
+                <div className="news-grid">
+                  {newsArticles.map((article, index) => (
+                    <div key={index} className="news-item">
+                      <h3>{article.title}</h3>
+                      <p>{article.description}</p>
+                      <a href={article.url} target="_blank" rel="noopener noreferrer">
+                        Read more
+                      </a>
                     </div>
                   ))}
                 </div>
