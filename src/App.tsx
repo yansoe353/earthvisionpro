@@ -289,6 +289,73 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
+  // Fetch YouTube videos using the generated prompt
+  const fetchYouTubeVideos = async (location: string) => {
+    try {
+      const searchPrompt = await generateYouTubeSearchPrompt(location);
+      if (!searchPrompt) {
+        console.error('Failed to generate YouTube search prompt.');
+        return;
+      }
+
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          searchPrompt
+        )}&type=video&maxResults=5&key=${apiKey}`
+      );
+      const data = await response.json();
+      if (data.items) {
+        const videos = data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+        }));
+        setYoutubeVideos(videos);
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube videos:', error);
+      setYoutubeVideos([]);
+    }
+  };
+
+  // Generate YouTube search prompt using Groq API
+  const generateYouTubeSearchPrompt = async (location: string) => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+    } catch (error) {
+      console.error('Error generating YouTube search prompt:', error);
+    }
+    return null;
+  };
+
+  // Handle rewritten content from MarkdownContent
+  const handleRewrittenContent = (content: string) => {
+    if (language === 'en') {
+      setFacts(content); // Update facts if language is English
+    } else {
+      translateText(content, language).then((translated) => setTranslatedFacts(translated)); // Translate if needed
+    }
+  };
+
   // Fetch news articles based on location
   const fetchNews = async (location: string) => {
     try {
