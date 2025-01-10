@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import ReactMarkdown from 'react-markdown';
-import VirtualTour from './components/VirtualTour';
+import axios from 'axios'; // Add axios for Pixel API
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -86,6 +86,100 @@ const rewriteContentWithAI = async (content: string): Promise<string> => {
   }
 };
 
+// VirtualTour Component
+interface VirtualTourProps {
+  location: {
+    lat: number;
+    lng: number;
+    name: string;
+  };
+}
+
+const VirtualTour: React.FC<VirtualTourProps> = ({ location }) => {
+  const [description, setDescription] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Initialize Groq client
+  const groq = new Groq({
+    apiKey: import.meta.env.VITE_GROQ_API_KEY,
+    dangerouslyAllowBrowser: true,
+  });
+
+  // Fetch location description using Groq API
+  const fetchDescription = async () => {
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Provide a detailed description of ${location.name} as a travel destination. Include historical facts, popular attractions, and travel tips.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        setDescription(completion.choices[0].message.content.trim());
+      }
+    } catch (error) {
+      console.error('Error fetching description:', error);
+      setDescription('Unable to fetch description. Please try again.');
+    }
+  };
+
+  // Fetch location image using Pixel API (e.g., Pexels)
+  const fetchImage = async () => {
+    try {
+      const response = await axios.get('https://api.pexels.com/v1/search', {
+        headers: {
+          Authorization: import.meta.env.VITE_PIXEL_API_KEY,
+        },
+        params: {
+          query: location.name,
+          per_page: 1,
+        },
+      });
+
+      if (response.data.photos && response.data.photos.length > 0) {
+        setImageUrl(response.data.photos[0].src.large);
+      }
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      setImageUrl(''); // Fallback to no image
+    }
+  };
+
+  // Fetch data when the component mounts or location changes
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchDescription(), fetchImage()]).finally(() => {
+      setLoading(false);
+    });
+  }, [location]);
+
+  return (
+    <div className="virtual-tour">
+      {loading ? (
+        <p>Loading virtual tour...</p>
+      ) : (
+        <>
+          <div className="image-container">
+            {imageUrl && <img src={imageUrl} alt={location.name} className="location-image" />}
+          </div>
+          <div className="description-container">
+            <h2>{location.name}</h2>
+            <p>{description}</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// SearchBar Component
 const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void }) => {
   const [searchText, setSearchText] = useState('');
 
@@ -115,6 +209,7 @@ const SearchBar = ({ onSearch }: { onSearch: (lng: number, lat: number) => void 
   );
 };
 
+// App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
