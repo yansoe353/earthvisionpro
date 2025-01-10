@@ -727,6 +727,14 @@ function App() {
           >
             {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
           </button>
+          <button
+    onClick={() => setIsNewsPanelActive(!isNewsPanelActive)}
+    className="news-button"
+    disabled={!currentLocation}
+  >
+    📰 Read News
+  </button>
+          
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
