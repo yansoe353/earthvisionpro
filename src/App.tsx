@@ -130,31 +130,39 @@ function App() {
 
   // Fetch news articles based on location
   const fetchNews = async (location: string) => {
-    if (!location) {
-      console.error('Location is undefined or empty.');
-      return;
+  if (!location) {
+    console.error('Location is undefined or empty.');
+    return;
+  }
+
+  try {
+    const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Ensure this is set in your .env file
+
+    // Simplify the query by using only the city or region name
+    const simplifiedLocation = location.split(',')[0]; // Use only the first part of the location
+    const encodedLocation = encodeURIComponent(simplifiedLocation); // Encode the simplified location
+
+    const url = `https://newsapi.org/v2/everything?q=${encodedLocation}&apiKey=${apiKey}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'YourAppName/1.0', // Add a User-Agent header
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news: ${response.status} ${response.statusText}`);
     }
 
-    try {
-      const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Ensure this is set in your .env file
-      const encodedLocation = encodeURIComponent(location); // Encode the location string
-      const response = await fetch(
-        `https://newsapi.org/v2/everything?q=${encodedLocation}&apiKey=${apiKey}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch news: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.articles) {
-        setNewsArticles(data.articles.slice(0, 5)); // Show top 5 articles
-      }
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      setNewsArticles([]);
+    const data = await response.json();
+    if (data.articles) {
+      setNewsArticles(data.articles.slice(0, 5)); // Show top 5 articles
     }
-  };
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    setNewsArticles([]);
+  }
+};
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
