@@ -130,11 +130,22 @@ function App() {
 
   // Fetch news articles based on location
   const fetchNews = async (location: string) => {
+    if (!location) {
+      console.error('Location is undefined or empty.');
+      return;
+    }
+
     try {
-      const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Add your NewsAPI key to .env
+      const apiKey = import.meta.env.VITE_NEWS_API_KEY; // Ensure this is set in your .env file
+      const encodedLocation = encodeURIComponent(location); // Encode the location string
       const response = await fetch(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&apiKey=${apiKey}`
+        `https://newsapi.org/v2/everything?q=${encodedLocation}&apiKey=${apiKey}`
       );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.status} ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.articles) {
         setNewsArticles(data.articles.slice(0, 5)); // Show top 5 articles
@@ -157,7 +168,7 @@ function App() {
     const data = await response.json();
     if (data.features && data.features.length > 0) {
       const locationName = data.features[0].place_name;
-      setCurrentLocation(locationName);
+      setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
       await fetchNews(locationName); // Fetch news for the location
@@ -618,7 +629,7 @@ function App() {
         />
       )}
       {/* News Panel */}
-      {isNewsPanelActive && (
+      {isNewsPanelActive && newsArticles.length > 0 && (
         <NewsPanel
           newsArticles={newsArticles}
           language={language}
