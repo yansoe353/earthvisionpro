@@ -63,4 +63,4 @@ const NewsPanel = ({ newsArticles, language, onTranslate, onClose }: NewsPanelPr
   );
 };
 
-export default NewsPanel; // Add default export
+export default NewsPanel;
