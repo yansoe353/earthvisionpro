@@ -122,7 +122,7 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, 
         ],
         model: 'llama-3.2-90b-vision-preview',
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 5000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
@@ -168,8 +168,8 @@ const VirtualTour: React.FC<VirtualTourProps> = ({ location, onClose, language, 
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature: 0.97,
+        max_tokens: 7000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
