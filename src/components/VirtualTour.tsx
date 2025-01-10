@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchMapillaryImage } from '../services/VirtualTourService';
-import './VirtualTour.css';
+import './index.css';
 
 interface Location {
   lat: number;
