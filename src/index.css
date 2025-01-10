@@ -922,50 +922,14 @@ html, body, #root {
 }
 
 
-
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  .virtual-tour {
-    padding: 15px;
-  }
-
-  .virtual-tour h2 {
-    font-size: 20px; /* Smaller heading for mobile */
-    margin-bottom: 15px;
-  }
-
-  .virtual-tour p {
-    font-size: 14px; /* Smaller text for mobile */
-  }
-
-  .panorama-container {
-    height: 300px; /* Smaller height for mobile */
-    margin-top: 15px;
-  }
-
-  .virtual-tour p:last-child {
-    font-size: 14px; /* Smaller text for mobile */
-  }
-}
-
-@media (max-width: 480px) {
-  .virtual-tour h2 {
-    font-size: 18px; /* Even smaller heading for very small screens */
-  }
-
-  .panorama-container {
-    height: 250px; /* Smaller height for very small screens */
-  }
-}
-
-/* News Panel Backdrop */
+Cc/* News Panel Backdrop */
 .news-panel-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black backdrop */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -974,7 +938,7 @@ html, body, #root {
 
 /* News Panel */
 .news-panel {
-  background: white;
+  background: white; /* White background for the panel */
   padding: 20px;
   border-radius: 10px;
   width: 90%;
@@ -982,6 +946,7 @@ html, body, #root {
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  color: black; /* Set text color to black for contrast */
 }
 
 /* Close Button */
@@ -993,6 +958,7 @@ html, body, #root {
   border: none;
   font-size: 24px;
   cursor: pointer;
+  color: black; /* Set close button color to black */
 }
 
 /* Language Buttons */
@@ -1006,13 +972,76 @@ html, body, #root {
   padding: 8px 16px;
   border: none;
   border-radius: 5px;
-  background: #007bff;
-  color: white;
+  background: #007bff; /* Blue background for buttons */
+  color: white; /* White text for buttons */
   cursor: pointer;
 }
 
 .news-panel .language-buttons button:disabled {
-  background: #ccc;
+  background: #ccc; /* Gray background for disabled buttons */
+  cursor: not-allowed;
+}
+
+/* News Articles */
+
+
+/* News Panel Backdrop */
+.news-panel-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* News Panel */
+.news-panel {
+  background: white; /* White background for the panel */
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  color: black; /* Set text color to black for contrast */
+}
+
+/* Close Button */
+.news-panel .close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: black; /* Set close button color to black */
+}
+
+/* Language Buttons */
+.news-panel .language-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.news-panel .language-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  background: #007bff; /* Blue background for buttons */
+  color: white; /* White text for buttons */
+  cursor: pointer;
+}
+
+.news-panel .language-buttons button:disabled {
+  background: #ccc; /* Gray background for disabled buttons */
   cursor: not-allowed;
 }
 
@@ -1031,12 +1060,64 @@ html, body, #root {
 .news-panel .news-article h3 {
   margin-bottom: 10px;
   font-size: 1.5rem;
+  color: black; /* Ensure heading text is black */
 }
 
 .news-panel .news-article p {
   font-size: 1rem;
   line-height: 1.5;
+  color: black; /* Ensure paragraph text is black */
 }
+
+
+
+??
+/* Responsive Design */
+@media (max-width: 768px) {
+  .news-panel {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .news-panel .language-buttons {
+    flex-direction: column;
+  }
+
+  .news-panel .language-buttons button {
+    width: 100%;
+  }
+
+  .news-panel .news-article h3 {
+    font-size: 1.25rem;
+  }
+
+  .news-panel .news-article p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .news-panel {
+    width: 100%;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .news-panel .close-button {
+    font-size: 20px;
+  }
+
+  .news-panel .news-article h3 {
+    font-size: 1.1rem;
+  }
+
+  .news-panel .news-article p {
+    font-size: 0.85rem;
+  }
+}
+
+
+
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1081,6 +1162,31 @@ html, body, #root {
     font-size: 0.85rem;
   }
 }
+
+
+
+
+
+
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .virtual-tour {
+    padding: 15px;
+  }
+
+  .virtual-tour h2 {
+    font-size: 20px; /* Smaller heading for mobile */
+    margin-bottom: 15px;
+  }
+
+  .virtual-tour p {
+    font-size: 14px; /* Smaller text for mobile */
+  }
+
+
+
+
 
 
 /* Mobile styles */
