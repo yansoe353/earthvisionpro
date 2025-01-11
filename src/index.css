@@ -895,6 +895,64 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+.quiz-panel {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.quiz-question {
+  margin-bottom: 20px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-option {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #fff;
+}
+
+.quiz-option.selected {
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+}
+
+.quiz-feedback {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.quiz-submit-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.quiz-submit-button:hover {
+  background-color: #0056b3;
+}
+
+.quiz-score {
+  margin-top: 20px;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .virtual-tour-panel {
