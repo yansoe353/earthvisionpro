@@ -59,23 +59,23 @@ const generateImage = async (locationName: string, retries = 3): Promise<string 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_HUGGING_FACE_API_KEY}`, // Use your Hugging Face API key
+          'Authorization': `Bearer ${import.meta.env.VITE_HUGGING_FACE_API_KEY}`,
         },
         body: JSON.stringify({
-          inputs: prompt, // The prompt for image generation
+          inputs: prompt,
           options: {
-            wait_for_model: true, // Wait for the model to load if it's not ready
+            wait_for_model: true,
           },
         }),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json(); // Parse error response
+      const errorData = await response.json();
       if (errorData.error === "Rate limit exceeded" && retries > 0) {
         // Wait for a few seconds before retrying
-        await new Promise((resolve) => setTimeout(resolve, 3000)); // 3-second delay
-        return generateImage(locationName, retries - 1); // Retry with one less retry
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        return generateImage(locationName, retries - 1);
       }
       throw new Error(`Failed to generate image: ${errorData.error || response.statusText}`);
     }
@@ -87,8 +87,8 @@ const generateImage = async (locationName: string, retries = 3): Promise<string 
     return imageUrl;
   } catch (error) {
     console.error("Error generating image:", error);
-    // Fallback to a placeholder image
-    return "https://via.placeholder.com/512x512.png?text=Image+Not+Available";
+    // Fallback to a local placeholder image
+    return "/path/to/local/placeholder.png";
   }
 };
 
