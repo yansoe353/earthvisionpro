@@ -1,5 +1,5 @@
-import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
-import Map, { MapRef, Layer, Source, Marker } from 'react-map-gl';
+import { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
+import Map, { MapRef, Layer, Source, Marker, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Original map style
@@ -18,11 +18,44 @@ interface EarthRef {
   handleSearch: (lng: number, lat: number) => void; // Expose handleSearch to parent
 }
 
+interface Earthquake {
+  id: string;
+  geometry: {
+    coordinates: [number, number];
+  };
+  properties: {
+    title: string;
+    mag: number;
+    place: string;
+  };
+}
+
 const Earth = forwardRef<EarthRef, EarthProps>(
   ({ onCaptureView, weatherData }, ref) => {
     const mapRef = useRef<MapRef>(null); // Reference to the Mapbox map
     const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null); // Store clicked location
     const [showWeatherWidget, setShowWeatherWidget] = useState(true); // Control visibility of weather widget
+    const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]); // Store earthquake data
+    const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null); // Store selected earthquake for popup
+
+    // Fetch earthquake data from USGS API
+    useEffect(() => {
+      const fetchEarthquakes = async () => {
+        try {
+          const response = await fetch(
+            'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'
+          );
+          const data = await response.json();
+          setEarthquakes(data.features);
+        } catch (error) {
+          console.error('Error fetching earthquake data:', error);
+        }
+      };
+
+      fetchEarthquakes();
+      const interval = setInterval(fetchEarthquakes, 60000); // Refresh data every minute
+      return () => clearInterval(interval);
+    }, []);
 
     // Handle click on the map
     const handleClick = useCallback(
@@ -105,6 +138,34 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               }}
             />
           </Source>
+
+          {/* Earthquake Markers */}
+          {earthquakes.map((earthquake) => (
+            <Marker
+              key={earthquake.id}
+              longitude={earthquake.geometry.coordinates[0]}
+              latitude={earthquake.geometry.coordinates[1]}
+              onClick={() => setSelectedEarthquake(earthquake)}
+            >
+              <div style={{ color: 'red', fontSize: '24px' }}>⚠️</div>
+            </Marker>
+          ))}
+
+          {/* Earthquake Popup */}
+          {selectedEarthquake && (
+            <Popup
+              longitude={selectedEarthquake.geometry.coordinates[0]}
+              latitude={selectedEarthquake.geometry.coordinates[1]}
+              onClose={() => setSelectedEarthquake(null)}
+            >
+              <div>
+                <h3>Earthquake Info</h3>
+                <p><strong>Magnitude:</strong> {selectedEarthquake.properties.mag}</p>
+                <p><strong>Location:</strong> {selectedEarthquake.properties.place}</p>
+                <p><strong>Title:</strong> {selectedEarthquake.properties.title}</p>
+              </div>
+            </Popup>
+          )}
 
           {/* Marker for Clicked Location */}
           {clickedLocation && (
