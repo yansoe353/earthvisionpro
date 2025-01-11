@@ -37,7 +37,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [showWeatherWidget, setShowWeatherWidget] = useState(true); // Control visibility of weather widget
     const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]); // Store earthquake data
     const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null); // Store selected earthquake for popup
-    const [showFeatureMenu, setShowFeatureMenu] = useState(false); // Control visibility of feature menu
+    const [showFeaturePanel, setShowFeaturePanel] = useState(false); // Control visibility of feature panel
     const [showDisasterAlerts, setShowDisasterAlerts] = useState(true); // Control visibility of disaster alerts
 
     // Fetch earthquake data from USGS API
@@ -93,9 +93,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       setShowWeatherWidget(false); // Hide the weather widget
     }, []);
 
-    // Toggle feature menu visibility
-    const toggleFeatureMenu = useCallback(() => {
-      setShowFeatureMenu((prev) => !prev);
+    // Toggle feature panel visibility
+    const toggleFeaturePanel = useCallback(() => {
+      setShowFeaturePanel((prev) => !prev);
     }, []);
 
     // Toggle Natural Disaster Alerts
@@ -105,55 +105,64 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        {/* Feature Menu Button */}
+        {/* Feature Panel Button */}
         <button
-          onClick={toggleFeatureMenu}
+          onClick={toggleFeaturePanel}
           style={{
             position: 'absolute',
-            top: 20,
-            right: 20,
+            bottom: 20,
+            left: 20,
             zIndex: 1,
             padding: '8px 16px',
             backgroundColor: '#fff',
             border: '1px solid #ccc',
             borderRadius: '4px',
             cursor: 'pointer',
+            fontSize: '14px',
           }}
         >
-          Features
+          {showFeaturePanel ? 'Hide Features' : 'Show Features'}
         </button>
 
-        {/* Feature Menu Popup */}
-        {showFeatureMenu && (
+        {/* Feature Panel */}
+        {showFeaturePanel && (
           <div
             style={{
               position: 'absolute',
-              top: 60,
-              right: 20,
+              bottom: 60,
+              left: 20,
               zIndex: 1,
               backgroundColor: '#fff',
               border: '1px solid #ccc',
-              borderRadius: '4px',
+              borderRadius: '8px',
               padding: '16px',
               boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              width: '250px',
             }}
           >
-            <button
-              onClick={toggleDisasterAlerts}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
-            </button>
+            <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Features</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <button
+                onClick={toggleDisasterAlerts}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
+              </button>
+            </div>
+            {/* Add more feature toggles here */}
           </div>
         )}
 
