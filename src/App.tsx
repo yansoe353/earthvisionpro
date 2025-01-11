@@ -8,6 +8,7 @@ import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
+import { HfInference } from '@huggingface/inference';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -29,12 +30,39 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
+// Initialize Hugging Face Inference
+const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
+
+// Function to generate images using Hugging Face API
+const generateImage = async (prompt: string): Promise<string | null> => {
+  try {
+    const response = await hf.textToImage({
+      inputs: prompt,
+      model: 'stabilityai/stable-diffusion-2', // Use a suitable model
+      parameters: {
+        width: 512,
+        height: 512,
+        num_inference_steps: 50,
+        guidance_scale: 7.5,
+      },
+    });
+
+    // Convert the response to a data URL
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return null;
+  }
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
@@ -54,7 +82,7 @@ function App() {
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
-  const [isNewsLoading, setIsNewsLoading] = useState(false); // Loading state for news
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -174,6 +202,11 @@ function App() {
       setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
+
+      // Generate an image based on the location description
+      const imagePrompt = `A beautiful and realistic image of ${locationName}`;
+      const imageUrl = await generateImage(imagePrompt);
+      setGeneratedImage(imageUrl);
     }
   };
 
@@ -251,6 +284,12 @@ function App() {
         if (locationMatch) {
           const location = locationMatch[0].trim();
           setCurrentLocation(location);
+
+          // Generate an image based on the location description
+          const imagePrompt = `A beautiful and realistic image of ${location}`;
+          const imageUrl = await generateImage(imagePrompt);
+          setGeneratedImage(imageUrl);
+
           await generateDynamicThemes(location);
           await fetchYouTubeVideos(location); // Fetch YouTube videos
         }
@@ -533,6 +572,12 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
+              </div>
+            )}
+            {generatedImage && (
+              <div className="generated-image-container">
+                <h3>AI-Generated Image of {currentLocation}</h3>
+                <img src={generatedImage} alt="AI-generated view" className="generated-image" />
               </div>
             )}
             <MarkdownContent
