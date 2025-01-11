@@ -1,8 +1,8 @@
 import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
-import Map, { MapRef } from 'react-map-gl';
+import Map, { MapRef, Layer, Source, Marker, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
+const MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v11'; // Default map style
 
 interface EarthProps {
   onCaptureView: () => void; // Function to capture the current view
@@ -39,7 +39,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const handleSearch = useCallback((lng: number, lat: number) => {
       mapRef.current?.flyTo({
         center: [lng, lat],
-        zoom: 5,
+        zoom: 10, // Zoom closer for better 3D view
         duration: 2000,
       });
       setClickedLocation({ lng, lat }); // Update the clicked location
@@ -75,20 +75,72 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           maxZoom={20}
           minZoom={1}
           projection={{ name: 'globe' }}
-          terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
+          terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }} // Enable 3D terrain
           fog={{
             range: [1, 10],
             color: '#242B4B',
             'horizon-blend': 0.2,
           }}
           attributionControl={false}
-        />
+        >
+          {/* 3D Buildings Layer */}
+          <Source
+            id="composite"
+            source="composite"
+            url="mapbox://mapbox.mapbox-streets-v8"
+            type="vector"
+          >
+            <Layer
+              id="3d-buildings"
+              source="composite"
+              source-layer="building"
+              filter={['==', 'extrude', 'true']}
+              type="fill-extrusion"
+              minZoom={15}
+              paint={{
+                'fill-extrusion-color': '#ddd', // Building color
+                'fill-extrusion-height': ['get', 'height'], // Use building height
+                'fill-extrusion-base': ['get', 'min_height'], // Base height
+                'fill-extrusion-opacity': 0.6, // Slightly transparent
+              }}
+            />
+          </Source>
+
+          {/* Marker for Clicked Location */}
+          {clickedLocation && (
+            <Marker longitude={clickedLocation.lng} latitude={clickedLocation.lat}>
+              <div style={{ color: 'red', fontSize: '24px' }}>📍</div>
+            </Marker>
+          )}
+        </Map>
 
         {/* Weather Widget */}
         {clickedLocation && showWeatherWidget && (
-          <div className="weather-widget">
-            <button className="close-button" onClick={handleClose}>
-              &times; {/* Close icon (×) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              backgroundColor: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+              zIndex: 1,
+            }}
+          >
+            <button
+              onClick={handleClose}
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                background: 'none',
+                border: 'none',
+                fontSize: '16px',
+                cursor: 'pointer',
+              }}
+            >
+              &times;
             </button>
             <h3>
               Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})
