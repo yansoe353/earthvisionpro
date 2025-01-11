@@ -1,29 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
-import ReactMarkdown from 'react-markdown';
-import axios from 'axios';
 import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
 import './index.css';
-
-// List of Hugging Face models for image generation
-const models = [
-  "stabilityai/stable-diffusion-2-1", // Stable Diffusion 2.1
-  "stabilityai/stable-diffusion-xl-base-1.0", // Stable Diffusion XL
-  "dalle-mini/dalle-mini", // DALL-E Mini
-  "kandinsky-community/kandinsky-2-2-decoder", // Kandinsky
-  "hakurei/waifu-diffusion", // Waifu Diffusion
-];
-
-// Function to randomly select a model
-const getRandomModel = () => {
-  const randomIndex = Math.floor(Math.random() * models.length);
-  return models[randomIndex];
-};
 
 // Translation function using the free Google Translate endpoint
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
@@ -44,61 +27,12 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Function to generate images using Hugging Face's multi-model API
-const generateImage = async (locationName: string, retries = 3): Promise<string | null> => {
-  try {
-    const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements.`;
-
-    // Randomly select a model
-    const model = getRandomModel();
-
-    // Hugging Face API endpoint for the selected model
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_HUGGING_FACE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          options: {
-            wait_for_model: true,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      if (errorData.error === "Rate limit exceeded" && retries > 0) {
-        // Wait for a few seconds before retrying
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        return generateImage(locationName, retries - 1);
-      }
-      throw new Error(`Failed to generate image: ${errorData.error || response.statusText}`);
-    }
-
-    // The response is an image blob, so convert it to a data URL
-    const blob = await response.blob();
-    const imageUrl = URL.createObjectURL(blob);
-
-    return imageUrl;
-  } catch (error) {
-    console.error("Error generating image:", error);
-    // Fallback to a local placeholder image
-    return "/path/to/local/placeholder.png";
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
@@ -238,10 +172,6 @@ function App() {
       setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
-
-      // Generate an AI-based image based on the location description
-      const imageUrl = await generateImage(locationName);
-      setGeneratedImage(imageUrl);
     }
   };
 
@@ -319,10 +249,6 @@ function App() {
         if (locationMatch) {
           const location = locationMatch[0].trim();
           setCurrentLocation(location);
-
-          // Generate an AI-based image based on the location description
-          const imageUrl = await generateImage(location);
-          setGeneratedImage(imageUrl);
 
           await generateDynamicThemes(location);
           await fetchYouTubeVideos(location); // Fetch YouTube videos
@@ -606,12 +532,6 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
-              </div>
-            )}
-            {generatedImage && (
-              <div className="generated-image-container">
-                <h3>AI-Generated Image of {currentLocation}</h3>
-                <img src={generatedImage} alt="AI-generated view" className="generated-image" />
               </div>
             )}
             <MarkdownContent
