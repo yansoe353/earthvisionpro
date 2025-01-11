@@ -8,7 +8,6 @@ import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
-import { HfInference } from '@huggingface/inference';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -30,28 +29,35 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Initialize Hugging Face Inference
-const hf = new HfInference(import.meta.env.VITE_HUGGINGFACE_API_KEY);
-
-// Function to generate images using Hugging Face API
-const generateImage = async (prompt: string): Promise<string | null> => {
+// Function to generate images using Hugging Face API with prompt engineering
+const generateImage = async (locationName: string): Promise<string | null> => {
   try {
-    const response = await hf.textToImage({
-      inputs: prompt,
-      model: 'stabilityai/stable-diffusion-2', // Use a suitable model
-      parameters: {
-        width: 512,
-        height: 512,
-        num_inference_steps: 50,
-        guidance_scale: 7.5,
-      },
-    });
+    // Enhanced prompt with additional context and style guidance
+    const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements. The image should be photorealistic, with vibrant colors, clear lighting, and a focus on the unique characteristics of the location.`;
 
-    // Convert the response to a data URL
-    const blob = await response.blob(); // Call .blob() on the Response object
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+      {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({ inputs: prompt }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate image: ${response.statusText}`);
+    }
+
+    // Convert the response to a Blob
+    const blob = await response.blob();
+
+    // Convert the Blob to a data URL
     return URL.createObjectURL(blob);
   } catch (error) {
-    console.error('Error generating image:', error);
+    console.error("Error generating image:", error);
     return null;
   }
 };
@@ -204,8 +210,7 @@ function App() {
       await fetchYouTubeVideos(locationName);
 
       // Generate an image based on the location description
-      const imagePrompt = `A beautiful and realistic image of ${locationName}`;
-      const imageUrl = await generateImage(imagePrompt);
+      const imageUrl = await generateImage(locationName);
       setGeneratedImage(imageUrl);
     }
   };
@@ -286,8 +291,7 @@ function App() {
           setCurrentLocation(location);
 
           // Generate an image based on the location description
-          const imagePrompt = `A beautiful and realistic image of ${location}`;
-          const imageUrl = await generateImage(imagePrompt);
+          const imageUrl = await generateImage(location);
           setGeneratedImage(imageUrl);
 
           await generateDynamicThemes(location);
