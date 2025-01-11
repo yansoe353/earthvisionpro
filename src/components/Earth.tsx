@@ -2,7 +2,7 @@ import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from '
 import Map, { MapRef, Layer, Source, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
+const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Original map style
 
 interface EarthProps {
   onCaptureView: () => void; // Function to capture the current view
@@ -61,7 +61,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         {/* Mapbox Map */}
         <Map
           ref={mapRef}
-          mapStyle={MAPBOX_STYLE}
+          mapStyle={MAPBOX_STYLE} // Original map style
           initialViewState={{
             longitude: 0,
             latitude: 20,
@@ -116,31 +116,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
         {/* Weather Widget */}
         {clickedLocation && showWeatherWidget && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 20,
-              right: 20,
-              backgroundColor: 'white',
-              padding: '16px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-              zIndex: 1,
-            }}
-          >
-            <button
-              onClick={handleClose}
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                background: 'none',
-                border: 'none',
-                fontSize: '16px',
-                cursor: 'pointer',
-              }}
-            >
-              &times;
+          <div className="weather-widget">
+            <button className="close-button" onClick={handleClose}>
+              &times; {/* Close icon (×) */}
             </button>
             <h3>
               Weather at ({clickedLocation.lat.toFixed(2)}, {clickedLocation.lng.toFixed(2)})
