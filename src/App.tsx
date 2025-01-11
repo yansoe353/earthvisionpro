@@ -38,7 +38,7 @@ const generateImage = async (prompt: string): Promise<string | null> => {
   try {
     const response = await hf.textToImage({
       inputs: prompt,
-      model: 'stabilityai/stable-diffusion-2', // Use a suitable model
+      model: 'black-forest-labs/FLUX.1-schnell', // Use a suitable model
       parameters: {
         width: 512,
         height: 512,
@@ -48,7 +48,7 @@ const generateImage = async (prompt: string): Promise<string | null> => {
     });
 
     // Convert the response to a data URL
-    const blob = await response.blob();
+    const blob = await response.blob(); // Ensure this is correctly typed
     return URL.createObjectURL(blob);
   } catch (error) {
     console.error('Error generating image:', error);
