@@ -37,9 +37,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [showWeatherWidget, setShowWeatherWidget] = useState(true); // Control visibility of weather widget
     const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]); // Store earthquake data
     const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null); // Store selected earthquake for popup
+    const [showFeatureMenu, setShowFeatureMenu] = useState(false); // Control visibility of feature menu
+    const [showDisasterAlerts, setShowDisasterAlerts] = useState(true); // Control visibility of disaster alerts
 
     // Fetch earthquake data from USGS API
     useEffect(() => {
+      if (!showDisasterAlerts) return; // Skip fetching if disaster alerts are disabled
+
       const fetchEarthquakes = async () => {
         try {
           const response = await fetch(
@@ -55,7 +59,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       fetchEarthquakes();
       const interval = setInterval(fetchEarthquakes, 60000); // Refresh data every minute
       return () => clearInterval(interval);
-    }, []);
+    }, [showDisasterAlerts]);
 
     // Handle click on the map
     const handleClick = useCallback(
@@ -89,8 +93,70 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       setShowWeatherWidget(false); // Hide the weather widget
     }, []);
 
+    // Toggle feature menu visibility
+    const toggleFeatureMenu = useCallback(() => {
+      setShowFeatureMenu((prev) => !prev);
+    }, []);
+
+    // Toggle Natural Disaster Alerts
+    const toggleDisasterAlerts = useCallback(() => {
+      setShowDisasterAlerts((prev) => !prev);
+    }, []);
+
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {/* Feature Menu Button */}
+        <button
+          onClick={toggleFeatureMenu}
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            zIndex: 1,
+            padding: '8px 16px',
+            backgroundColor: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          Features
+        </button>
+
+        {/* Feature Menu Popup */}
+        {showFeatureMenu && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 60,
+              right: 20,
+              zIndex: 1,
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              padding: '16px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <button
+              onClick={toggleDisasterAlerts}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '8px',
+                marginBottom: '8px',
+                backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
+            </button>
+          </div>
+        )}
+
         {/* Mapbox Map */}
         <Map
           ref={mapRef}
@@ -140,16 +206,17 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           </Source>
 
           {/* Earthquake Markers */}
-          {earthquakes.map((earthquake) => (
-            <Marker
-              key={earthquake.id}
-              longitude={earthquake.geometry.coordinates[0]}
-              latitude={earthquake.geometry.coordinates[1]}
-              onClick={() => setSelectedEarthquake(earthquake)}
-            >
-              <div style={{ color: 'red', fontSize: '24px' }}>⚠️</div>
-            </Marker>
-          ))}
+          {showDisasterAlerts &&
+            earthquakes.map((earthquake) => (
+              <Marker
+                key={earthquake.id}
+                longitude={earthquake.geometry.coordinates[0]}
+                latitude={earthquake.geometry.coordinates[1]}
+                onClick={() => setSelectedEarthquake(earthquake)}
+              >
+                <div style={{ color: 'red', fontSize: '24px' }}>⚠️</div>
+              </Marker>
+            ))}
 
           {/* Earthquake Popup */}
           {selectedEarthquake && (
