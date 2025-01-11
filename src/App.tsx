@@ -35,19 +35,11 @@ const generateImage = async (locationName: string): Promise<string | null> => {
     const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements.`;
 
     const response = await fetch(
-      "https://api.pixelapi.ai/v1/images/generate", // Pixel API endpoint
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(prompt)}&per_page=1`, // Pexels API endpoint
       {
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_PIXEL_API_KEY}`,
-          "Content-Type": "application/json",
+          Authorization: import.meta.env.VITE_PEXELS_API_KEY, // Use your Pexels API key
         },
-        method: "POST",
-        body: JSON.stringify({
-          prompt: prompt,
-          width: 512, // Desired image width
-          height: 512, // Desired image height
-          num_images: 1, // Number of images to generate
-        }),
       }
     );
 
@@ -57,7 +49,7 @@ const generateImage = async (locationName: string): Promise<string | null> => {
     }
 
     const data = await response.json();
-    const imageUrl = data.images[0].url; // Extract the image URL from the response
+    const imageUrl = data.photos[0].src.large; // Extract the image URL from the response
 
     return imageUrl;
   } catch (error) {
