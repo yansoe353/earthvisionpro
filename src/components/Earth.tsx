@@ -39,6 +39,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null); // Store selected earthquake for popup
     const [showFeaturePanel, setShowFeaturePanel] = useState(false); // Control visibility of feature panel
     const [showDisasterAlerts, setShowDisasterAlerts] = useState(true); // Control visibility of disaster alerts
+    const [isDarkTheme, setIsDarkTheme] = useState(false); // Control dark theme
 
     // Fetch earthquake data from USGS API
     useEffect(() => {
@@ -103,6 +104,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(
       setShowDisasterAlerts((prev) => !prev);
     }, []);
 
+    // Toggle dark theme
+    const toggleDarkTheme = useCallback(() => {
+      setIsDarkTheme((prev) => !prev);
+    }, []);
+
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {/* Feature Panel Button */}
@@ -111,14 +117,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           style={{
             position: 'absolute',
             bottom: 20,
-            left: 20,
+            right: 20,
             zIndex: 1,
             padding: '8px 16px',
-            backgroundColor: '#fff',
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '14px',
+            color: isDarkTheme ? '#fff' : '#000',
           }}
         >
           {showFeaturePanel ? 'Hide Features' : 'Show Features'}
@@ -130,9 +137,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(
             style={{
               position: 'absolute',
               bottom: 60,
-              left: 20,
+              right: 20,
               zIndex: 1,
-              backgroundColor: '#fff',
+              backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
               border: '1px solid #ccc',
               borderRadius: '8px',
               padding: '16px',
@@ -140,6 +147,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               maxHeight: '60vh',
               overflowY: 'auto',
               width: '250px',
+              color: isDarkTheme ? '#fff' : '#000',
             }}
           >
             <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Features</h3>
@@ -161,6 +169,23 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               >
                 {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
               </button>
+              <button
+                onClick={toggleDarkTheme}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: isDarkTheme ? '#333' : '#ccc',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
+              </button>
             </div>
             {/* Add more feature toggles here */}
           </div>
@@ -169,7 +194,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         {/* Mapbox Map */}
         <Map
           ref={mapRef}
-          mapStyle={MAPBOX_STYLE} // Original map style
+          mapStyle={isDarkTheme ? 'mapbox://styles/mapbox/dark-v11' : MAPBOX_STYLE} // Dynamic map style
           initialViewState={{
             longitude: 0,
             latitude: 20,
@@ -186,7 +211,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }} // Enable 3D terrain
           fog={{
             range: [1, 10],
-            color: '#242B4B',
+            color: isDarkTheme ? '#000' : '#242B4B',
             'horizon-blend': 0.2,
           }}
           attributionControl={false}
@@ -206,7 +231,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               type="fill-extrusion"
               minzoom={15} // Correct property name (all lowercase)
               paint={{
-                'fill-extrusion-color': '#ddd', // Building color
+                'fill-extrusion-color': isDarkTheme ? '#555' : '#ddd', // Building color
                 'fill-extrusion-height': ['get', 'height'], // Use building height
                 'fill-extrusion-base': ['get', 'min_height'], // Base height
                 'fill-extrusion-opacity': 0.6, // Slightly transparent
@@ -234,7 +259,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               latitude={selectedEarthquake.geometry.coordinates[1]}
               onClose={() => setSelectedEarthquake(null)}
             >
-              <div>
+              <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
                 <h3>Earthquake Info</h3>
                 <p><strong>Magnitude:</strong> {selectedEarthquake.properties.mag}</p>
                 <p><strong>Location:</strong> {selectedEarthquake.properties.place}</p>
@@ -253,8 +278,34 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
         {/* Weather Widget */}
         {clickedLocation && showWeatherWidget && (
-          <div className="weather-widget">
-            <button className="close-button" onClick={handleClose}>
+          <div
+            className="weather-widget"
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              padding: '16px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+              color: isDarkTheme ? '#fff' : '#000',
+            }}
+          >
+            <button
+              className="close-button"
+              onClick={handleClose}
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                background: 'none',
+                border: 'none',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: isDarkTheme ? '#fff' : '#000',
+              }}
+            >
               &times; {/* Close icon (×) */}
             </button>
             <h3>
