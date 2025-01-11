@@ -1,5 +1,5 @@
 import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
-import Map, { MapRef, Layer, Source, Marker, Popup } from 'react-map-gl';
+import Map, { MapRef, Layer, Source, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v11'; // Default map style
@@ -96,7 +96,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               source-layer="building"
               filter={['==', 'extrude', 'true']}
               type="fill-extrusion"
-              minZoom={15}
+              minzoom={15} // Correct property name (all lowercase)
               paint={{
                 'fill-extrusion-color': '#ddd', // Building color
                 'fill-extrusion-height': ['get', 'height'], // Use building height
