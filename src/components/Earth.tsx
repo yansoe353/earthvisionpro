@@ -2,7 +2,7 @@ import { useCallback, useRef, forwardRef, useState, useImperativeHandle } from '
 import Map, { MapRef, Layer, Source, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v11'; // Default map style
+const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
 interface EarthProps {
   onCaptureView: () => void; // Function to capture the current view
