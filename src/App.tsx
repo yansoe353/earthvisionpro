@@ -32,11 +32,9 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
 // Function to generate images using Hugging Face API with prompt engineering
 const generateImage = async (locationName: string): Promise<string | null> => {
   try {
-    // Enhanced prompt with additional context and style guidance
-    const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements. The image should be photorealistic, with vibrant colors, clear lighting, and a focus on the unique characteristics of the location.`;
-
+    const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements.`;
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2", // Fallback model
       {
         headers: {
           Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`,
@@ -48,17 +46,16 @@ const generateImage = async (locationName: string): Promise<string | null> => {
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to generate image: ${response.statusText}`);
+      const errorData = await response.json(); // Parse error response
+      throw new Error(`Failed to generate image: ${errorData.error || response.statusText}`);
     }
 
-    // Convert the response to a Blob
     const blob = await response.blob();
-
-    // Convert the Blob to a data URL
     return URL.createObjectURL(blob);
   } catch (error) {
     console.error("Error generating image:", error);
-    return null;
+    // Fallback to a placeholder image
+    return "https://via.placeholder.com/512x512.png?text=Image+Not+Available";
   }
 };
 
