@@ -29,19 +29,25 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Function to generate images using Hugging Face API with prompt engineering
+// Function to generate images using Pixel API
 const generateImage = async (locationName: string): Promise<string | null> => {
   try {
     const prompt = `A highly detailed and realistic image of ${locationName}, showcasing its natural beauty, landmarks, and cultural elements.`;
+
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2", // Fallback model
+      "https://api.pixelapi.ai/v1/images/generate", // Pixel API endpoint
       {
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`,
+          Authorization: `Bearer ${import.meta.env.VITE_PIXEL_API_KEY}`,
           "Content-Type": "application/json",
         },
         method: "POST",
-        body: JSON.stringify({ inputs: prompt }),
+        body: JSON.stringify({
+          prompt: prompt,
+          width: 512, // Desired image width
+          height: 512, // Desired image height
+          num_images: 1, // Number of images to generate
+        }),
       }
     );
 
@@ -50,8 +56,10 @@ const generateImage = async (locationName: string): Promise<string | null> => {
       throw new Error(`Failed to generate image: ${errorData.error || response.statusText}`);
     }
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+    const data = await response.json();
+    const imageUrl = data.images[0].url; // Extract the image URL from the response
+
+    return imageUrl;
   } catch (error) {
     console.error("Error generating image:", error);
     // Fallback to a placeholder image
