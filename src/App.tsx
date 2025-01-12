@@ -27,25 +27,6 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Skyscanner API Utility Function
-const fetchFlights = async (origin: string, destination: string, date: string) => {
-  const apiKey = 'YOUR_SKYSCANNER_API_KEY'; // Replace with your API key
-  const url = `https://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/US/USD/en-US/${origin}/${destination}/${date}`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'X-RapidAPI-Key': apiKey,
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching flight data:', error);
-    return null;
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -66,8 +47,6 @@ function App() {
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [flights, setFlights] = useState<any[]>([]); // State for flight data
-  const [flightSearchLoading, setFlightSearchLoading] = useState(false); // Loading state for flight search
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -456,18 +435,6 @@ function App() {
     setTranslating(false);
   };
 
-  // Flight Search Handler
-  const handleFlightSearch = async (origin: string, destination: string, date: string) => {
-    setFlightSearchLoading(true);
-    const data = await fetchFlights(origin, destination, date);
-    if (data && data.Quotes) {
-      setFlights(data.Quotes);
-    } else {
-      setFlights([]);
-    }
-    setFlightSearchLoading(false);
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -527,14 +494,6 @@ function App() {
             disabled={!currentLocation}
           >
             📰 Read News
-          </button>
-          {/* Flight Search Button */}
-          <button
-            onClick={() => handleFlightSearch('JFK', 'LAX', '2023-12-25')} // Example flight search
-            className="flight-search-button"
-            disabled={flightSearchLoading}
-          >
-            {flightSearchLoading ? 'Searching Flights...' : '✈️ Search Flights'}
           </button>
         </div>
         {loading ? (
@@ -629,34 +588,6 @@ function App() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-            {/* Flight Results Section */}
-            {flights.length > 0 && (
-              <div className="flight-results">
-                <h2>Flights from {currentLocation}</h2>
-                <ul>
-                  {flights.map((flight, index) => (
-                    <li key={index}>
-                      <p>
-                        <strong>Price:</strong> {flight.MinPrice} USD
-                      </p>
-                      <p>
-                        <strong>Direct:</strong> {flight.Direct ? 'Yes' : 'No'}
-                      </p>
-                      <p>
-                        <strong>Outbound:</strong> {new Date(flight.OutboundLeg.DepartureDate).toLocaleDateString()}
-                      </p>
-                      <a
-                        href={`https://www.skyscanner.net/?affiliate=YOUR_AFFILIATE_ID`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Book Now
-                      </a>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
           </div>
