@@ -49,7 +49,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [isDarkTheme, setIsDarkTheme] = useState(false); // Control dark theme
     const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]); // Store user-generated markers
     const [timeZoneInfo, setTimeZoneInfo] = useState<{ lng: number; lat: number; time: string } | null>(null); // Store time zone info
-    const [isFullScreen, setIsFullScreen] = useState(false); // Control full-screen mode
 
     // Load markers from local storage on component mount
     useEffect(() => {
@@ -160,36 +159,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         console.error('Error fetching time zone data:', error);
       }
     }, []);
-
-    // Toggle full-screen mode
-    const toggleFullScreen = useCallback(() => {
-      const mapContainer = mapRef.current?.getMap().getContainer();
-      if (mapContainer) {
-        if (!isFullScreen) {
-          if (mapContainer.requestFullscreen) {
-            mapContainer.requestFullscreen();
-          } else if (mapContainer.mozRequestFullScreen) {
-            mapContainer.mozRequestFullScreen(); // Firefox
-          } else if (mapContainer.webkitRequestFullscreen) {
-            mapContainer.webkitRequestFullscreen(); // Chrome, Safari, and Opera
-          } else if (mapContainer.msRequestFullscreen) {
-            mapContainer.msRequestFullscreen(); // IE/Edge
-          }
-          setIsFullScreen(true);
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen(); // Firefox
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen(); // Chrome, Safari, and Opera
-          } else if (document.msExitFullscreen) {
-            document.msExitFullscreen(); // IE/Edge
-          }
-          setIsFullScreen(false);
-        }
-      }
-    }, [isFullScreen]);
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -310,23 +279,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 }}
               >
                 Show Time Zone
-              </button>
-              <button
-                onClick={toggleFullScreen}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '8px',
-                  marginBottom: '8px',
-                  backgroundColor: '#9C27B0',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }}
-              >
-                {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
               </button>
             </div>
             {/* Add more feature toggles here */}
