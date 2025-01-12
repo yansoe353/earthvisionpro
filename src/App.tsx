@@ -38,6 +38,12 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
+  const [weatherData, setWeatherData] = useState<{
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    weatherIcon: string;
+  } | null>(null);
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -47,6 +53,13 @@ function App() {
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
+
+  // Quiz Mode State
+  const [isQuizModeActive, setIsQuizModeActive] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<Array<{ question: string; options: string[]; correctAnswer: string }>>([]);
+  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
+  const [quizScore, setQuizScore] = useState(0);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -154,8 +167,9 @@ function App() {
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
+    await fetchWeatherData(lat, lng);
 
-    // Fetch location name and YouTube videos
+    // Fetch location name, YouTube videos, and news
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
@@ -165,6 +179,27 @@ function App() {
       setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
       await fetchYouTubeVideos(locationName);
+    }
+  };
+
+  // Fetch weather data
+  const fetchWeatherData = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (data) {
+        setWeatherData({
+          temperature: data.main.temp,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          weatherIcon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setWeatherData(null);
     }
   };
 
@@ -435,12 +470,61 @@ function App() {
     setTranslating(false);
   };
 
+  // Generate quiz questions
+  const generateQuizQuestions = async (location: string) => {
+    setIsQuizLoading(true);
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate 5 quiz questions about the geography, culture, and history of ${location}. Each question should have 4 options and a correct answer. Return the questions in JSON format.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const questions = JSON.parse(completion.choices[0].message.content);
+        setQuizQuestions(questions);
+      }
+    } catch (error) {
+      console.error('Error generating quiz questions:', error);
+    } finally {
+      setIsQuizLoading(false);
+    }
+  };
+
+  // Handle quiz answer selection
+  const handleQuizAnswerSelect = (questionIndex: number, selectedAnswer: string) => {
+    setUserAnswers((prev) => ({ ...prev, [questionIndex]: selectedAnswer }));
+  };
+
+  // Calculate quiz score
+  const calculateQuizScore = () => {
+    let score = 0;
+    quizQuestions.forEach((question, index) => {
+      if (userAnswers[index] === question.correctAnswer) {
+        score += 1;
+      }
+    });
+    setQuizScore(score);
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
+          weatherData={weatherData}
         />
       </div>
       <div className="info-panel">
@@ -494,6 +578,19 @@ function App() {
             disabled={!currentLocation}
           >
             📰 Read News
+          </button>
+          {/* Quiz Mode Button */}
+          <button
+            onClick={async () => {
+              setIsQuizModeActive(!isQuizModeActive);
+              if (!isQuizModeActive) {
+                await generateQuizQuestions(currentLocation);
+              }
+            }}
+            className="quiz-button"
+            disabled={!currentLocation}
+          >
+            {isQuizModeActive ? 'Close Quiz' : '🧠 Start Quiz'}
           </button>
         </div>
         {loading ? (
@@ -588,6 +685,47 @@ function App() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {/* Quiz Panel */}
+            {isQuizModeActive && (
+              <div className="quiz-panel">
+                <h2>Quiz: {currentLocation}</h2>
+                {isQuizLoading ? (
+                  <p>Loading quiz questions...</p>
+                ) : (
+                  <>
+                    {quizQuestions.map((question, index) => (
+                      <div key={index} className="quiz-question">
+                        <h3>{question.question}</h3>
+                        <div className="quiz-options">
+                          {question.options.map((option, optionIndex) => (
+                            <button
+                              key={optionIndex}
+                              onClick={() => handleQuizAnswerSelect(index, option)}
+                              className={`quiz-option ${
+                                userAnswers[index] === option ? 'selected' : ''
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                        {userAnswers[index] && (
+                          <p className="quiz-feedback">
+                            {userAnswers[index] === question.correctAnswer
+                              ? 'Correct!'
+                              : `Incorrect. The correct answer is: ${question.correctAnswer}`}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    <button onClick={calculateQuizScore} className="quiz-submit-button">
+                      Submit Answers
+                    </button>
+                    {quizScore > 0 && <p className="quiz-score">Your score: {quizScore}/{quizQuestions.length}</p>}
+                  </>
+                )}
               </div>
             )}
           </div>
