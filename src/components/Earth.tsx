@@ -1,7 +1,7 @@
 import { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
 import Map, { MapRef, Layer, Source, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import './Earth.css'; // Ensure you have this CSS file for styling
+import './Earth.css'; // Ensure you have this CSS file for style
 
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Default map style
 
