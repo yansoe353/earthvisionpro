@@ -458,7 +458,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         {/* Weather Widget */}
         {clickedLocation && showWeatherWidget && (
           <div
-            className="weather-widget"
             style={{
               position: 'absolute',
               top: 20,
@@ -472,8 +471,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
             }}
           >
             <button
-              className="close-button"
-              onClick={handleClose}
               style={{
                 position: 'absolute',
                 top: '8px',
@@ -484,6 +481,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 cursor: 'pointer',
                 color: isDarkTheme ? '#fff' : '#000',
               }}
+              onClick={handleClose}
             >
               &times; {/* Close icon (×) */}
             </button>
@@ -498,7 +496,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 <p>Wind Speed: {weatherData.windSpeed} m/s</p>
               </>
             ) : (
-              <p>Loading weather data...</p>
+              <p>Weather data not available.</p> // Fallback message
             )}
           </div>
         )}
