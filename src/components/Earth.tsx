@@ -30,6 +30,13 @@ interface Earthquake {
   };
 }
 
+interface UserMarker {
+  lng: number;
+  lat: number;
+  label: string;
+  id: string; // Unique ID for each marker
+}
+
 const Earth = forwardRef<EarthRef, EarthProps>(
   ({ onCaptureView, weatherData }, ref) => {
     const mapRef = useRef<MapRef>(null); // Reference to the Mapbox map
@@ -40,8 +47,22 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [showFeaturePanel, setShowFeaturePanel] = useState(false); // Control visibility of feature panel
     const [showDisasterAlerts, setShowDisasterAlerts] = useState(true); // Control visibility of disaster alerts
     const [isDarkTheme, setIsDarkTheme] = useState(false); // Control dark theme
-    const [userMarkers, setUserMarkers] = useState<{ lng: number; lat: number; label: string }[]>([]); // Store user-generated markers
+    const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]); // Store user-generated markers
     const [timeZoneInfo, setTimeZoneInfo] = useState<{ lng: number; lat: number; time: string } | null>(null); // Store time zone info
+    const [isFullScreen, setIsFullScreen] = useState(false); // Control full-screen mode
+
+    // Load markers from local storage on component mount
+    useEffect(() => {
+      const savedMarkers = localStorage.getItem('userMarkers');
+      if (savedMarkers) {
+        setUserMarkers(JSON.parse(savedMarkers));
+      }
+    }, []);
+
+    // Save markers to local storage whenever userMarkers changes
+    useEffect(() => {
+      localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
+    }, [userMarkers]);
 
     // Fetch earthquake data from USGS API
     useEffect(() => {
@@ -113,7 +134,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
     // Add user-generated marker
     const addUserMarker = useCallback((lng: number, lat: number, label: string) => {
-      setUserMarkers((prev) => [...prev, { lng, lat, label }]);
+      const newMarker: UserMarker = {
+        lng,
+        lat,
+        label,
+        id: Math.random().toString(36).substring(7), // Generate a unique ID
+      };
+      setUserMarkers((prev) => [...prev, newMarker]);
+    }, []);
+
+    // Delete user-generated marker
+    const deleteUserMarker = useCallback((id: string) => {
+      setUserMarkers((prev) => prev.filter((marker) => marker.id !== id));
     }, []);
 
     // Fetch time zone info
@@ -128,6 +160,36 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         console.error('Error fetching time zone data:', error);
       }
     }, []);
+
+    // Toggle full-screen mode
+    const toggleFullScreen = useCallback(() => {
+      const mapContainer = mapRef.current?.getMap().getContainer();
+      if (mapContainer) {
+        if (!isFullScreen) {
+          if (mapContainer.requestFullscreen) {
+            mapContainer.requestFullscreen();
+          } else if (mapContainer.mozRequestFullScreen) {
+            mapContainer.mozRequestFullScreen(); // Firefox
+          } else if (mapContainer.webkitRequestFullscreen) {
+            mapContainer.webkitRequestFullscreen(); // Chrome, Safari, and Opera
+          } else if (mapContainer.msRequestFullscreen) {
+            mapContainer.msRequestFullscreen(); // IE/Edge
+          }
+          setIsFullScreen(true);
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen(); // Firefox
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen(); // Chrome, Safari, and Opera
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen(); // IE/Edge
+          }
+          setIsFullScreen(false);
+        }
+      }
+    }, [isFullScreen]);
 
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -249,6 +311,23 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               >
                 Show Time Zone
               </button>
+              <button
+                onClick={toggleFullScreen}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: '#9C27B0',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+              </button>
             </div>
             {/* Add more feature toggles here */}
           </div>
@@ -332,18 +411,35 @@ const Earth = forwardRef<EarthRef, EarthProps>(
           )}
 
           {/* User-Generated Markers */}
-          {userMarkers.map((marker, index) => (
-            <Marker key={index} longitude={marker.lng} latitude={marker.lat}>
+          {userMarkers.map((marker) => (
+            <Marker key={marker.id} longitude={marker.lng} latitude={marker.lat}>
               <div style={{ color: 'blue', fontSize: '24px' }}>📍</div>
               <Popup
                 longitude={marker.lng}
                 latitude={marker.lat}
-                onClose={() => setUserMarkers((prev) => prev.filter((_, i) => i !== index))}
+                onClose={() => {}}
               >
                 <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
                   <h3>{marker.label}</h3>
                   <p>Lat: {marker.lat.toFixed(2)}</p>
                   <p>Lng: {marker.lng.toFixed(2)}</p>
+                  <button
+                    onClick={() => deleteUserMarker(marker.id)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px',
+                      marginTop: '8px',
+                      backgroundColor: '#ff4444',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    }}
+                  >
+                    Delete Marker
+                  </button>
                 </div>
               </Popup>
             </Marker>
