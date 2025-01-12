@@ -49,6 +49,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [isDarkTheme, setIsDarkTheme] = useState(false); // Control dark theme
     const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]); // Store user-generated markers
     const [timeZoneInfo, setTimeZoneInfo] = useState<{ lng: number; lat: number; time: string } | null>(null); // Store time zone info
+    const [isCaptureEnabled, setIsCaptureEnabled] = useState(true); // Control whether map capture is enabled
+    const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null); // Track selected user marker
 
     // Load markers from local storage on component mount
     useEffect(() => {
@@ -90,9 +92,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(
         const { lngLat } = event;
         setClickedLocation(lngLat); // Store the clicked location
         setShowWeatherWidget(true); // Show the weather widget
-        onCaptureView(); // Trigger the capture view function
+        if (isCaptureEnabled) {
+          onCaptureView(); // Trigger the capture view function if enabled
+        }
       },
-      [onCaptureView]
+      [onCaptureView, isCaptureEnabled]
     );
 
     // Handle search for a location
@@ -129,6 +133,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     // Toggle dark theme
     const toggleDarkTheme = useCallback(() => {
       setIsDarkTheme((prev) => !prev);
+    }, []);
+
+    // Toggle capture feature
+    const toggleCaptureFeature = useCallback(() => {
+      setIsCaptureEnabled((prev) => !prev);
     }, []);
 
     // Add user-generated marker
@@ -238,6 +247,23 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
               </button>
               <button
+                onClick={toggleCaptureFeature}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: isCaptureEnabled ? '#4CAF50' : '#ccc',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                {isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
+              </button>
+              <button
                 onClick={() => {
                   const label = prompt('Enter a label for the marker:');
                   if (label && clickedLocation) {
@@ -281,7 +307,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 Show Time Zone
               </button>
             </div>
-            {/* Add more feature toggles here */}
           </div>
         )}
 
@@ -364,38 +389,47 @@ const Earth = forwardRef<EarthRef, EarthProps>(
 
           {/* User-Generated Markers */}
           {userMarkers.map((marker) => (
-            <Marker key={marker.id} longitude={marker.lng} latitude={marker.lat}>
+            <Marker
+              key={marker.id}
+              longitude={marker.lng}
+              latitude={marker.lat}
+              onClick={() => setSelectedMarker(marker)} // Set selected marker on click
+            >
               <div style={{ color: 'blue', fontSize: '24px' }}>📍</div>
-              <Popup
-                longitude={marker.lng}
-                latitude={marker.lat}
-                onClose={() => {}}
-              >
-                <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
-                  <h3>{marker.label}</h3>
-                  <p>Lat: {marker.lat.toFixed(2)}</p>
-                  <p>Lng: {marker.lng.toFixed(2)}</p>
-                  <button
-                    onClick={() => deleteUserMarker(marker.id)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '8px',
-                      marginTop: '8px',
-                      backgroundColor: '#ff4444',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                    }}
-                  >
-                    Delete Marker
-                  </button>
-                </div>
-              </Popup>
             </Marker>
           ))}
+
+          {/* Popup for Selected User Marker */}
+          {selectedMarker && (
+            <Popup
+              longitude={selectedMarker.lng}
+              latitude={selectedMarker.lat}
+              onClose={() => setSelectedMarker(null)} // Close popup
+            >
+              <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
+                <h3>{selectedMarker.label}</h3>
+                <p>Lat: {selectedMarker.lat.toFixed(2)}</p>
+                <p>Lng: {selectedMarker.lng.toFixed(2)}</p>
+                <button
+                  onClick={() => deleteUserMarker(selectedMarker.id)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '8px',
+                    marginTop: '8px',
+                    backgroundColor: '#ff4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  Delete Marker
+                </button>
+              </div>
+            </Popup>
+          )}
 
           {/* Time Zone Popup */}
           {timeZoneInfo && (
