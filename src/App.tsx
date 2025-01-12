@@ -38,7 +38,6 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -162,9 +161,8 @@ function App() {
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
-    await fetchWeatherData(lat, lng);
 
-    // Fetch location name, YouTube videos, and news
+    // Fetch location name and YouTube videos
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
@@ -176,8 +174,6 @@ function App() {
       await fetchYouTubeVideos(locationName);
     }
   };
-
-
 
   // Capture the current view of the globe
   const captureView = async () => {
@@ -500,7 +496,6 @@ function App() {
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
-          weatherData={weatherData}
         />
       </div>
       <div className="info-panel">
