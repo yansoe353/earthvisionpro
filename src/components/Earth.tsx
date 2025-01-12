@@ -1,8 +1,8 @@
 import { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
-import Map, { MapRef, Layer, Source, Marker, Popup } from 'react-map-gl';
+import Map, { MapRef, Layer, Source, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Original map style
+const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Default map style
 
 interface EarthProps {
   onCaptureView: () => void; // Function to capture the current view
@@ -66,6 +66,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
         const response = await fetch(
           'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'
         );
+        if (!response.ok) throw new Error('Failed to fetch earthquake data');
         const data = await response.json();
         setEarthquakes(data.features);
       } catch (error) {
@@ -80,7 +81,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
 
   // Handle click on the map
   const handleClick = useCallback(
-    (event: any) => {
+    (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
       setClickedLocation(lngLat); // Store the clicked location
       if (isCaptureEnabled) {
@@ -152,8 +153,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
   const fetchTimeZone = useCallback(async (lng: number, lat: number) => {
     try {
       const response = await fetch(
-        `https://api.timezonedb.com/v2.1/get-time-zone?key=YOUR_API_KEY&format=json&by=position&lng=${lng}&lat=${lat}`
+        `https://api.timezonedb.com/v2.1/get-time-zone?key=${import.meta.env.VITE_TIMEZONE_API_KEY}&format=json&by=position&lng=${lng}&lat=${lat}`
       );
+      if (!response.ok) throw new Error('Failed to fetch time zone data');
       const data = await response.json();
       setTimeZoneInfo({ lng, lat, time: data.formatted });
     } catch (error) {
@@ -335,7 +337,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
             source-layer="building"
             filter={['==', 'extrude', 'true']}
             type="fill-extrusion"
-            minzoom={15} // Correct property name (all lowercase)
+            minzoom={15}
             paint={{
               'fill-extrusion-color': isDarkTheme ? '#555' : '#ddd', // Building color
               'fill-extrusion-height': ['get', 'height'], // Use building height
