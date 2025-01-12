@@ -31,6 +31,22 @@ interface UserMarker {
   id: string; // Unique ID for each marker
 }
 
+interface WeatherData {
+  name: string;
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+  };
+  weather: {
+    description: string;
+    icon: string;
+  }[];
+  wind: {
+    speed: number;
+  };
+}
+
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
   const mapRef = useRef<MapRef>(null); // Reference to the Mapbox map
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null); // Store clicked location
@@ -43,6 +59,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
   const [timeZoneInfo, setTimeZoneInfo] = useState<{ lng: number; lat: number; time: string } | null>(null); // Store time zone info
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true); // Control whether map capture is enabled
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null); // Track selected user marker
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null); // Store weather data
+  const [showWeatherWidget, setShowWeatherWidget] = useState(false); // Control visibility of weather widget
 
   // Load markers from local storage on component mount
   useEffect(() => {
@@ -81,11 +99,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
 
   // Handle click on the map
   const handleClick = useCallback(
-    (event: MapLayerMouseEvent) => {
+    async (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
       setClickedLocation(lngLat); // Store the clicked location
       if (isCaptureEnabled) {
         onCaptureView(); // Trigger the capture view function if enabled
+      }
+
+      // Fetch weather data for the clicked location
+      try {
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lngLat.lat}&lon=${lngLat.lng}&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}&units=metric`
+        );
+        if (!response.ok) throw new Error('Failed to fetch weather data');
+        const data = await response.json();
+        setWeatherData(data);
+        setShowWeatherWidget(true); // Show weather widget
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
       }
     },
     [onCaptureView, isCaptureEnabled]
@@ -161,6 +192,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
     } catch (error) {
       console.error('Error fetching time zone data:', error);
     }
+  }, []);
+
+  // Close weather widget
+  const closeWeatherWidget = useCallback(() => {
+    setShowWeatherWidget(false);
   }, []);
 
   return (
@@ -296,6 +332,53 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
               Remove All Markers
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Weather Widget */}
+      {showWeatherWidget && weatherData && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            zIndex: 1,
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            padding: '16px',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+            width: '250px',
+            color: isDarkTheme ? '#fff' : '#000',
+          }}
+        >
+          <button
+            onClick={closeWeatherWidget}
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              background: 'none',
+              border: 'none',
+              color: isDarkTheme ? '#fff' : '#000',
+              cursor: 'pointer',
+              fontSize: '16px',
+            }}
+          >
+            ×
+          </button>
+          <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Weather Info</h3>
+          <p><strong>Location:</strong> {weatherData.name}</p>
+          <p><strong>Temperature:</strong> {weatherData.main.temp}°C</p>
+          <p><strong>Feels Like:</strong> {weatherData.main.feels_like}°C</p>
+          <p><strong>Humidity:</strong> {weatherData.main.humidity}%</p>
+          <p><strong>Wind Speed:</strong> {weatherData.wind.speed} m/s</p>
+          <p><strong>Condition:</strong> {weatherData.weather[0].description}</p>
+          <img
+            src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`}
+            alt="Weather Icon"
+            style={{ width: '50px', height: '50px' }}
+          />
         </div>
       )}
 
