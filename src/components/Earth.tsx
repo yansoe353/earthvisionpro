@@ -1,6 +1,7 @@
 import { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
 import Map, { MapRef, Layer, Source, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import './Earth.css'; // Ensure you have this CSS file for styling
 
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Default map style
 
@@ -223,135 +224,58 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
 
       {/* Feature Panel */}
       {showFeaturePanel && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 60,
-            right: 20,
-            zIndex: 1,
-            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            padding: '16px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            maxHeight: '60vh',
-            overflowY: 'auto',
-            width: '250px',
-            color: isDarkTheme ? '#fff' : '#000',
-          }}
-        >
+        <div className="feature-panel">
           <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Features</h3>
-          <div style={{ marginBottom: '16px' }}>
-            <button
-              onClick={toggleDisasterAlerts}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
-            </button>
-            <button
-              onClick={toggleDarkTheme}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: isDarkTheme ? '#333' : '#ccc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
-            </button>
-            <button
-              onClick={toggleCaptureFeature}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: isCaptureEnabled ? '#4CAF50' : '#ccc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              {isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
-            </button>
-            <button
-              onClick={() => {
-                if (clickedLocation) {
-                  addUserMarker(clickedLocation.lng, clickedLocation.lat);
-                }
-              }}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: '#4CAF50',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              Add Marker
-            </button>
-            <button
-              onClick={removeAllMarkers}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: '#ff4444',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              Remove All Markers
-            </button>
-          </div>
+          <button
+            onClick={toggleDisasterAlerts}
+            style={{
+              backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
+            }}
+          >
+            {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
+          </button>
+          <button
+            onClick={toggleDarkTheme}
+            style={{
+              backgroundColor: isDarkTheme ? '#333' : '#ccc',
+            }}
+          >
+            {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
+          </button>
+          <button
+            onClick={toggleCaptureFeature}
+            style={{
+              backgroundColor: isCaptureEnabled ? '#4CAF50' : '#ccc',
+            }}
+          >
+            {isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
+          </button>
+          <button
+            onClick={() => {
+              if (clickedLocation) {
+                addUserMarker(clickedLocation.lng, clickedLocation.lat);
+              }
+            }}
+            style={{
+              backgroundColor: '#4CAF50',
+            }}
+          >
+            Add Marker
+          </button>
+          <button
+            onClick={removeAllMarkers}
+            style={{
+              backgroundColor: '#ff4444',
+            }}
+          >
+            Remove All Markers
+          </button>
         </div>
       )}
 
       {/* Weather Widget */}
       {showWeatherWidget && weatherData && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            zIndex: 1,
-            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            padding: '16px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-            width: '250px',
-            color: isDarkTheme ? '#fff' : '#000',
-          }}
-        >
+        <div className="weather-widget">
           <button
             onClick={closeWeatherWidget}
             style={{
@@ -360,7 +284,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
               right: 8,
               background: 'none',
               border: 'none',
-              color: isDarkTheme ? '#fff' : '#000',
+              color: '#000',
               cursor: 'pointer',
               fontSize: '16px',
             }}
