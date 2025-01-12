@@ -141,14 +141,21 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     }, []);
 
     // Add user-generated marker
-    const addUserMarker = useCallback((lng: number, lat: number, label: string) => {
+    const addUserMarker = useCallback((lng: number, lat: number) => {
       const newMarker: UserMarker = {
         lng,
         lat,
-        label,
+        label: 'Marker', // Default label
         id: Math.random().toString(36).substring(7), // Generate a unique ID
       };
       setUserMarkers((prev) => [...prev, newMarker]);
+      setSelectedMarker(newMarker); // Show popup for the new marker
+    }, []);
+
+    // Remove all user-generated markers
+    const removeAllMarkers = useCallback(() => {
+      setUserMarkers([]); // Clear all markers
+      setSelectedMarker(null); // Close any open popup
     }, []);
 
     // Delete user-generated marker
@@ -265,9 +272,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               </button>
               <button
                 onClick={() => {
-                  const label = prompt('Enter a label for the marker:');
-                  if (label && clickedLocation) {
-                    addUserMarker(clickedLocation.lng, clickedLocation.lat, label);
+                  if (clickedLocation) {
+                    addUserMarker(clickedLocation.lng, clickedLocation.lat);
                   }
                 }}
                 style={{
@@ -286,17 +292,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 Add Marker
               </button>
               <button
-                onClick={() => {
-                  if (clickedLocation) {
-                    fetchTimeZone(clickedLocation.lng, clickedLocation.lat);
-                  }
-                }}
+                onClick={removeAllMarkers}
                 style={{
                   display: 'block',
                   width: '100%',
                   padding: '8px',
                   marginBottom: '8px',
-                  backgroundColor: '#2196F3',
+                  backgroundColor: '#ff4444',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -304,7 +306,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                   fontSize: '14px',
                 }}
               >
-                Show Time Zone
+                Remove All Markers
               </button>
             </div>
           </div>
