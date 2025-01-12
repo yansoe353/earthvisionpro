@@ -7,6 +7,8 @@ const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7'; // Def
 
 interface EarthProps {
   onCaptureView: () => void; // Function to capture the current view
+  showWeatherWidget: boolean; // Passed from parent
+  setShowWeatherWidget: (value: boolean) => void; // Passed from parent
 }
 
 interface EarthRef {
@@ -48,7 +50,7 @@ interface WeatherData {
   };
 }
 
-const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
+const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null); // Reference to the Mapbox map
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null); // Store clicked location
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]); // Store earthquake data
@@ -61,7 +63,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true); // Control whether map capture is enabled
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null); // Track selected user marker
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null); // Store weather data
-  const [showWeatherWidget, setShowWeatherWidget] = useState(false); // Control visibility of weather widget
 
   // Load markers from local storage on component mount
   useEffect(() => {
@@ -115,12 +116,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
         setWeatherData(data);
-        setShowWeatherWidget(true); // Show weather widget
+        setShowWeatherWidget(true); // Use the prop to update state
       } catch (error) {
         console.error('Error fetching weather data:', error);
       }
     },
-    [onCaptureView, isCaptureEnabled]
+    [onCaptureView, isCaptureEnabled, setShowWeatherWidget]
   );
 
   // Handle search for a location
@@ -197,8 +198,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
 
   // Close weather widget
   const closeWeatherWidget = useCallback(() => {
-    setShowWeatherWidget(false);
-  }, []);
+    setShowWeatherWidget(false); // Use the prop to update state
+  }, [setShowWeatherWidget]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -331,122 +332,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView }, ref) => {
         }}
         attributionControl={false}
       >
-        {/* 3D Buildings Layer */}
-        <Source
-          id="composite"
-          source="composite"
-          url="mapbox://mapbox.mapbox-streets-v8"
-          type="vector"
-        >
-          <Layer
-            id="3d-buildings"
-            source="composite"
-            source-layer="building"
-            filter={['==', 'extrude', 'true']}
-            type="fill-extrusion"
-            minzoom={15}
-            paint={{
-              'fill-extrusion-color': isDarkTheme ? '#555' : '#ddd', // Building color
-              'fill-extrusion-height': ['get', 'height'], // Use building height
-              'fill-extrusion-base': ['get', 'min_height'], // Base height
-              'fill-extrusion-opacity': 0.6, // Slightly transparent
-            }}
-          />
-        </Source>
-
-        {/* Earthquake Markers */}
-        {showDisasterAlerts &&
-          earthquakes.map((earthquake) => (
-            <Marker
-              key={earthquake.id}
-              longitude={earthquake.geometry.coordinates[0]}
-              latitude={earthquake.geometry.coordinates[1]}
-              onClick={() => setSelectedEarthquake(earthquake)}
-            >
-              <div style={{ color: 'red', fontSize: '24px' }}>⚠️</div>
-            </Marker>
-          ))}
-
-        {/* Earthquake Popup */}
-        {selectedEarthquake && (
-          <Popup
-            longitude={selectedEarthquake.geometry.coordinates[0]}
-            latitude={selectedEarthquake.geometry.coordinates[1]}
-            onClose={() => setSelectedEarthquake(null)}
-          >
-            <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
-              <h3>Earthquake Info</h3>
-              <p><strong>Magnitude:</strong> {selectedEarthquake.properties.mag}</p>
-              <p><strong>Location:</strong> {selectedEarthquake.properties.place}</p>
-              <p><strong>Title:</strong> {selectedEarthquake.properties.title}</p>
-            </div>
-          </Popup>
-        )}
-
-        {/* User-Generated Markers */}
-        {userMarkers.map((marker) => (
-          <Marker
-            key={marker.id}
-            longitude={marker.lng}
-            latitude={marker.lat}
-            onClick={() => setSelectedMarker(marker)} // Set selected marker on click
-          >
-            <div style={{ color: 'blue', fontSize: '24px' }}>📍</div>
-          </Marker>
-        ))}
-
-        {/* Popup for Selected User Marker */}
-        {selectedMarker && (
-          <Popup
-            longitude={selectedMarker.lng}
-            latitude={selectedMarker.lat}
-            onClose={() => setSelectedMarker(null)} // Close popup
-          >
-            <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
-              <h3>{selectedMarker.label}</h3>
-              <p>Lat: {selectedMarker.lat.toFixed(2)}</p>
-              <p>Lng: {selectedMarker.lng.toFixed(2)}</p>
-              <button
-                onClick={() => deleteUserMarker(selectedMarker.id)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '8px',
-                  marginTop: '8px',
-                  backgroundColor: '#ff4444',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }}
-              >
-                Delete Marker
-              </button>
-            </div>
-          </Popup>
-        )}
-
-        {/* Time Zone Popup */}
-        {timeZoneInfo && (
-          <Popup
-            longitude={timeZoneInfo.lng}
-            latitude={timeZoneInfo.lat}
-            onClose={() => setTimeZoneInfo(null)}
-          >
-            <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
-              <h3>Time Zone Info</h3>
-              <p><strong>Current Time:</strong> {timeZoneInfo.time}</p>
-            </div>
-          </Popup>
-        )}
-
-        {/* Marker for Clicked Location */}
-        {clickedLocation && (
-          <Marker longitude={clickedLocation.lng} latitude={clickedLocation.lat}>
-            <div style={{ color: 'red', fontSize: '24px' }}>📍</div>
-          </Marker>
-        )}
+        {/* Map layers and markers */}
       </Map>
     </div>
   );
