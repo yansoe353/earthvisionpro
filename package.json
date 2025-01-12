@@ -39,7 +39,6 @@
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@types/react-router-dom": "^5.3.3",
-    "@types/screenfull": "^6.0.0",
     "@types/turf": "^6.3.2",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.17.0",
