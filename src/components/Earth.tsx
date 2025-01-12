@@ -40,6 +40,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     const [showFeaturePanel, setShowFeaturePanel] = useState(false); // Control visibility of feature panel
     const [showDisasterAlerts, setShowDisasterAlerts] = useState(true); // Control visibility of disaster alerts
     const [isDarkTheme, setIsDarkTheme] = useState(false); // Control dark theme
+    const [userMarkers, setUserMarkers] = useState<{ lng: number; lat: number; label: string }[]>([]); // Store user-generated markers
+    const [timeZoneInfo, setTimeZoneInfo] = useState<{ lng: number; lat: number; time: string } | null>(null); // Store time zone info
 
     // Fetch earthquake data from USGS API
     useEffect(() => {
@@ -107,6 +109,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(
     // Toggle dark theme
     const toggleDarkTheme = useCallback(() => {
       setIsDarkTheme((prev) => !prev);
+    }, []);
+
+    // Add user-generated marker
+    const addUserMarker = useCallback((lng: number, lat: number, label: string) => {
+      setUserMarkers((prev) => [...prev, { lng, lat, label }]);
+    }, []);
+
+    // Fetch time zone info
+    const fetchTimeZone = useCallback(async (lng: number, lat: number) => {
+      try {
+        const response = await fetch(
+          `https://api.timezonedb.com/v2.1/get-time-zone?key=YOUR_API_KEY&format=json&by=position&lng=${lng}&lat=${lat}`
+        );
+        const data = await response.json();
+        setTimeZoneInfo({ lng, lat, time: data.formatted });
+      } catch (error) {
+        console.error('Error fetching time zone data:', error);
+      }
     }, []);
 
     return (
@@ -186,6 +206,49 @@ const Earth = forwardRef<EarthRef, EarthProps>(
               >
                 {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
               </button>
+              <button
+                onClick={() => {
+                  const label = prompt('Enter a label for the marker:');
+                  if (label && clickedLocation) {
+                    addUserMarker(clickedLocation.lng, clickedLocation.lat, label);
+                  }
+                }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: '#4CAF50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Add Marker
+              </button>
+              <button
+                onClick={() => {
+                  if (clickedLocation) {
+                    fetchTimeZone(clickedLocation.lng, clickedLocation.lat);
+                  }
+                }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  backgroundColor: '#2196F3',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Show Time Zone
+              </button>
             </div>
             {/* Add more feature toggles here */}
           </div>
@@ -264,6 +327,38 @@ const Earth = forwardRef<EarthRef, EarthProps>(
                 <p><strong>Magnitude:</strong> {selectedEarthquake.properties.mag}</p>
                 <p><strong>Location:</strong> {selectedEarthquake.properties.place}</p>
                 <p><strong>Title:</strong> {selectedEarthquake.properties.title}</p>
+              </div>
+            </Popup>
+          )}
+
+          {/* User-Generated Markers */}
+          {userMarkers.map((marker, index) => (
+            <Marker key={index} longitude={marker.lng} latitude={marker.lat}>
+              <div style={{ color: 'blue', fontSize: '24px' }}>📍</div>
+              <Popup
+                longitude={marker.lng}
+                latitude={marker.lat}
+                onClose={() => setUserMarkers((prev) => prev.filter((_, i) => i !== index))}
+              >
+                <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
+                  <h3>{marker.label}</h3>
+                  <p>Lat: {marker.lat.toFixed(2)}</p>
+                  <p>Lng: {marker.lng.toFixed(2)}</p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {/* Time Zone Popup */}
+          {timeZoneInfo && (
+            <Popup
+              longitude={timeZoneInfo.lng}
+              latitude={timeZoneInfo.lat}
+              onClose={() => setTimeZoneInfo(null)}
+            >
+              <div style={{ color: isDarkTheme ? '#fff' : '#000' }}>
+                <h3>Time Zone Info</h3>
+                <p><strong>Current Time:</strong> {timeZoneInfo.time}</p>
               </div>
             </Popup>
           )}
