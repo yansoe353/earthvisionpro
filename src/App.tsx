@@ -47,6 +47,7 @@ function App() {
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [showWeatherWidget, setShowWeatherWidget] = useState(false); // Add weather widget state
 
   // Quiz Mode State
   const [isQuizModeActive, setIsQuizModeActive] = useState(false);
@@ -177,74 +178,74 @@ function App() {
 
   // Capture the current view of the globe
   const captureView = async () => {
-  if (!earthContainerRef.current) return;
+    if (!earthContainerRef.current) return;
 
-  // Close the weather widget before capturing
-  setShowWeatherWidget(false);
+    // Close the weather widget before capturing
+    setShowWeatherWidget(false);
 
-  setLoading(true);
-  setDynamicThemes([]);
+    setLoading(true);
+    setDynamicThemes([]);
 
-  try {
-    console.log('Capturing Earth view...');
-    const dataUrl = await toPng(earthContainerRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      quality: 1,
-      filter: (node) => {
-        // Exclude the weather widget from the capture
-        return !node.classList?.contains('weather-widget');
-      },
-    });
-    console.log('Earth view captured:', dataUrl);
-
-    console.log('Analyzing image with Groq...');
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: dataUrl,
-              },
-            },
-          ],
+    try {
+      console.log('Capturing Earth view...');
+      const dataUrl = await toPng(earthContainerRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        quality: 1,
+        filter: (node) => {
+          // Exclude the weather widget from the capture
+          return !node.classList?.contains('weather-widget');
         },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.95,
-      max_tokens: 8000,
-    });
+      });
+      console.log('Earth view captured:', dataUrl);
 
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      const content = completion.choices[0].message.content;
-      const locationMatch = content.match(/^[^•\n]+/);
-      if (locationMatch) {
-        const location = locationMatch[0].trim();
-        setCurrentLocation(location);
-        setFacts(content);
-        await generateDynamicThemes(location);
-        await fetchYouTubeVideos(location);
+      console.log('Analyzing image with Groq...');
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: dataUrl,
+                },
+              },
+            ],
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 8000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const content = completion.choices[0].message.content;
+        const locationMatch = content.match(/^[^•\n]+/);
+        if (locationMatch) {
+          const location = locationMatch[0].trim();
+          setCurrentLocation(location);
+          setFacts(content);
+          await generateDynamicThemes(location);
+          await fetchYouTubeVideos(location);
+        }
       }
+    } catch (error) {
+      console.error('Error capturing view:', error);
+      setFacts('Error getting facts about this region. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error capturing view:', error);
-    setFacts('Error getting facts about this region. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
@@ -492,6 +493,8 @@ function App() {
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
+          showWeatherWidget={showWeatherWidget} // Pass state as prop
+          setShowWeatherWidget={setShowWeatherWidget} // Pass setter as prop
         />
       </div>
       <div className="info-panel">
