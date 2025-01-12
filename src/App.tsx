@@ -38,12 +38,7 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [weatherData, setWeatherData] = useState<{
-    temperature: number;
-    humidity: number;
-    windSpeed: number;
-    weatherIcon: string;
-  } | null>(null);
+  
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -182,26 +177,7 @@ function App() {
     }
   };
 
-  // Fetch weather data
-  const fetchWeatherData = async (lat: number, lng: number) => {
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}&units=metric`
-      );
-      const data = await response.json();
-      if (data) {
-        setWeatherData({
-          temperature: data.main.temp,
-          humidity: data.main.humidity,
-          windSpeed: data.wind.speed,
-          weatherIcon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      setWeatherData(null);
-    }
-  };
+
 
   // Capture the current view of the globe
   const captureView = async () => {
