@@ -83,7 +83,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     [onCaptureView, isCaptureEnabled, setShowWeatherWidget]
   );
 
-  // Handle search for a locationS
+  // Handle search for a location
   const handleSearch = useCallback((lng: number, lat: number) => {
     mapRef.current?.flyTo({
       center: [lng, lat],
@@ -163,6 +163,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           toggleCaptureFeature={toggleCaptureFeature}
           addUserMarker={addUserMarker}
           removeAllMarkers={removeAllMarkers}
+          onClose={toggleFeaturePanel} // Pass the onClose handler
         />
       )}
 
