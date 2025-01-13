@@ -51,12 +51,13 @@ const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
       )}
 
       {isVolcanicEruption(marker) && (
-        <>
-          <p>Status: {marker.status}</p>
-          <p>Location: {`${marker.location.lat}, ${marker.location.lng}`}</p>
-          {/* Add more volcanic eruption-specific details if needed */}
-        </>
-      )}
+  <>
+    <p>Name: {marker.volcano_name_appended}</p>
+    <p>Status: {marker.alert_level}</p>
+    <p>Location: {`${marker.latitude}, ${marker.longitude}`}</p>
+    <p>Synopsis: {marker.synopsis}</p>
+  </>
+)}
 
       {isWildfire(marker) && (
         <>
