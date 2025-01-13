@@ -84,7 +84,7 @@
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
   padding: 16px;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow-y: auto; /* Enable vertical scrolling */
   width: 250px;
   color: white;
   backdrop-filter: blur(10px);
@@ -130,21 +130,40 @@
 }
 
 .feature-panel .close-button {
-  position: sticky;
-  top: 0;
-  right: 0;
+  position: absolute; /* Use absolute positioning */
+  top: 8px;
+  right: 8px;
   background: none;
   border: none;
   color: #00ffff;
   cursor: pointer;
   font-size: 16px;
   transition: color 0.3s ease;
-  float: right; /* Position the close button to the right */
-  margin-bottom: 8px; /* Add spacing below the close button */
+  z-index: 11; /* Ensure the close button is above the scrollable content */
 }
 
 .feature-panel .close-button:hover {
   color: #ff00ff;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .feature-panel {
+    width: 90%;
+    max-width: 300px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .feature-panel {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    top: 0;
+    right: 0;
+    max-height: 100vh; /* Full height on very small screens */
+  }
 }
 
 /* Weather Widget */
