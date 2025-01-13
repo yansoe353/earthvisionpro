@@ -32,7 +32,7 @@ const FeaturePanel = ({
       ×
     </button>
 
-    {/* Feature Buttons */}
+    {/* Feature Buttons, */}
     <button onClick={toggleDisasterAlerts}>
       {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
     </button>
