@@ -62,16 +62,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return () => clearInterval(interval);
   }, [showDisasterAlerts]);
 
-  // Fetch volcanic eruption data
+  // Fetch volcanic eruption data from USGS API
   useEffect(() => {
     if (!showVolcanicEruptions) return;
 
     const fetchVolcanicEruptions = async () => {
       try {
-        const response = await fetch('https://api.volcano.si.edu/eruptions');
+        const response = await fetch('https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes');
         if (!response.ok) throw new Error('Failed to fetch volcanic eruption data');
         const data = await response.json();
-        setVolcanicEruptions(data.eruptions);
+        setVolcanicEruptions(data);
       } catch (error) {
         console.error('Error fetching volcanic eruption data:', error);
       }
