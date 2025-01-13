@@ -9,6 +9,7 @@ export interface Earthquake {
     coordinates: [number, number]; // [longitude, latitude]
   };
   properties: {
+    title: string; // Title of the earthquake event
     mag: number; // Magnitude of the earthquake
     place: string; // Location description
   };
