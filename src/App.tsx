@@ -27,25 +27,6 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Skyscanner API Utility Function
-const fetchFlights = async (origin: string, destination: string, date: string) => {
-  const apiKey = 'YOUR_SKYSCANNER_API_KEY'; // Replace with your API key
-  const url = `https://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/US/USD/en-US/${origin}/${destination}/${date}`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'X-RapidAPI-Key': apiKey,
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching flight data:', error);
-    return null;
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -66,8 +47,7 @@ function App() {
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [flights, setFlights] = useState<any[]>([]); // State for flight data
-  const [flightSearchLoading, setFlightSearchLoading] = useState(false); // Loading state for flight search
+  const [showWeatherWidget, setShowWeatherWidget] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -192,27 +172,32 @@ function App() {
   // Capture the current view of the globe
   const captureView = async () => {
     if (!earthContainerRef.current) return;
+
+    // Close the weather widget before capturing
+    setShowWeatherWidget(false);
+
     setLoading(true);
     setDynamicThemes([]);
 
     try {
-      // Capture the Earth view as a data URL
+      console.log('Capturing Earth view...');
       const dataUrl = await toPng(earthContainerRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         quality: 1,
+        filter: (node) => {
+          // Exclude the weather widget from the capture
+          return !node.classList?.contains('weather-widget');
+        },
       });
+      console.log('Earth view captured:', dataUrl);
 
-      // Set the captured image for display
-      setCapturedImage(dataUrl);
-
-      // Initialize Groq client
+      console.log('Analyzing image with Groq...');
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
 
-      // Send the image URL directly to Groq's vision API
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -225,7 +210,7 @@ function App() {
               {
                 type: 'image_url',
                 image_url: {
-                  url: dataUrl, // Directly use the data URL
+                  url: dataUrl,
                 },
               },
             ],
@@ -242,22 +227,13 @@ function App() {
         if (locationMatch) {
           const location = locationMatch[0].trim();
           setCurrentLocation(location);
-
+          setFacts(content);
           await generateDynamicThemes(location);
-          await fetchYouTubeVideos(location); // Fetch YouTube videos
-        }
-        setFacts(content);
-
-        // Translate the facts if the current language is not English
-        if (language !== 'en') {
-          const translatedText = await translateText(content, language);
-          setTranslatedFacts(translatedText);
-        } else {
-          setTranslatedFacts(content);
+          await fetchYouTubeVideos(location);
         }
       }
     } catch (error) {
-      console.error('Detailed error:', error);
+      console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
     } finally {
       setLoading(false);
@@ -456,24 +432,14 @@ function App() {
     setTranslating(false);
   };
 
-  // Flight Search Handler
-  const handleFlightSearch = async (origin: string, destination: string, date: string) => {
-    setFlightSearchLoading(true);
-    const data = await fetchFlights(origin, destination, date);
-    if (data && data.Quotes) {
-      setFlights(data.Quotes);
-    } else {
-      setFlights([]);
-    }
-    setFlightSearchLoading(false);
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
+          showWeatherWidget={showWeatherWidget} // Pass state as prop
+          setShowWeatherWidget={setShowWeatherWidget} // Pass setter as prop
         />
       </div>
       <div className="info-panel">
@@ -527,14 +493,6 @@ function App() {
             disabled={!currentLocation}
           >
             📰 Read News
-          </button>
-          {/* Flight Search Button */}
-          <button
-            onClick={() => handleFlightSearch('JFK', 'LAX', '2023-12-25')} // Example flight search
-            className="flight-search-button"
-            disabled={flightSearchLoading}
-          >
-            {flightSearchLoading ? 'Searching Flights...' : '✈️ Search Flights'}
           </button>
         </div>
         {loading ? (
@@ -629,34 +587,6 @@ function App() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-            {/* Flight Results Section */}
-            {flights.length > 0 && (
-              <div className="flight-results">
-                <h2>Flights from {currentLocation}</h2>
-                <ul>
-                  {flights.map((flight, index) => (
-                    <li key={index}>
-                      <p>
-                        <strong>Price:</strong> {flight.MinPrice} USD
-                      </p>
-                      <p>
-                        <strong>Direct:</strong> {flight.Direct ? 'Yes' : 'No'}
-                      </p>
-                      <p>
-                        <strong>Outbound:</strong> {new Date(flight.OutboundLeg.DepartureDate).toLocaleDateString()}
-                      </p>
-                      <a
-                        href={`https://www.skyscanner.net/?affiliate=YOUR_AFFILIATE_ID`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Book Now
-                      </a>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
           </div>
