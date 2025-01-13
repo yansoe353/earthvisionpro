@@ -232,7 +232,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             top: 20,
             right: 20,
             zIndex: 1,
-            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
             padding: '16px',
             borderRadius: '8px',
             boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
