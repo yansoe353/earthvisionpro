@@ -71,11 +71,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         const response = await fetch('https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes');
         if (!response.ok) throw new Error('Failed to fetch volcanic eruption data');
         const data = await response.json();
+        console.log('Volcanic Eruption Data:', data); // Log the API response
 
         // Validate and filter data to ensure it has the correct structure
         const validEruptions = data.filter(
-          (eruption: VolcanicEruption) => eruption.location && eruption.location.lng && eruption.location.lat
+          (eruption: VolcanicEruption) =>
+            eruption.location &&
+            typeof eruption.location.lng === 'number' &&
+            typeof eruption.location.lat === 'number'
         );
+        console.log('Valid Volcanic Eruptions:', validEruptions); // Log filtered data
         setVolcanicEruptions(validEruptions);
       } catch (error) {
         console.error('Error fetching volcanic eruption data:', error);
@@ -99,7 +104,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         // Validate and filter data to ensure it has the correct structure
         const validWildfires = data.wildfires.filter(
-          (wildfire: Wildfire) => wildfire.location && wildfire.location.lng && wildfire.location.lat
+          (wildfire: Wildfire) =>
+            wildfire.location &&
+            typeof wildfire.location.lng === 'number' &&
+            typeof wildfire.location.lat === 'number'
         );
         setWildfires(validWildfires);
       } catch (error) {
@@ -285,28 +293,31 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {/* Volcanic Eruption Markers */}
         {showVolcanicEruptions &&
-          volcanicEruptions.map((eruption) => (
-            <Marker
-              key={eruption.id}
-              longitude={eruption.location?.lng || 0} // Fallback to 0 if location is undefined
-              latitude={eruption.location?.lat || 0}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation(); // Prevent map click event
-                setSelectedVolcanicEruption(eruption);
-              }}
-            >
-              <div className="volcano-marker">
-                <span>🌋</span>
-              </div>
-            </Marker>
-          ))}
+          volcanicEruptions.map((eruption) => {
+            console.log('Rendering Volcanic Eruption:', eruption); // Log each eruption
+            return (
+              <Marker
+                key={eruption.id}
+                longitude={eruption.location?.lng || 0}
+                latitude={eruption.location?.lat || 0}
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation(); // Prevent map click event
+                  setSelectedVolcanicEruption(eruption);
+                }}
+              >
+                <div className="volcano-marker">
+                  <span>🌋</span>
+                </div>
+              </Marker>
+            );
+          })}
 
         {/* Wildfire Markers */}
         {showWildfires &&
           wildfires.map((wildfire) => (
             <Marker
               key={wildfire.id}
-              longitude={wildfire.location?.lng || 0} // Fallback to 0 if location is undefined
+              longitude={wildfire.location?.lng || 0}
               latitude={wildfire.location?.lat || 0}
               onClick={(e) => {
                 e.originalEvent.stopPropagation(); // Prevent map click event
