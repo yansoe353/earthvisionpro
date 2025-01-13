@@ -6,34 +6,72 @@
   overflow: hidden;
 }
 
-/* Feature Panel */
+/* Modern Feature Panel */
 .feature-panel {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   padding: 16px;
-  max-height: 60vh;
+  max-height: 40vh;
   overflow-y: auto;
-  width: 250px;
+  width: 90%;
+  max-width: 400px;
   z-index: 10;
   color: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.feature-panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.feature-panel-header button {
+  background: none;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+}
+
+.feature-panel-content {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .feature-panel button {
   display: block;
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   margin-bottom: 8px;
   background-color: #007bff;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   text-align: left;
+  transition: background-color 0.3s ease;
+}
+
+.feature-panel button:hover {
+  background-color: #0056b3;
 }
 
 .feature-panel button:disabled {
@@ -46,9 +84,9 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   padding: 16px;
   width: 250px;
   z-index: 10;
@@ -84,58 +122,28 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .feature-panel {
-    top: 10px;
-    right: 10px;
-    max-height: 50vh; /* Adjust height for smaller screens */
-    width: 90%; /* Take up more width on mobile */
+    bottom: 10px;
+    max-height: 50vh;
+    width: 95%;
   }
 
   .weather-widget {
     top: 10px;
     right: 10px;
-    width: 90%; /* Take up more width on mobile */
+    width: 90%;
   }
 
   .feature-panel button,
   .weather-widget p {
-    font-size: 12px; /* Smaller font size for mobile */
+    font-size: 12px;
   }
-}
-
-/* Mapbox Map Styles */
-.mapboxgl-map {
-  width: 100%;
-  height: 100%;
-}
-
-/* Marker Styles */
-.mapboxgl-marker {
-  cursor: pointer;
-}
-
-/* Popup Styles */
-.mapboxgl-popup {
-  z-index: 20;
-}
-
-.mapboxgl-popup-content {
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #000;
-}
-
-.mapboxgl-popup-close-button {
-  font-size: 16px;
-  color: #000;
 }
 
 /* Dark Theme Styles */
 .dark-theme .feature-panel,
 .dark-theme .weather-widget,
 .dark-theme .mapboxgl-popup-content {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.9);
   color: #fff;
 }
 
@@ -150,5 +158,5 @@
 }
 
 .dark-theme .weather-widget img {
-  filter: invert(1); /* Invert weather icon colors for dark theme */
+  filter: invert(1);
 }
