@@ -46,16 +46,15 @@ const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
         <>
           <p>Magnitude: {marker.properties.mag}</p>
           <p>Location: {marker.properties.place}</p>
-          <p>Time: {new Date(marker.properties.time).toLocaleString()}</p>
+          {/* Add more earthquake-specific details if needed */}
         </>
       )}
 
       {isVolcanicEruption(marker) && (
         <>
           <p>Status: {marker.status}</p>
-          <p>Alert Level: {marker.alertLevel}</p>
           <p>Location: {`${marker.location.lat}, ${marker.location.lng}`}</p>
-          <p>Last Updated: {new Date(marker.lastUpdated).toLocaleString()}</p>
+          {/* Add more volcanic eruption-specific details if needed */}
         </>
       )}
 
@@ -64,7 +63,7 @@ const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
           <p>Size: {marker.size} acres</p>
           <p>Status: {marker.status}</p>
           <p>Location: {`${marker.location.lat}, ${marker.location.lng}`}</p>
-          <p>Reported On: {new Date(marker.reportedOn).toLocaleString()}</p>
+          {/* Add more wildfire-specific details if needed */}
         </>
       )}
 
