@@ -75,11 +75,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         // Validate and filter data to ensure it has the correct structure
         const validEruptions = data.filter(
-          (eruption: VolcanicEruption) =>
-            eruption.location &&
-            typeof eruption.location.lng === 'number' &&
-            typeof eruption.location.lat === 'number'
-        );
+  (eruption: VolcanicEruption) =>
+    typeof eruption.latitude === 'number' &&
+    typeof eruption.longitude === 'number'
+);
         console.log('Valid Volcanic Eruptions:', validEruptions); // Log filtered data
         setVolcanicEruptions(validEruptions);
       } catch (error) {
@@ -293,24 +292,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {/* Volcanic Eruption Markers */}
         {showVolcanicEruptions &&
-          volcanicEruptions.map((eruption) => {
-            console.log('Rendering Volcanic Eruption:', eruption); // Log each eruption
-            return (
-              <Marker
-                key={eruption.id}
-                longitude={eruption.location?.lng || 0}
-                latitude={eruption.location?.lat || 0}
-                onClick={(e) => {
-                  e.originalEvent.stopPropagation(); // Prevent map click event
-                  setSelectedVolcanicEruption(eruption);
-                }}
-              >
-                <div className="volcano-marker">
-                  <span>🌋</span>
-                </div>
-              </Marker>
-            );
-          })}
+  volcanicEruptions.map((eruption) => {
+    console.log('Rendering Volcanic Eruption:', eruption); // Log each eruption
+    return (
+      <Marker
+        key={eruption.vnum} // Use vnum as the unique key
+        longitude={eruption.longitude || 0}
+        latitude={eruption.latitude || 0}
+        onClick={(e) => {
+          e.originalEvent.stopPropagation(); // Prevent map click event
+          setSelectedVolcanicEruption(eruption);
+        }}
+      >
+        <div className="volcano-marker">
+          <span>🌋</span>
+        </div>
+      </Marker>
+    );
+  })}
 
         {/* Wildfire Markers */}
         {showWildfires &&
