@@ -21,6 +21,20 @@
   box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
 }
 
+/* Volcanic eruption marker styles */
+.volcano-marker {
+  font-size: 24px;
+  color: #ff5722; /* Orange color for volcanic eruptions */
+  text-shadow: 0 0 10px rgba(255, 87, 34, 0.8);
+}
+
+/* Wildfire marker styles */
+.wildfire-marker {
+  font-size: 24px;
+  color: #ff9800; /* Orange color for wildfires */
+  text-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
+}
+
 /* User-generated marker styles */
 .user-marker {
   background-color: #4CAF50;
