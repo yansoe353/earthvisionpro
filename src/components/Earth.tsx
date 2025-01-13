@@ -196,7 +196,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, []);
 
-  // Close weather widgetS
+  // Close weather widget
   const closeWeatherWidget = useCallback(() => {
     setShowWeatherWidget(false); // Use the prop to update state
   }, [setShowWeatherWidget]);
@@ -225,7 +225,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
       {/* Feature Panel */}
       {showFeaturePanel && (
-        <div className="feature-panel">
+        <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
+          {/* Close Button */}
+          <button
+            onClick={toggleFeaturePanel}
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              background: 'none',
+              border: 'none',
+              color: isDarkTheme ? '#fff' : '#000',
+              cursor: 'pointer',
+              fontSize: '16px',
+            }}
+          >
+            ×
+          </button>
+
           <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Features</h3>
           <button
             onClick={toggleDisasterAlerts}
@@ -332,7 +349,70 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
-        {/* Map layers and markers */}
+        {/* Earthquake Markers */}
+        {showDisasterAlerts &&
+          earthquakes.map((earthquake) => (
+            <Marker
+              key={earthquake.id}
+              longitude={earthquake.geometry.coordinates[0]}
+              latitude={earthquake.geometry.coordinates[1]}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation(); // Prevent map click event
+                setSelectedEarthquake(earthquake);
+              }}
+            >
+              <div className="earthquake-marker">
+                <span>{earthquake.properties.mag}</span>
+              </div>
+            </Marker>
+          ))}
+
+        {/* User-Generated Markers */}
+        {userMarkers.map((marker) => (
+          <Marker
+            key={marker.id}
+            longitude={marker.lng}
+            latitude={marker.lat}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation(); // Prevent map click event
+              setSelectedMarker(marker);
+            }}
+          >
+            <div className="user-marker">
+              <span>{marker.label}</span>
+            </div>
+          </Marker>
+        ))}
+
+        {/* Popups */}
+        {selectedEarthquake && (
+          <Popup
+            longitude={selectedEarthquake.geometry.coordinates[0]}
+            latitude={selectedEarthquake.geometry.coordinates[1]}
+            onClose={() => setSelectedEarthquake(null)}
+          >
+            <div>
+              <h3>{selectedEarthquake.properties.title}</h3>
+              <p>Magnitude: {selectedEarthquake.properties.mag}</p>
+              <p>Location: {selectedEarthquake.properties.place}</p>
+            </div>
+          </Popup>
+        )}
+
+        {selectedMarker && (
+          <Popup
+            longitude={selectedMarker.lng}
+            latitude={selectedMarker.lat}
+            onClose={() => setSelectedMarker(null)}
+          >
+            <div>
+              <h3>{selectedMarker.label}</h3>
+              <button onClick={() => deleteUserMarker(selectedMarker.id)}>
+                Delete Marker
+              </button>
+            </div>
+          </Popup>
+        )}
       </Map>
     </div>
   );
