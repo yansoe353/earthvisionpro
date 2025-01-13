@@ -64,6 +64,11 @@
   color: #00ffff;
 }
 
+.mapboxgl-popup-content p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
 .mapboxgl-popup-content button {
   background-color: rgba(255, 0, 0, 0.2);
   color: white;
