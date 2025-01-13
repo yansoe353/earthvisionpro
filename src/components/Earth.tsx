@@ -225,7 +225,22 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
       {/* Feature Panel */}
       {showFeaturePanel && (
-        <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
+        <div
+          className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            zIndex: 1,
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+            width: '250px',
+            maxHeight: '80vh', // Set a maximum height
+            overflowY: 'auto', // Enable vertical scrolling
+          }}
+        >
           {/* Close Button */}
           <button
             onClick={toggleFeaturePanel}
@@ -243,11 +258,23 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             ×
           </button>
 
-          <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>Features</h3>
+          {/* Feature Title */}
+          <h3 style={{ marginBottom: '16px', fontSize: '16px', paddingRight: '20px' }}>
+            Features
+          </h3>
+
+          {/* Feature Buttons */}
           <button
             onClick={toggleDisasterAlerts}
             style={{
               backgroundColor: showDisasterAlerts ? '#ff4444' : '#ccc',
+              width: '100%',
+              marginBottom: '8px',
+              padding: '8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
             }}
           >
             {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
@@ -256,6 +283,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={toggleDarkTheme}
             style={{
               backgroundColor: isDarkTheme ? '#333' : '#ccc',
+              width: '100%',
+              marginBottom: '8px',
+              padding: '8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
             }}
           >
             {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
@@ -264,6 +298,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={toggleCaptureFeature}
             style={{
               backgroundColor: isCaptureEnabled ? '#4CAF50' : '#ccc',
+              width: '100%',
+              marginBottom: '8px',
+              padding: '8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
             }}
           >
             {isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
@@ -276,6 +317,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             }}
             style={{
               backgroundColor: '#4CAF50',
+              width: '100%',
+              marginBottom: '8px',
+              padding: '8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
             }}
           >
             Add Marker
@@ -284,6 +332,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={removeAllMarkers}
             style={{
               backgroundColor: '#ff4444',
+              width: '100%',
+              marginBottom: '8px',
+              padding: '8px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
             }}
           >
             Remove All Markers
