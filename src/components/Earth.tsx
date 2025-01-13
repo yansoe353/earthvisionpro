@@ -1,3 +1,5 @@
+// src/components/Earth/Earth.tsx
+
 import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -6,7 +8,7 @@ import FeaturePanel from './FeaturePanel';
 import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
-import { EarthProps, EarthRef, Earthquake, UserMarker, WeatherData } from './types';
+import { Earthquake, VolcanicEruption, Wildfire, UserMarker, WeatherData, EarthProps, EarthRef } from './types';
 
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
@@ -14,9 +16,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
+  const [volcanicEruptions, setVolcanicEruptions] = useState<VolcanicEruption[]>([]);
+  const [wildfires, setWildfires] = useState<Wildfire[]>([]);
   const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null);
+  const [selectedVolcanicEruption, setSelectedVolcanicEruption] = useState<VolcanicEruption | null>(null);
+  const [selectedWildfire, setSelectedWildfire] = useState<Wildfire | null>(null);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
+  const [showVolcanicEruptions, setShowVolcanicEruptions] = useState(true);
+  const [showWildfires, setShowWildfires] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
@@ -38,13 +46,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Fetch earthquake data from USGS API
   useEffect(() => {
-    if (!showDisasterAlerts) return; // Skip fetching if disaster alerts are disabled
+    if (!showDisasterAlerts) return;
 
     const fetchEarthquakes = async () => {
       try {
-        const response = await fetch(
-          'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'
-        );
+        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
         if (!response.ok) throw new Error('Failed to fetch earthquake data');
         const data = await response.json();
         setEarthquakes(data.features);
@@ -54,9 +60,49 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     };
 
     fetchEarthquakes();
-    const interval = setInterval(fetchEarthquakes, 60000); // Refresh data every minute
+    const interval = setInterval(fetchEarthquakes, 60000); // Refresh every minute
     return () => clearInterval(interval);
   }, [showDisasterAlerts]);
+
+  // Fetch volcanic eruption data
+  useEffect(() => {
+    if (!showVolcanicEruptions) return;
+
+    const fetchVolcanicEruptions = async () => {
+      try {
+        const response = await fetch('https://api.volcano.si.edu/eruptions');
+        if (!response.ok) throw new Error('Failed to fetch volcanic eruption data');
+        const data = await response.json();
+        setVolcanicEruptions(data.eruptions);
+      } catch (error) {
+        console.error('Error fetching volcanic eruption data:', error);
+      }
+    };
+
+    fetchVolcanicEruptions();
+    const interval = setInterval(fetchVolcanicEruptions, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, [showVolcanicEruptions]);
+
+  // Fetch wildfire data
+  useEffect(() => {
+    if (!showWildfires) return;
+
+    const fetchWildfires = async () => {
+      try {
+        const response = await fetch('https://firms.modaps.eosdis.nasa.gov/api/wildfires');
+        if (!response.ok) throw new Error('Failed to fetch wildfire data');
+        const data = await response.json();
+        setWildfires(data.wildfires);
+      } catch (error) {
+        console.error('Error fetching wildfire data:', error);
+      }
+    };
+
+    fetchWildfires();
+    const interval = setInterval(fetchWildfires, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, [showWildfires]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -75,7 +121,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         if (!response.ok) throw new Error('Failed to fetch weather data');
         const data = await response.json();
         setWeatherData(data);
-        setShowWeatherWidget(true); // Use the prop to update state
+        setShowWeatherWidget(true); // Show the weather widget
       } catch (error) {
         console.error('Error fetching weather data:', error);
       }
@@ -106,6 +152,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Toggle Natural Disaster Alerts
   const toggleDisasterAlerts = useCallback(() => {
     setShowDisasterAlerts((prev) => !prev);
+  }, []);
+
+  // Toggle Volcanic Eruptions
+  const toggleVolcanicEruptions = useCallback(() => {
+    setShowVolcanicEruptions((prev) => !prev);
+  }, []);
+
+  // Toggle Wildfires
+  const toggleWildfires = useCallback(() => {
+    setShowWildfires((prev) => !prev);
   }, []);
 
   // Toggle dark theme
@@ -143,7 +199,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Close weather widget
   const closeWeatherWidget = useCallback(() => {
-    setShowWeatherWidget(false); // Use the prop to update state
+    setShowWeatherWidget(false); // Hide the weather widget
   }, [setShowWeatherWidget]);
 
   return (
@@ -156,14 +212,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         <FeaturePanel
           isDarkTheme={isDarkTheme}
           showDisasterAlerts={showDisasterAlerts}
+          showVolcanicEruptions={showVolcanicEruptions}
+          showWildfires={showWildfires}
           isCaptureEnabled={isCaptureEnabled}
           clickedLocation={clickedLocation}
           toggleDisasterAlerts={toggleDisasterAlerts}
+          toggleVolcanicEruptions={toggleVolcanicEruptions}
+          toggleWildfires={toggleWildfires}
           toggleDarkTheme={toggleDarkTheme}
           toggleCaptureFeature={toggleCaptureFeature}
           addUserMarker={addUserMarker}
           removeAllMarkers={removeAllMarkers}
-          onClose={toggleFeaturePanel} // Pass the onClose handler
+          onClose={toggleFeaturePanel}
         />
       )}
 
@@ -215,6 +275,42 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             </Marker>
           ))}
 
+        {/* Volcanic Eruption Markers */}
+        {showVolcanicEruptions &&
+          volcanicEruptions.map((eruption) => (
+            <Marker
+              key={eruption.id}
+              longitude={eruption.location.lng}
+              latitude={eruption.location.lat}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation(); // Prevent map click event
+                setSelectedVolcanicEruption(eruption);
+              }}
+            >
+              <div className="volcano-marker">
+                <span>🌋</span>
+              </div>
+            </Marker>
+          ))}
+
+        {/* Wildfire Markers */}
+        {showWildfires &&
+          wildfires.map((wildfire) => (
+            <Marker
+              key={wildfire.id}
+              longitude={wildfire.location.lng}
+              latitude={wildfire.location.lat}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation(); // Prevent map click event
+                setSelectedWildfire(wildfire);
+              }}
+            >
+              <div className="wildfire-marker">
+                <span>🔥</span>
+              </div>
+            </Marker>
+          ))}
+
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
           <Marker
@@ -243,6 +339,33 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               marker={selectedEarthquake}
               onClose={() => setSelectedEarthquake(null)}
             />
+          </Popup>
+        )}
+
+        {selectedVolcanicEruption && (
+          <Popup
+            longitude={selectedVolcanicEruption.location.lng}
+            latitude={selectedVolcanicEruption.location.lat}
+            onClose={() => setSelectedVolcanicEruption(null)}
+          >
+            <div>
+              <h3>{selectedVolcanicEruption.name}</h3>
+              <p>Status: {selectedVolcanicEruption.status}</p>
+            </div>
+          </Popup>
+        )}
+
+        {selectedWildfire && (
+          <Popup
+            longitude={selectedWildfire.location.lng}
+            latitude={selectedWildfire.location.lat}
+            onClose={() => setSelectedWildfire(null)}
+          >
+            <div>
+              <h3>Wildfire</h3>
+              <p>Size: {selectedWildfire.size} acres</p>
+              <p>Status: {selectedWildfire.status}</p>
+            </div>
           </Popup>
         )}
 
