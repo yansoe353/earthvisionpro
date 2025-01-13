@@ -1,5 +1,3 @@
-// src/components/Earth/Earth.tsx
-
 import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -348,10 +346,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={selectedVolcanicEruption.location.lat}
             onClose={() => setSelectedVolcanicEruption(null)}
           >
-            <div>
-              <h3>{selectedVolcanicEruption.name}</h3>
-              <p>Status: {selectedVolcanicEruption.status}</p>
-            </div>
+            <MarkerPopup
+              marker={selectedVolcanicEruption}
+              onClose={() => setSelectedVolcanicEruption(null)}
+            />
           </Popup>
         )}
 
@@ -361,11 +359,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={selectedWildfire.location.lat}
             onClose={() => setSelectedWildfire(null)}
           >
-            <div>
-              <h3>Wildfire</h3>
-              <p>Size: {selectedWildfire.size} acres</p>
-              <p>Status: {selectedWildfire.status}</p>
-            </div>
+            <MarkerPopup
+              marker={selectedWildfire}
+              onClose={() => setSelectedWildfire(null)}
+            />
           </Popup>
         )}
 
