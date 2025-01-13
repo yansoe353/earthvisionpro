@@ -71,7 +71,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         const response = await fetch('https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes');
         if (!response.ok) throw new Error('Failed to fetch volcanic eruption data');
         const data = await response.json();
-        setVolcanicEruptions(data);
+
+        // Validate and filter data to ensure it has the correct structure
+        const validEruptions = data.filter(
+          (eruption: VolcanicEruption) => eruption.location && eruption.location.lng && eruption.location.lat
+        );
+        setVolcanicEruptions(validEruptions);
       } catch (error) {
         console.error('Error fetching volcanic eruption data:', error);
       }
@@ -91,7 +96,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         const response = await fetch('https://firms.modaps.eosdis.nasa.gov/api/wildfires');
         if (!response.ok) throw new Error('Failed to fetch wildfire data');
         const data = await response.json();
-        setWildfires(data.wildfires);
+
+        // Validate and filter data to ensure it has the correct structure
+        const validWildfires = data.wildfires.filter(
+          (wildfire: Wildfire) => wildfire.location && wildfire.location.lng && wildfire.location.lat
+        );
+        setWildfires(validWildfires);
       } catch (error) {
         console.error('Error fetching wildfire data:', error);
       }
@@ -278,8 +288,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           volcanicEruptions.map((eruption) => (
             <Marker
               key={eruption.id}
-              longitude={eruption.location.lng}
-              latitude={eruption.location.lat}
+              longitude={eruption.location?.lng || 0} // Fallback to 0 if location is undefined
+              latitude={eruption.location?.lat || 0}
               onClick={(e) => {
                 e.originalEvent.stopPropagation(); // Prevent map click event
                 setSelectedVolcanicEruption(eruption);
@@ -296,8 +306,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           wildfires.map((wildfire) => (
             <Marker
               key={wildfire.id}
-              longitude={wildfire.location.lng}
-              latitude={wildfire.location.lat}
+              longitude={wildfire.location?.lng || 0} // Fallback to 0 if location is undefined
+              latitude={wildfire.location?.lat || 0}
               onClick={(e) => {
                 e.originalEvent.stopPropagation(); // Prevent map click event
                 setSelectedWildfire(wildfire);
@@ -342,8 +352,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {selectedVolcanicEruption && (
           <Popup
-            longitude={selectedVolcanicEruption.location.lng}
-            latitude={selectedVolcanicEruption.location.lat}
+            longitude={selectedVolcanicEruption.location?.lng || 0}
+            latitude={selectedVolcanicEruption.location?.lat || 0}
             onClose={() => setSelectedVolcanicEruption(null)}
           >
             <MarkerPopup
@@ -355,8 +365,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {selectedWildfire && (
           <Popup
-            longitude={selectedWildfire.location.lng}
-            latitude={selectedWildfire.location.lat}
+            longitude={selectedWildfire.location?.lng || 0}
+            latitude={selectedWildfire.location?.lat || 0}
             onClose={() => setSelectedWildfire(null)}
           >
             <MarkerPopup
