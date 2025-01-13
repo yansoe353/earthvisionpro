@@ -9,10 +9,10 @@
   border-radius: 12px;
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3); /* Neon glow effect */
   padding: 16px;
-  max-height: 40vh;
+  max-height: 50vh; /* Adjusted for better mobile responsiveness */
   overflow-y: auto;
-  width: 90%;
-  max-width: 400px;
+  width: 90%; /* Responsive width */
+  max-width: 400px; /* Maximum width for larger screens */
   z-index: 10;
   color: #fff; /* White text for contrast */
   display: flex;
@@ -21,6 +21,7 @@
   backdrop-filter: blur(10px); /* Frosted glass effect */
 }
 
+/* Feature Panel Header with Close Button */
 .feature-panel-header {
   display: flex;
   justify-content: space-between;
@@ -51,11 +52,14 @@
   color: #ff00ff; /* Neon magenta on hover */
 }
 
+/* Feature Panel Content */
 .feature-panel-content {
   flex: 1;
   overflow-y: auto;
+  padding-right: 8px; /* Add padding to avoid scrollbar overlap */
 }
 
+/* Feature Panel Buttons */
 .feature-panel button {
   display: block;
   width: 100%;
@@ -88,16 +92,36 @@
 @media (max-width: 768px) {
   .feature-panel {
     bottom: 10px;
-    max-height: 50vh;
-    width: 95%;
+    max-height: 60vh; /* Increase height for better usability on mobile */
+    width: 95%; /* Take up more width on smaller screens */
+    padding: 12px; /* Reduce padding for smaller screens */
   }
 
   .feature-panel-header h3 {
-    font-size: 16px;
+    font-size: 16px; /* Smaller font size for mobile */
+  }
+
+  .feature-panel button {
+    font-size: 12px; /* Smaller font size for mobile */
+    padding: 8px; /* Reduce padding for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .feature-panel {
+    max-height: 70vh; /* Further increase height for very small screens */
+    width: 100%; /* Full width on very small screens */
+    border-radius: 0; /* Remove border radius for full-width look */
+    bottom: 0; /* Stick to the bottom */
+  }
+
+  .feature-panel-header h3 {
+    font-size: 14px; /* Even smaller font size for very small screens */
   }
 
   .feature-panel button {
     font-size: 12px;
+    padding: 6px; /* Further reduce padding for very small screens */
   }
 }
 
