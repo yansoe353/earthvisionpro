@@ -11,6 +11,7 @@ interface FeaturePanelProps {
   toggleCaptureFeature: () => void;
   addUserMarker: (lng: number, lat: number) => void;
   removeAllMarkers: () => void;
+  onClose: () => void; // New prop for closing the panel
 }
 
 const FeaturePanel = ({
@@ -23,8 +24,15 @@ const FeaturePanel = ({
   toggleCaptureFeature,
   addUserMarker,
   removeAllMarkers,
+  onClose, // Destructure the onClose prop
 }: FeaturePanelProps) => (
   <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
+    {/* Close Button */}
+    <button className="close-button" onClick={onClose}>
+      ×
+    </button>
+
+    {/* Feature Buttons */}
     <button onClick={toggleDisasterAlerts}>
       {showDisasterAlerts ? 'Disable Alerts' : 'Enable Alerts'}
     </button>
