@@ -196,7 +196,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, []);
 
-  // Close weather widget
+  // Close weather widgetS
   const closeWeatherWidget = useCallback(() => {
     setShowWeatherWidget(false); // Use the prop to update state
   }, [setShowWeatherWidget]);
