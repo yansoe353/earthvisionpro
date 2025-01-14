@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { UserMarker } from '../types';
 
 interface MarkerPopupProps {
@@ -14,11 +14,21 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
   // Check if the note has changed
   const isNoteChanged = note !== marker.note;
 
-  const handleSaveNote = () => {
+  // Handle saving the note
+  const handleSaveNote = useCallback(() => {
     if (isNoteChanged) {
       onUpdateNote(marker.id, note);
     }
+  }, [isNoteChanged, marker.id, note, onUpdateNote]);
+
+  // Handle changes to the note input
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(e.target.value);
   };
+
+  // Calculate remaining characters
+  const maxLength = 500;
+  const remainingChars = maxLength - note.length;
 
   return (
     <div className="marker-popup">
@@ -34,10 +44,14 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
         <textarea
           id="note"
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={handleNoteChange}
           placeholder="Add a note..."
-          maxLength={500} // Optional: Add a character limit
+          maxLength={maxLength}
+          aria-describedby="note-char-count"
         />
+        <span id="note-char-count" className="char-count">
+          {remainingChars} characters remaining
+        </span>
       </div>
 
       {/* Action Buttons */}
@@ -46,6 +60,7 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
           onClick={handleSaveNote}
           disabled={!isNoteChanged}
           aria-label="Save Note"
+          aria-disabled={!isNoteChanged}
         >
           Save Note
         </button>
