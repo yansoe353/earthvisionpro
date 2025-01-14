@@ -10,30 +10,9 @@ import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle 
 import useEarthquakes from '../hooks/useEarthquakes'; // Import custom hook for earthquakes
 import useWeatherData from '../hooks/useWeatherData'; // Import custom hook for weather data
 import useUserMarkers from '../hooks/useUserMarkers'; // Import custom hook for user markers
+import { MAPBOX_STYLES } from '../constants/mapboxStyles'; // Import from constants file
 
-// Define Mapbox styles,
-const MAPBOX_STYLES: MapboxStyle[] = [
-  {
-    label: "Default",
-    value: "mapbox://styles/mapbox/streets-v12",
-  },
-  {
-    label: "Satellite",
-    value: "mapbox://styles/mapbox/satellite-v9",
-  },
-  {
-    label: "Dark",
-    value: "mapbox://styles/mapbox/dark-v11",
-  },
-  {
-    label: "Light",
-    value: "mapbox://styles/mapbox/light-v11",
-  },
-  {
-    label: "Outdoors",
-    value: "mapbox://styles/mapbox/outdoors-v12",
-  },
-];
+  
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
