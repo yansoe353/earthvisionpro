@@ -1,58 +1,69 @@
-import React from 'react';
-import { Earthquake, UserMarker } from './types';
+import React, { useState } from 'react';
+import { UserMarker } from '../types';
 
 interface MarkerPopupProps {
-  marker: Earthquake | UserMarker;
+  marker: UserMarker;
   onClose: () => void;
-  onDelete?: (id: string) => void;
+  onDelete: (id: string) => void;
+  onUpdateNote: (id: string, note: string) => void;
 }
 
-const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
-  // Type guard for Earthquake
-  const isEarthquake = (marker: Earthquake | UserMarker): marker is Earthquake => {
-    return 'properties' in marker;
-  };
+const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupProps) => {
+  const [note, setNote] = useState(marker.note || '');
 
-  // Type guard for UserMarker
-  const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
-    return 'label' in marker && 'id' in marker;
+  // Check if the note has changed
+  const isNoteChanged = note !== marker.note;
+
+  const handleSaveNote = () => {
+    if (isNoteChanged) {
+      onUpdateNote(marker.id, note);
+    }
   };
 
   return (
     <div className="marker-popup">
       {/* Popup Header */}
-      <h3>
-        {isEarthquake(marker)
-          ? marker.properties.title
-          : marker.label}
-      </h3>
+      <h3>{marker.label}</h3>
 
       {/* Popup Content */}
-      {isEarthquake(marker) && (
-        <>
-          <p>Magnitude: {marker.properties.mag}</p>
-          <p>Location: {marker.properties.place}</p>
-        </>
-      )}
+      <p>Location: {`${marker.lat}, ${marker.lng}`}</p>
 
-      {isUserMarker(marker) && (
-        <>
-          <p>Location: {`${marker.lat}, ${marker.lng}`}</p>
-          {onDelete && (
-            <button
-              onClick={() => onDelete(marker.id)}
-              className="delete-button"
-            >
-              Delete Marker
-            </button>
-          )}
-        </>
-      )}
+      {/* Note Input */}
+      <div className="note-input">
+        <label htmlFor="note">Notes:</label>
+        <textarea
+          id="note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Add a note..."
+          maxLength={500} // Optional: Add a character limit
+        />
+      </div>
 
-      {/* Close Button */}
-      <button onClick={onClose} className="close-button">
-        Close
-      </button>
+      {/* Action Buttons */}
+      <div className="button-group">
+        <button
+          onClick={handleSaveNote}
+          disabled={!isNoteChanged}
+          aria-label="Save Note"
+        >
+          Save Note
+        </button>
+        <button
+          onClick={() => onDelete(marker.id)}
+          className="delete-button"
+          aria-label="Delete Marker"
+        >
+          Delete Marker
+        </button>
+        <button
+          onClick={onClose}
+          className="close-button"
+          aria-label="Close Popup"
+        >
+          Close
+        </button>
+      </div>
     </div>
   );
 };
