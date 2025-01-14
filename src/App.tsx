@@ -1,32 +1,3 @@
-import { useState, useRef, useEffect } from 'react';
-import { toPng } from 'html-to-image';
-import Earth from './components/Earth';
-import { Groq } from 'groq-sdk';
-import NewsPanel from './components/NewsPanel';
-import SearchBar from './components/SearchBar';
-import MarkdownContent from './components/MarkdownContent';
-import VirtualTour from './components/VirtualTour';
-import './index.css';
-
-// Translation function using the free Google Translate endpoint
-const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  try {
-    const translatedSentences = await Promise.all(
-      sentences.map(async (sentence) => {
-        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        return data[0][0][0];
-      })
-    );
-    return translatedSentences.join(' ');
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text;
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -65,22 +36,38 @@ function App() {
       }
 
       const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+      if (!apiKey) {
+        console.error('YouTube API key is missing.');
+        return;
+      }
+
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchPrompt
         )}&type=video&maxResults=5&key=${apiKey}`
       );
+
+      if (!response.ok) {
+        console.error('YouTube API request failed:', response.status, response.statusText);
+        return;
+      }
+
       const data = await response.json();
-      if (data.items) {
+      console.log('YouTube API response:', data); // Log the API response
+
+      if (data.items && data.items.length > 0) {
         const videos = data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
         }));
-        setYoutubeVideos(videos);
+        setYoutubeVideos(videos); // Update the state with fetched videos
+      } else {
+        console.warn('No videos found for the location:', location);
+        setYoutubeVideos([]); // Clear the state if no videos are found
       }
     } catch (error) {
       console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]);
+      setYoutubeVideos([]); // Clear the state on error
     }
   };
 
