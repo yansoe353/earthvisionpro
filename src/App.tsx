@@ -48,6 +48,7 @@ function App() {
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
+  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/streets-v11'); // Default map style
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -181,6 +182,15 @@ function App() {
 
     try {
       console.log('Capturing Earth view...');
+
+      // Temporarily switch to a non-WebGL style
+      const originalMapStyle = mapStyle;
+      setMapStyle('mapbox://styles/mapbox/streets-v11'); // Use a raster style
+
+      // Wait for the map to re-render
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Capture the map
       const dataUrl = await toPng(earthContainerRef.current, {
         cacheBust: true,
         pixelRatio: 2,
@@ -190,8 +200,16 @@ function App() {
           return !node.classList?.contains('weather-widget');
         },
       });
+
       console.log('Earth view captured:', dataUrl);
 
+      // Revert to the original map style
+      setMapStyle(originalMapStyle);
+
+      // Set the captured image in the state
+      setCapturedImage(dataUrl);
+
+      // Analyze the captured image with Groq
       console.log('Analyzing image with Groq...');
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
