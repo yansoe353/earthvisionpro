@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -183,6 +184,9 @@ function App() {
 
       // Get the Mapbox map instance
       const map = earthRef.current.getMap();
+      if (!map) {
+        throw new Error('Map instance not found.');
+      }
 
       // Capture the map canvas
       const canvas = map.getCanvas();
