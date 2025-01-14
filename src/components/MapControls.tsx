@@ -5,24 +5,24 @@ interface MapControlsProps {
   isDarkTheme: boolean;
   showHeatmap: boolean;
   setShowHeatmap: (value: boolean) => void;
-  showChoropleth: boolean;
-  setShowChoropleth: (value: boolean) => void;
-  showPointsOfInterest: boolean;
-  setShowPointsOfInterest: (value: boolean) => void;
-  showWeather: boolean;
-  setShowWeather: (value: boolean) => void;
-  showTransit: boolean;
-  setShowTransit: (value: boolean) => void;
   showTraffic: boolean;
   setShowTraffic: (value: boolean) => void;
   showSatellite: boolean;
   setShowSatellite: (value: boolean) => void;
   show3DTerrain: boolean;
   setShow3DTerrain: (value: boolean) => void;
+  showChoropleth: boolean;
+  setShowChoropleth: (value: boolean) => void;
   show3DBuildings: boolean;
   setShow3DBuildings: (value: boolean) => void;
-  showContour: boolean; // Add Contour Layer
-  setShowContour: (value: boolean) => void; // Add Contour Layer
+  showContour: boolean;
+  setShowContour: (value: boolean) => void;
+  showPointsOfInterest: boolean;
+  setShowPointsOfInterest: (value: boolean) => void;
+  showWeather: boolean;
+  setShowWeather: (value: boolean) => void;
+  showTransit: boolean;
+  setShowTransit: (value: boolean) => void;
 }
 
 const MapControls = ({
@@ -30,24 +30,24 @@ const MapControls = ({
   isDarkTheme,
   showHeatmap,
   setShowHeatmap,
-  showChoropleth,
-  setShowChoropleth,
-  showPointsOfInterest,
-  setShowPointsOfInterest,
-  showWeather,
-  setShowWeather,
-  showTransit,
-  setShowTransit,
   showTraffic,
   setShowTraffic,
   showSatellite,
   setShowSatellite,
   show3DTerrain,
   setShow3DTerrain,
+  showChoropleth,
+  setShowChoropleth,
   show3DBuildings,
   setShow3DBuildings,
-  showContour, // Add Contour Layer
-  setShowContour, // Add Contour Layer
+  showContour,
+  setShowContour,
+  showPointsOfInterest,
+  setShowPointsOfInterest,
+  showWeather,
+  setShowWeather,
+  showTransit,
+  setShowTransit,
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -151,7 +151,7 @@ const MapControls = ({
             { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
             { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
             { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
-            { label: 'Contour', checked: showContour, onChange: setShowContour }, // Add Contour Layer
+            { label: 'Contour', checked: showContour, onChange: setShowContour },
           ].map(({ label, checked, onChange }) => (
             <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
               <input
