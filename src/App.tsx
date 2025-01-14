@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -48,7 +47,6 @@ function App() {
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
-  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/streets-v11'); // Default map style
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -172,7 +170,7 @@ function App() {
 
   // Capture the current view of the globe
   const captureView = async () => {
-    if (!earthContainerRef.current) return;
+    if (!earthContainerRef.current || !earthRef.current) return;
 
     // Close the weather widget before capturing
     setShowWeatherWidget(false);
@@ -183,28 +181,14 @@ function App() {
     try {
       console.log('Capturing Earth view...');
 
-      // Temporarily switch to a non-WebGL style
-      const originalMapStyle = mapStyle;
-      setMapStyle('mapbox://styles/mapbox/streets-v11'); // Use a raster style
+      // Get the Mapbox map instance
+      const map = earthRef.current.getMap();
 
-      // Wait for the map to re-render
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Capture the map
-      const dataUrl = await toPng(earthContainerRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        quality: 1,
-        filter: (node) => {
-          // Exclude the weather widget from the capture
-          return !node.classList?.contains('weather-widget');
-        },
-      });
+      // Capture the map canvas
+      const canvas = map.getCanvas();
+      const dataUrl = canvas.toDataURL('image/png');
 
       console.log('Earth view captured:', dataUrl);
-
-      // Revert to the original map style
-      setMapStyle(originalMapStyle);
 
       // Set the captured image in the state
       setCapturedImage(dataUrl);
