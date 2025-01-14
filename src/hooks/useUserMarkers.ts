@@ -5,6 +5,7 @@ export interface UserMarker {
   lat: number;
   label: string;
   id: string;
+  note: string; // Add a note property
 }
 
 const useUserMarkers = () => {
@@ -25,14 +26,24 @@ const useUserMarkers = () => {
   }, [userMarkers]);
 
   // Add a new user marker
-  const addUserMarker = (lng: number, lat: number) => {
+  const addUserMarker = (lng: number, lat: number, label: string = 'Marker', note: string = '') => {
     const newMarker: UserMarker = {
       lng,
       lat,
-      label: 'Marker', // Default label
+      label, // Use the provided label or default to 'Marker'
       id: Math.random().toString(36).substring(7), // Generate a unique ID
+      note, // Add the note
     };
     setUserMarkers((prev) => [...prev, newMarker]);
+  };
+
+  // Update a user marker's note
+  const updateMarkerNote = (id: string, note: string) => {
+    setUserMarkers((prev) =>
+      prev.map((marker) =>
+        marker.id === id ? { ...marker, note } : marker
+      )
+    );
   };
 
   // Remove all user markers
@@ -48,6 +59,7 @@ const useUserMarkers = () => {
   return {
     userMarkers,
     addUserMarker,
+    updateMarkerNote,
     removeAllMarkers,
     deleteUserMarker,
   };
