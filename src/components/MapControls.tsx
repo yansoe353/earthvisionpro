@@ -3,6 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
   isDarkTheme: boolean;
+  showHeatmap: boolean;
+  setShowHeatmap: (value: boolean) => void;
+  showChoropleth: boolean;
+  setShowChoropleth: (value: boolean) => void;
   showPointsOfInterest: boolean;
   setShowPointsOfInterest: (value: boolean) => void;
   showWeather: boolean;
@@ -17,11 +21,17 @@ interface MapControlsProps {
   setShow3DTerrain: (value: boolean) => void;
   show3DBuildings: boolean;
   setShow3DBuildings: (value: boolean) => void;
+  showContour: boolean; // Add Contour Layer
+  setShowContour: (value: boolean) => void; // Add Contour Layer
 }
 
 const MapControls = ({
   toggleFeaturePanel,
   isDarkTheme,
+  showHeatmap,
+  setShowHeatmap,
+  showChoropleth,
+  setShowChoropleth,
   showPointsOfInterest,
   setShowPointsOfInterest,
   showWeather,
@@ -36,6 +46,8 @@ const MapControls = ({
   setShow3DTerrain,
   show3DBuildings,
   setShow3DBuildings,
+  showContour, // Add Contour Layer
+  setShowContour, // Add Contour Layer
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -130,6 +142,8 @@ const MapControls = ({
             Map Layers
           </h3>
           {[
+            { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
+            { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
             { label: 'Points of Interest', checked: showPointsOfInterest, onChange: setShowPointsOfInterest },
             { label: 'Weather', checked: showWeather, onChange: setShowWeather },
             { label: 'Transit', checked: showTransit, onChange: setShowTransit },
@@ -137,6 +151,7 @@ const MapControls = ({
             { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
             { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
             { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
+            { label: 'Contour', checked: showContour, onChange: setShowContour }, // Add Contour Layer
           ].map(({ label, checked, onChange }) => (
             <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
               <input
