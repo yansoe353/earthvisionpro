@@ -39,6 +39,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
   const [show3DBuildings, setShow3DBuildings] = useState(false);
+  const [showContour, setShowContour] = useState(false); // Add Contour Layer state
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -171,6 +172,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setShowChoropleth={setShowChoropleth}
         show3DBuildings={show3DBuildings}
         setShow3DBuildings={setShow3DBuildings}
+        showContour={showContour} // Add Contour Layer
+        setShowContour={setShowContour} // Add Contour Layer
       />
 
       {/* Feature Panel */}
@@ -443,6 +446,26 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                 'fill-extrusion-height': ['get', 'height'],
                 'fill-extrusion-base': ['get', 'min_height'],
                 'fill-extrusion-opacity': 0.6,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Contour Layer */}
+        {showContour && (
+          <Source
+            id="contour"
+            type="vector"
+            url="mapbox://mapbox.mapbox-terrain-v2"
+          >
+            <Layer
+              id="contour-layer"
+              type="line"
+              source="contour"
+              source-layer="contour"
+              paint={{
+                'line-color': '#000',
+                'line-width': 1,
               }}
             />
           </Source>
