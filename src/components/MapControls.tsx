@@ -51,17 +51,17 @@ const MapControls = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          position: 'absolute',
-          bottom: isMobile ? '10px' : '20px',
-          right: isMobile ? '10px' : '20px',
-          zIndex: 1,
+          position: 'fixed', // Use fixed positioning for mobile
+          bottom: isMobile ? '16px' : '20px',
+          right: isMobile ? '16px' : '20px',
+          zIndex: 1000, // Ensure it's above other elements
           backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
           border: '1px solid #ccc',
           borderRadius: '50%',
-          width: isMobile ? '40px' : '50px',
-          height: isMobile ? '40px' : '50px',
+          width: isMobile ? '48px' : '50px',
+          height: isMobile ? '48px' : '50px',
           cursor: 'pointer',
-          fontSize: isMobile ? '18px' : '20px',
+          fontSize: isMobile ? '20px' : '24px',
           color: isDarkTheme ? '#00ffff' : '#000',
           backdropFilter: 'blur(10px)',
           boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
@@ -80,47 +80,25 @@ const MapControls = ({
       {isOpen && (
         <div
           style={{
-            position: 'absolute',
-            bottom: isMobile ? '60px' : '80px',
-            right: isMobile ? '10px' : '20px',
-            zIndex: 1,
+            position: 'fixed', // Use fixed positioning for mobile
+            bottom: isMobile ? '80px' : '80px',
+            right: isMobile ? '16px' : '20px',
+            zIndex: 999, // Ensure it's below the FAB
             backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '8px',
-            padding: isMobile ? '8px' : '16px',
+            padding: isMobile ? '12px' : '16px',
             color: isDarkTheme ? '#fff' : '#000',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
-            width: isMobile ? 'calc(100% - 20px)' : '250px', // Fit within screen width on mobile
-            maxWidth: '300px',
+            width: isMobile ? 'calc(100% - 32px)' : '280px', // Fit within screen width on mobile
+            maxWidth: '400px',
             transition: 'opacity 0.3s ease, transform 0.3s ease',
           }}
         >
-          {/* Toggle Feature Panel Button */}
-          <button
-            onClick={toggleFeaturePanel}
-            style={{
-              padding: isMobile ? '6px 8px' : '8px 16px',
-              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '12px' : '14px',
-              color: isDarkTheme ? '#00ffff' : '#000',
-              marginBottom: isMobile ? '8px' : '16px',
-              width: '100%',
-              whiteSpace: 'nowrap', // Prevent text wrapping
-              overflow: 'hidden', // Hide overflow
-              textOverflow: 'ellipsis', // Add ellipsis for long text
-              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
-            }}
-          >
-            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
-          </button>
-
           {/* Layer Toggles */}
-          <div style={{ marginTop: isMobile ? '8px' : '10px' }}>
-            <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '14px' : '16px', color: isDarkTheme ? '#00ffff' : '#000' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
               Map Layers
             </h3>
             {[
@@ -131,7 +109,7 @@ const MapControls = ({
               { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
               { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
             ].map(({ label, checked, onChange }) => (
-              <label key={label} style={{ display: 'block', marginBottom: '6px', fontSize: isMobile ? '12px' : '14px' }}>
+              <label key={label} style={{ display: 'block', marginBottom: '8px', fontSize: isMobile ? '14px' : '16px' }}>
                 <input
                   type="checkbox"
                   checked={checked}
@@ -142,6 +120,27 @@ const MapControls = ({
               </label>
             ))}
           </div>
+
+          {/* Toggle Feature Panel Button */}
+          <button
+            onClick={toggleFeaturePanel}
+            style={{
+              padding: isMobile ? '8px 12px' : '8px 16px',
+              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '14px' : '16px',
+              color: isDarkTheme ? '#00ffff' : '#000',
+              width: '100%',
+              whiteSpace: 'nowrap', // Prevent text wrapping
+              overflow: 'hidden', // Hide overflow
+              textOverflow: 'ellipsis', // Add ellipsis for long text
+              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+            }}
+          >
+            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+          </button>
         </div>
       )}
     </>
