@@ -16,13 +16,23 @@ const useUserMarkers = () => {
   useEffect(() => {
     const savedMarkers = localStorage.getItem('userMarkers');
     if (savedMarkers) {
-      setUserMarkers(JSON.parse(savedMarkers));
+      try {
+        const parsedMarkers = JSON.parse(savedMarkers);
+        setUserMarkers(parsedMarkers);
+      } catch (error) {
+        console.error('Error parsing saved markers:', error);
+        localStorage.removeItem('userMarkers'); // Clear invalid data
+      }
     }
   }, []);
 
   // Save markers to localStorage whenever userMarkers changes
   useEffect(() => {
-    localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
+    try {
+      localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
+    } catch (error) {
+      console.error('Error saving markers to localStorage:', error);
+    }
   }, [userMarkers]);
 
   // Add a new user marker
