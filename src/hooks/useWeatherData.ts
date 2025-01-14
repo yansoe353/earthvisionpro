@@ -1,5 +1,5 @@
-// useWeatherData.ts
 import { useState, useCallback } from 'react';
+import { WeatherData } from '../types'; // Import the WeatherData type
 
 const useWeatherData = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
