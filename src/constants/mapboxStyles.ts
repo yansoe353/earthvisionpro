@@ -7,11 +7,15 @@ export interface MapboxStyle {
 export const MAPBOX_STYLES: MapboxStyle[] = [
   {
     label: "Default",
+    value: "mapbox://styles/mapbox/satellite-v9",
+  },
+  {
+    label: "Street",
     value: "mapbox://styles/mapbox/streets-v12",
   },
   {
-    label: "Satellite",
-    value: "mapbox://styles/mapbox/satellite-v9",
+    label: "Earth Vision Pro",
+    value: "mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7",
   },
   {
     label: "Dark",
