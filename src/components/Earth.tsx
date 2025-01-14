@@ -7,6 +7,9 @@ import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
 import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle } from './types';
+import useEarthquakes from '../hooks/useEarthquakes'; // Import custom hook for earthquakes
+import useWeatherData from '../hooks/useWeatherData'; // Import custom hook for weather data
+import useUserMarkers from '../hooks/useUserMarkers'; // Import custom hook for user markers
 
 // Define Mapbox styles
 const MAPBOX_STYLES: MapboxStyle[] = [
@@ -35,49 +38,18 @@ const MAPBOX_STYLES: MapboxStyle[] = [
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
-  const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
   const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value); // Default map style
 
-  // Load markers from local storage on component mount
-  useEffect(() => {
-    const savedMarkers = localStorage.getItem('userMarkers');
-    if (savedMarkers) {
-      setUserMarkers(JSON.parse(savedMarkers));
-    }
-  }, []);
-
-  // Save markers to local storage whenever userMarkers changes
-  useEffect(() => {
-    localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
-  }, [userMarkers]);
-
-  // Fetch earthquake data from USGS API
-  useEffect(() => {
-    if (!showDisasterAlerts) return;
-
-    const fetchEarthquakes = async () => {
-      try {
-        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
-        if (!response.ok) throw new Error('Failed to fetch earthquake data');
-        const data = await response.json();
-        setEarthquakes(data.features);
-      } catch (error) {
-        console.error('Error fetching earthquake data:', error);
-      }
-    };
-
-    fetchEarthquakes();
-    const interval = setInterval(fetchEarthquakes, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, [showDisasterAlerts]);
+  // Custom hooks
+  const { earthquakes } = useEarthquakes(showDisasterAlerts); // Fetch earthquake data
+  const { weatherData, fetchWeatherData } = useWeatherData(); // Fetch weather data
+  const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker } = useUserMarkers(); // Manage user markers
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -89,19 +61,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       }
 
       // Fetch weather data for the clicked location
-      try {
-        const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lngLat.lat}&lon=${lngLat.lng}&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}&units=metric`
-        );
-        if (!response.ok) throw new Error('Failed to fetch weather data');
-        const data = await response.json();
-        setWeatherData(data);
-        setShowWeatherWidget(true); // Show the weather widget
-      } catch (error) {
-        console.error('Error fetching weather data:', error);
-      }
+      await fetchWeatherData(lngLat.lat, lngLat.lng);
+      setShowWeatherWidget(true); // Show the weather widget
     },
-    [onCaptureView, isCaptureEnabled, setShowWeatherWidget]
+    [onCaptureView, isCaptureEnabled, fetchWeatherData, setShowWeatherWidget]
   );
 
   // Handle search for a location
@@ -137,29 +100,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Toggle capture feature
   const toggleCaptureFeature = useCallback(() => {
     setIsCaptureEnabled((prev) => !prev);
-  }, []);
-
-  // Add user-generated marker
-  const addUserMarker = useCallback((lng: number, lat: number) => {
-    const newMarker: UserMarker = {
-      lng,
-      lat,
-      label: 'Marker', // Default label
-      id: Math.random().toString(36).substring(7), // Generate a unique ID
-    };
-    setUserMarkers((prev) => [...prev, newMarker]);
-    setSelectedMarker(newMarker); // Show popup for the new marker
-  }, []);
-
-  // Remove all user-generated markers
-  const removeAllMarkers = useCallback(() => {
-    setUserMarkers([]); // Clear all markers
-    setSelectedMarker(null); // Close any open popup
-  }, []);
-
-  // Delete user-generated marker
-  const deleteUserMarker = useCallback((id: string) => {
-    setUserMarkers((prev) => prev.filter((marker) => marker.id !== id));
   }, []);
 
   // Close weather widget
