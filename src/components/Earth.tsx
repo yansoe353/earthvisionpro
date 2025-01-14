@@ -12,8 +12,6 @@ import useWeatherData from '../hooks/useWeatherData'; // Import custom hook for 
 import useUserMarkers from '../hooks/useUserMarkers'; // Import custom hook for user markers
 import { MAPBOX_STYLES } from '../constants/mapboxStyles'; // Import from constants file
 
-  
-
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
@@ -24,6 +22,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value); // Default map style
+  const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5); // Default terrain exaggeration
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts); // Fetch earthquake data
@@ -107,6 +106,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           mapStyle={mapStyle}
           setMapStyle={setMapStyle}
           mapStyles={MAPBOX_STYLES}
+          terrainExaggeration={terrainExaggeration}
+          setTerrainExaggeration={setTerrainExaggeration}
         />
       )}
 
@@ -132,7 +133,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         maxZoom={20}
         minZoom={1}
         projection={{ name: 'globe' }}
-        terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }} // Enable 3D terrain
+        terrain={{ source: 'mapbox-dem', exaggeration: terrainExaggeration }} // Dynamic terrain exaggeration
         fog={{
           range: [1, 10],
           color: isDarkTheme ? '#000' : '#242B4B',
