@@ -17,14 +17,18 @@ import { Feature, Point } from 'geojson';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
 
+// Debounce function for map clicks
+const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
+  callback();
+}, 300);
+
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
-  const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
@@ -57,11 +61,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       supercluster.load(points);
       setClusters(supercluster.getClusters([-180, -90, 180, 90], 1));
     }
-  }, [earthquakes]);
+  }, [earthquakes, supercluster]);
 
   // Handle click on the map
   const handleClick = useCallback(
-    debounce(async (event: MapLayerMouseEvent) => {
+    async (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
       setClickedLocation(lngLat);
       if (isCaptureEnabled) {
@@ -69,8 +73,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       }
       await fetchWeatherData(lngLat.lat, lngLat.lng);
       setShowWeatherWidget(true);
-    }, 300),
-    [onCaptureView, isCaptureEnabled, fetchWeatherData, setShowWeatherWidget]
+    },
+    [isCaptureEnabled, onCaptureView, fetchWeatherData, setShowWeatherWidget]
   );
 
   // Handle search for a location
@@ -112,6 +116,30 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const closeWeatherWidget = useCallback(() => {
     setShowWeatherWidget(false);
   }, [setShowWeatherWidget]);
+
+  // Render clusters
+  const renderClusters = useMemo(() => {
+    return clusters.map((cluster) => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+      if (cluster.properties.cluster) {
+        return (
+          <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
+            <div className="cluster-marker">
+              {cluster.properties.point_count}
+            </div>
+          </Marker>
+        );
+      } else {
+        return (
+          <Marker key={cluster.properties.id} longitude={longitude} latitude={latitude}>
+            <div className="earthquake-marker">
+              {cluster.properties.mag}
+            </div>
+          </Marker>
+        );
+      }
+    });
+  }, [clusters]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -156,7 +184,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           pitch: 0,
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        onClick={handleClick}
+        onClick={(e) => debouncedClick(e, () => handleClick(e))}
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
@@ -179,26 +207,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         />
 
         {/* Earthquake Markers (Clustered) */}
-        {clusters.map((cluster) => {
-          const [longitude, latitude] = cluster.geometry.coordinates;
-          if (cluster.properties.cluster) {
-            return (
-              <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
-                <div className="cluster-marker">
-                  {cluster.properties.point_count}
-                </div>
-              </Marker>
-            );
-          } else {
-            return (
-              <Marker key={cluster.properties.id} longitude={longitude} latitude={latitude}>
-                <div className="earthquake-marker">
-                  {cluster.properties.mag}
-                </div>
-              </Marker>
-            );
-          }
-        })}
+        {renderClusters}
 
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
@@ -208,7 +217,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={marker.lat}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelectedMarker(marker);
+              setSelectedFeature(marker);
             }}
           >
             <div className="user-marker">
@@ -217,29 +226,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         ))}
 
-        {/* Popups */}
-        {selectedEarthquake && (
+        {/* Popup */}
+        {selectedFeature && (
           <Popup
-            longitude={selectedEarthquake.geometry.coordinates[0]}
-            latitude={selectedEarthquake.geometry.coordinates[1]}
-            onClose={() => setSelectedEarthquake(null)}
+            longitude={
+              'geometry' in selectedFeature
+                ? selectedFeature.geometry.coordinates[0]
+                : selectedFeature.lng
+            }
+            latitude={
+              'geometry' in selectedFeature
+                ? selectedFeature.geometry.coordinates[1]
+                : selectedFeature.lat
+            }
+            onClose={() => setSelectedFeature(null)}
           >
             <MarkerPopup
-              marker={selectedEarthquake}
-              onClose={() => setSelectedEarthquake(null)}
-            />
-          </Popup>
-        )}
-
-        {selectedMarker && (
-          <Popup
-            longitude={selectedMarker.lng}
-            latitude={selectedMarker.lat}
-            onClose={() => setSelectedMarker(null)}
-          >
-            <MarkerPopup
-              marker={selectedMarker}
-              onClose={() => setSelectedMarker(null)}
+              marker={selectedFeature}
+              onClose={() => setSelectedFeature(null)}
               onDelete={deleteUserMarker}
             />
           </Popup>
