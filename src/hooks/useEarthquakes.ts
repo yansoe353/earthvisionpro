@@ -1,5 +1,5 @@
-// useEarthquakes.ts
 import { useState, useEffect } from 'react';
+import { Earthquake } from '../types'; // Import the Earthquake type
 
 const useEarthquakes = (showDisasterAlerts: boolean) => {
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
@@ -23,7 +23,7 @@ const useEarthquakes = (showDisasterAlerts: boolean) => {
     return () => clearInterval(interval);
   }, [showDisasterAlerts]);
 
-  return earthquakes;
+  return { earthquakes };
 };
 
 export default useEarthquakes;
