@@ -6,7 +6,7 @@ import FeaturePanel from './FeaturePanel';
 import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
-import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle } from './types';
+import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle } from '../types';
 import useEarthquakes from '../hooks/useEarthquakes';
 import useWeatherData from '../hooks/useWeatherData';
 import useUserMarkers from '../hooks/useUserMarkers';
