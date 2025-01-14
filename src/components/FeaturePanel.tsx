@@ -1,5 +1,5 @@
 import React from 'react';
-import { Earthquake, UserMarker, MapboxStyle } from './types';
+import { Earthquake, UserMarker, MapboxStyle } from '../types';
 import { FaTimes, FaGlobeAmericas, FaMoon, FaCamera, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
 
 interface FeaturePanelProps {
