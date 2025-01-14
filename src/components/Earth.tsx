@@ -11,7 +11,7 @@ import useEarthquakes from '../hooks/useEarthquakes'; // Import custom hook for 
 import useWeatherData from '../hooks/useWeatherData'; // Import custom hook for weather data
 import useUserMarkers from '../hooks/useUserMarkers'; // Import custom hook for user markers
 
-// Define Mapbox styles
+// Define Mapbox styles,
 const MAPBOX_STYLES: MapboxStyle[] = [
   {
     label: "Default",
