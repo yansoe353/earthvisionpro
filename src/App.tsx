@@ -188,7 +188,7 @@ function App() {
       throw new Error('Map instance not found.');
     }
 
-    // Wait for the map to be fully rendered
+    // Wait for the map to be fully rendered.
     await new Promise((resolve) => {
       map.once('idle', resolve); // Wait for the map to finish rendering
     });
