@@ -4,9 +4,34 @@ import { UserMarker } from '../types';
 const useUserMarkers = () => {
   const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]);
 
+  // Load markers from localStorage on mount
+  useEffect(() => {
+    const savedMarkers = localStorage.getItem('userMarkers');
+    if (savedMarkers) {
+      try {
+        const parsedMarkers = JSON.parse(savedMarkers);
+        if (Array.isArray(parsedMarkers)) {
+          setUserMarkers(parsedMarkers);
+        }
+      } catch (error) {
+        console.error('Failed to parse userMarkers from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save markers to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
+  }, [userMarkers]);
+
   // Add a new user marker
   const addUserMarker = useCallback(
     (lng: number, lat: number, label: string = 'Custom Marker', note: string = '') => {
+      if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
+        console.error('Invalid coordinates');
+        return;
+      }
+
       const newMarker: UserMarker = {
         lng,
         lat,
@@ -38,8 +63,11 @@ const useUserMarkers = () => {
     setUserMarkers((prev) => prev.filter((marker) => marker.id !== id));
   }, []);
 
+  // Memoize the userMarkers array to avoid unnecessary re-renders
+  const memoizedUserMarkers = useMemo(() => userMarkers, [userMarkers]);
+
   return {
-    userMarkers,
+    userMarkers: memoizedUserMarkers,
     addUserMarker,
     updateMarkerNote,
     removeAllMarkers,
