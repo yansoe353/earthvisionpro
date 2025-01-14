@@ -51,10 +51,10 @@ const MapControls = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          position: 'fixed', // Use fixed positioning for mobile
+          position: 'fixed',
           bottom: isMobile ? '16px' : '20px',
           right: isMobile ? '16px' : '20px',
-          zIndex: 1000, // Ensure it's above other elements
+          zIndex: 1000,
           backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
           border: '1px solid #ccc',
           borderRadius: '50%',
@@ -80,10 +80,10 @@ const MapControls = ({
       {isOpen && (
         <div
           style={{
-            position: 'fixed', // Use fixed positioning for mobile
+            position: 'fixed',
             bottom: isMobile ? '80px' : '80px',
             right: isMobile ? '16px' : '20px',
-            zIndex: 999, // Ensure it's below the FAB
+            zIndex: 999,
             backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '8px',
@@ -91,35 +91,15 @@ const MapControls = ({
             color: isDarkTheme ? '#fff' : '#000',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
-            width: isMobile ? 'calc(100% - 32px)' : '280px', // Fit within screen width on mobile
+            width: isMobile ? 'calc(100% - 32px)' : '280px',
             maxWidth: '400px',
-            transition: 'opacity 0.3s ease, transform 0.3s ease',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
           }}
         >
-          {/* Toggle Feature Panel Button */}
-          <button
-            onClick={toggleFeaturePanel}
-            style={{
-              padding: isMobile ? '8px 12px' : '8px 16px',
-              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '14px' : '16px',
-              color: isDarkTheme ? '#00ffff' : '#000',
-              marginBottom: isMobile ? '12px' : '16px',
-              width: '100%',
-              whiteSpace: 'nowrap', // Prevent text wrapping
-              overflow: 'hidden', // Hide overflow
-              textOverflow: 'ellipsis', // Add ellipsis for long text
-              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
-            }}
-          >
-            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
-          </button>
-
           {/* Layer Toggles */}
-          <div style={{ marginTop: isMobile ? '8px' : '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
               Map Layers
             </h3>
@@ -131,17 +111,38 @@ const MapControls = ({
               { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
               { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
             ].map(({ label, checked, onChange }) => (
-              <label key={label} style={{ display: 'block', marginBottom: '8px', fontSize: isMobile ? '14px' : '16px' }}>
+              <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={(e) => onChange(e.target.checked)}
-                  style={{ marginRight: '8px', cursor: 'pointer' }}
+                  style={{ margin: 0, cursor: 'pointer' }}
                 />
                 {label}
               </label>
             ))}
           </div>
+
+          {/* Toggle Feature Panel Button */}
+          <button
+            onClick={toggleFeaturePanel}
+            style={{
+              padding: '8px 12px',
+              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '14px' : '16px',
+              color: isDarkTheme ? '#00ffff' : '#000',
+              width: '100%',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+            }}
+          >
+            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+          </button>
         </div>
       )}
     </>
