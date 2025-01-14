@@ -32,6 +32,15 @@
   box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
 }
 
+.cluster-marker {
+  background-color: #2196f3;
+  color: white;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
 /* Popup styles */
 .mapboxgl-popup {
   z-index: 10;
@@ -175,7 +184,7 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
-
+/* Terrain Control */
 .terrain-control {
   margin-top: 10px;
 }
@@ -244,6 +253,21 @@
 
 .weather-widget .close-button:hover {
   color: #ff00ff;
+}
+
+/* Layer Toggles */
+.layer-toggle {
+  margin-bottom: 10px;
+}
+
+.layer-toggle label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.layer-toggle input[type="checkbox"] {
+  margin-right: 8px;
 }
 
 /* Mobile Responsiveness */
