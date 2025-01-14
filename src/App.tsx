@@ -171,80 +171,85 @@ function App() {
 
   // Capture the current view of the globe
   const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
+  if (!earthContainerRef.current || !earthRef.current) return;
 
-    // Close the weather widget before capturing
-    setShowWeatherWidget(false);
+  // Close the weather widget before capturing
+  setShowWeatherWidget(false);
 
-    setLoading(true);
-    setDynamicThemes([]);
+  setLoading(true);
+  setDynamicThemes([]);
 
-    try {
-      console.log('Capturing Earth view...');
+  try {
+    console.log('Capturing Earth view...');
 
-      // Get the Mapbox map instance
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      // Capture the map canvas
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-
-      console.log('Earth view captured:', dataUrl);
-
-      // Set the captured image in the state
-      setCapturedImage(dataUrl);
-
-      // Analyze the captured image with Groq
-      console.log('Analyzing image with Groq...');
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl,
-                },
-              },
-            ],
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 8000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const content = completion.choices[0].message.content;
-        const locationMatch = content.match(/^[^•\n]+/);
-        if (locationMatch) {
-          const location = locationMatch[0].trim();
-          setCurrentLocation(location);
-          setFacts(content);
-          await generateDynamicThemes(location);
-          await fetchYouTubeVideos(location);
-        }
-      }
-    } catch (error) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
+    // Get the Mapbox map instance
+    const map = earthRef.current.getMap();
+    if (!map) {
+      throw new Error('Map instance not found.');
     }
-  };
+
+    // Wait for the map to be fully rendered
+    await new Promise((resolve) => {
+      map.once('idle', resolve); // Wait for the map to finish rendering
+    });
+
+    // Capture the map canvas
+    const canvas = map.getCanvas();
+    const dataUrl = canvas.toDataURL('image/png');
+
+    console.log('Earth view captured:', dataUrl);
+
+    // Set the captured image in the state
+    setCapturedImage(dataUrl);
+
+    // Analyze the captured image with Groq
+    console.log('Analyzing image with Groq...');
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: dataUrl,
+              },
+            },
+          ],
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.95,
+      max_tokens: 8000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const content = completion.choices[0].message.content;
+      const locationMatch = content.match(/^[^•\n]+/);
+      if (locationMatch) {
+        const location = locationMatch[0].trim();
+        setCurrentLocation(location);
+        setFacts(content);
+        await generateDynamicThemes(location);
+        await fetchYouTubeVideos(location);
+      }
+    }
+  } catch (error) {
+    console.error('Error capturing view:', error);
+    setFacts('Error getting facts about this region. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
