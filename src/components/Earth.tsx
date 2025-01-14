@@ -13,6 +13,9 @@ import useUserMarkers from '../hooks/useUserMarkers';
 import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
+import { Feature, Point } from 'geojson';
+
+type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -25,7 +28,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
-  const [clusters, setClusters] = useState([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -44,10 +47,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   useEffect(() => {
     if (earthquakes.length > 0) {
       const points = earthquakes.map((eq) => ({
-        type: 'Feature',
+        type: "Feature" as const,
         properties: { id: eq.id, mag: eq.properties.mag },
         geometry: {
-          type: 'Point',
+          type: "Point" as const,
           coordinates: [eq.geometry.coordinates[0], eq.geometry.coordinates[1]],
         },
       }));
@@ -180,7 +183,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           const [longitude, latitude] = cluster.geometry.coordinates;
           if (cluster.properties.cluster) {
             return (
-              <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
+              <Marker key={cluster.properties.cluster_id} longitude={longitude} latitude={latitude}>
                 <div className="cluster-marker">
                   {cluster.properties.point_count}
                 </div>
