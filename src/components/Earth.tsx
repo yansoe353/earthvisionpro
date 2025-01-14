@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, forwardRef, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useRef, forwardRef, useState, useMemo, useEffect, useImperativeHandle } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
@@ -183,7 +183,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           const [longitude, latitude] = cluster.geometry.coordinates;
           if (cluster.properties.cluster) {
             return (
-              <Marker key={cluster.properties.cluster_id} longitude={longitude} latitude={latitude}>
+              <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
                 <div className="cluster-marker">
                   {cluster.properties.point_count}
                 </div>
