@@ -141,6 +141,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     });
   }, [clusters]);
 
+  // Type guard to check if a marker is a UserMarker
+  const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
+    return 'label' in marker && 'id' in marker;
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Map Controls */}
@@ -244,7 +249,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             <MarkerPopup
               marker={selectedFeature}
               onClose={() => setSelectedFeature(null)}
-              onDelete={deleteUserMarker}
+              onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
             />
           </Popup>
         )}
