@@ -270,6 +270,120 @@
   margin-right: 8px;
 }
 
+/* Map Controls */
+.map-controls {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
+}
+
+.map-controls .control-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  background-color: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.map-controls .control-button:hover {
+  background-color: rgba(0, 255, 255, 0.2);
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.map-controls .layer-toggles {
+  margin-top: 10px;
+}
+
+.map-controls .layer-toggles h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #00ffff;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+}
+
+.map-controls .layer-toggle {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: white;
+}
+
+.map-controls .layer-toggle input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.map-controls .layer-toggle input[type="checkbox"]:checked {
+  accent-color: #00ffff;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .map-controls {
+    width: 90%;
+    max-width: 300px;
+    padding: 12px;
+    top: 10px;
+    left: 10px;
+  }
+
+  .map-controls .control-button {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .map-controls .layer-toggles h3 {
+    font-size: 14px;
+  }
+
+  .map-controls .layer-toggle {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-controls {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+  }
+
+  .map-controls .control-button {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .map-controls .layer-toggles h3 {
+    font-size: 14px;
+  }
+
+  .map-controls .layer-toggle {
+    font-size: 12px;
+  }
+}
+
+
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .feature-panel,
