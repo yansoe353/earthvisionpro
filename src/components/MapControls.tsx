@@ -3,16 +3,18 @@ import React, { useState, useEffect, useRef } from 'react';
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
   isDarkTheme: boolean;
-  showHeatmap: boolean;
-  setShowHeatmap: (value: boolean) => void;
+  showPointsOfInterest: boolean;
+  setShowPointsOfInterest: (value: boolean) => void;
+  showWeather: boolean;
+  setShowWeather: (value: boolean) => void;
+  showTransit: boolean;
+  setShowTransit: (value: boolean) => void;
   showTraffic: boolean;
   setShowTraffic: (value: boolean) => void;
   showSatellite: boolean;
   setShowSatellite: (value: boolean) => void;
   show3DTerrain: boolean;
   setShow3DTerrain: (value: boolean) => void;
-  showChoropleth: boolean;
-  setShowChoropleth: (value: boolean) => void;
   show3DBuildings: boolean;
   setShow3DBuildings: (value: boolean) => void;
 }
@@ -20,16 +22,18 @@ interface MapControlsProps {
 const MapControls = ({
   toggleFeaturePanel,
   isDarkTheme,
-  showHeatmap,
-  setShowHeatmap,
+  showPointsOfInterest,
+  setShowPointsOfInterest,
+  showWeather,
+  setShowWeather,
+  showTransit,
+  setShowTransit,
   showTraffic,
   setShowTraffic,
   showSatellite,
   setShowSatellite,
   show3DTerrain,
   setShow3DTerrain,
-  showChoropleth,
-  setShowChoropleth,
   show3DBuildings,
   setShow3DBuildings,
 }: MapControlsProps) => {
@@ -126,11 +130,12 @@ const MapControls = ({
             Map Layers
           </h3>
           {[
-            { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
+            { label: 'Points of Interest', checked: showPointsOfInterest, onChange: setShowPointsOfInterest },
+            { label: 'Weather', checked: showWeather, onChange: setShowWeather },
+            { label: 'Transit', checked: showTransit, onChange: setShowTransit },
             { label: 'Traffic', checked: showTraffic, onChange: setShowTraffic },
             { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
             { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
-            { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
             { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
           ].map(({ label, checked, onChange }) => (
             <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
