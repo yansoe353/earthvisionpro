@@ -65,38 +65,22 @@ function App() {
       }
 
       const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      if (!apiKey) {
-        console.error('YouTube API key is missing.');
-        return;
-      }
-
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchPrompt
         )}&type=video&maxResults=5&key=${apiKey}`
       );
-
-      if (!response.ok) {
-        console.error('YouTube API request failed:', response.status, response.statusText);
-        return;
-      }
-
       const data = await response.json();
-      console.log('YouTube API response:', data); // Log the API response
-
-      if (data.items && data.items.length > 0) {
+      if (data.items) {
         const videos = data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
         }));
-        setYoutubeVideos(videos); // Update the state with fetched videos
-      } else {
-        console.warn('No videos found for the location:', location);
-        setYoutubeVideos([]); // Clear the state if no videos are found
+        setYoutubeVideos(videos);
       }
     } catch (error) {
       console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]); // Clear the state on error
+      setYoutubeVideos([]);
     }
   };
 
@@ -185,121 +169,87 @@ function App() {
     }
   };
 
-  // Fetch location name from Mapbox Geocoding API
-  const fetchLocationName = async (lng: number, lat: number) => {
-    const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
+  // Capture the current view of the globe
+  const captureView = async () => {
+  if (!earthContainerRef.current || !earthRef.current) return;
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        return data.features[0].place_name; // Returns the location name
-      }
-      return 'Unknown Location';
-    } catch (error) {
-      console.error('Error fetching location name:', error);
-      return 'Unknown Location';
+  // Close the weather widget before capturing
+  setShowWeatherWidget(false);
+
+  setLoading(true);
+  setDynamicThemes([]);
+
+  try {
+    console.log('Capturing Earth view...');
+
+    // Get the Mapbox map instance
+    const map = earthRef.current.getMap();
+    if (!map) {
+      throw new Error('Map instance not found.');
     }
-  };
 
-  // Analyze image and location with Groq API
-  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
+    // Wait for the map to be fully rendered.
+    await new Promise((resolve) => {
+      map.once('idle', resolve); // Wait for the map to finish rendering
+    });
+
+    // Capture the map canvas
+    const canvas = map.getCanvas();
+    const dataUrl = canvas.toDataURL('image/png');
+
+    console.log('Earth view captured:', dataUrl);
+
+    // Set the captured image in the state
+    setCapturedImage(dataUrl);
+
+    // Analyze the captured image with Groq
+    console.log('Analyzing image with Groq...');
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
       dangerouslyAllowBrowser: true,
     });
 
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Examine the image and identify the location visible. Provide a detailed analysis of the region.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: dataUrl,
               },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl,
-                },
-              },
-            ],
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 8000,
-      });
+            },
+          ],
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.95,
+      max_tokens: 8000,
+    });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content; // Returns the AI-generated analysis
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const content = completion.choices[0].message.content;
+      const locationMatch = content.match(/^[^•\n]+/);
+      if (locationMatch) {
+        const location = locationMatch[0].trim();
+        setCurrentLocation(location);
+        setFacts(content);
+        await generateDynamicThemes(location);
+        await fetchYouTubeVideos(location);
       }
-      return 'No analysis available.';
-    } catch (error) {
-      console.error('Error analyzing with Groq:', error);
-      return 'Error analyzing the image. Please try again.';
     }
-  };
-
-  // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
-
-    // Close the weather widget before capturing
-    setShowWeatherWidget(false);
-
-    setLoading(true);
-    setDynamicThemes([]);
-
-    try {
-      console.log('Capturing Earth view...');
-
-      // Get the Mapbox map instance
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      // Wait for the map to be fully rendered
-      await new Promise((resolve) => {
-        map.once('idle', resolve); // Wait for the map to finish rendering
-      });
-
-      // Capture the map canvas as an image
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      console.log('Earth view captured:', dataUrl);
-
-      // Set the captured image in the state
-      setCapturedImage(dataUrl);
-
-      // Get the current center coordinates
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      // Fetch the location name using Mapbox Geocoding API
-      const locationName = await fetchLocationName(lng, lat);
-      console.log('Location name:', locationName);
-      setCurrentLocation(locationName);
-
-      // Send the image and location name to Groq API for analysis
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
-      setFacts(analysis);
-
-      // Generate dynamic themes and fetch YouTube videos
-      await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
-    } catch (error) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error('Error capturing view:', error);
+    setFacts('Error getting facts about this region. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
