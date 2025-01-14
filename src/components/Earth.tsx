@@ -6,9 +6,31 @@ import FeaturePanel from './FeaturePanel';
 import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
-import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef } from './types';
+import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle } from './types';
 
-const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
+// Define Mapbox styles
+const MAPBOX_STYLES: MapboxStyle[] = [
+  {
+    label: "Default",
+    value: "mapbox://styles/mapbox/streets-v12",
+  },
+  {
+    label: "Satellite",
+    value: "mapbox://styles/mapbox/satellite-v9",
+  },
+  {
+    label: "Dark",
+    value: "mapbox://styles/mapbox/dark-v11",
+  },
+  {
+    label: "Light",
+    value: "mapbox://styles/mapbox/light-v11",
+  },
+  {
+    label: "Outdoors",
+    value: "mapbox://styles/mapbox/outdoors-v12",
+  },
+];
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -22,6 +44,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
+  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value); // Default map style
 
   // Load markers from local storage on component mount
   useEffect(() => {
@@ -162,6 +185,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           addUserMarker={addUserMarker}
           removeAllMarkers={removeAllMarkers}
           onClose={toggleFeaturePanel}
+          mapStyle={mapStyle}
+          setMapStyle={setMapStyle}
+          mapStyles={MAPBOX_STYLES}
         />
       )}
 
@@ -173,7 +199,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       {/* Mapbox Map */}
       <Map
         ref={mapRef}
-        mapStyle={isDarkTheme ? 'mapbox://styles/mapbox/dark-v11' : MAPBOX_STYLE}
+        mapStyle={mapStyle} // Use the selected map style
         initialViewState={{
           longitude: 0,
           latitude: 20,
