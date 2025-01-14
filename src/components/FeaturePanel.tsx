@@ -1,7 +1,5 @@
 import React from 'react';
-import { Earthquake, UserMarker } from './types';
-
-// Icons (Using a library like FontAwesome or Material Icons)
+import { Earthquake, UserMarker, MapboxStyle } from './types';
 import { FaTimes, FaGlobeAmericas, FaMoon, FaCamera, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
 
 interface FeaturePanelProps {
@@ -15,6 +13,9 @@ interface FeaturePanelProps {
   addUserMarker: (lng: number, lat: number) => void;
   removeAllMarkers: () => void;
   onClose: () => void;
+  mapStyle: string; // Current map style
+  setMapStyle: (style: string) => void; // Function to update map style
+  mapStyles: MapboxStyle[]; // List of available map styles
 }
 
 const FeatureToggle = ({ icon, label, checked, onChange, ariaLabel }: {
@@ -67,6 +68,9 @@ const FeaturePanel = ({
   addUserMarker,
   removeAllMarkers,
   onClose,
+  mapStyle,
+  setMapStyle,
+  mapStyles,
 }: FeaturePanelProps) => (
   <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
     {/* Close Button */}
@@ -76,6 +80,24 @@ const FeaturePanel = ({
 
     {/* Panel Title */}
     <h2 className="panel-title">Map Features</h2>
+
+    {/* Map Style Dropdown */}
+    <div className="feature-toggle">
+      <label>
+        Map Style:
+        <select
+          value={mapStyle}
+          onChange={(e) => setMapStyle(e.target.value)}
+          aria-label="Select map style"
+        >
+          {mapStyles.map((style) => (
+            <option key={style.value} value={style.value}>
+              {style.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
 
     {/* Disaster Alerts Toggle */}
     <FeatureToggle
