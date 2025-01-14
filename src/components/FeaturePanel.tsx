@@ -16,6 +16,8 @@ interface FeaturePanelProps {
   mapStyle: string; // Current map style
   setMapStyle: (style: string) => void; // Function to update map style
   mapStyles: MapboxStyle[]; // List of available map styles
+  terrainExaggeration: number; // Current terrain exaggeration value
+  setTerrainExaggeration: (value: number) => void; // Function to update terrain exaggeration
 }
 
 const FeatureToggle = ({ icon, label, checked, onChange, ariaLabel }: {
@@ -71,6 +73,8 @@ const FeaturePanel = ({
   mapStyle,
   setMapStyle,
   mapStyles,
+  terrainExaggeration,
+  setTerrainExaggeration,
 }: FeaturePanelProps) => (
   <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
     {/* Close Button */}
@@ -142,6 +146,23 @@ const FeaturePanel = ({
       onClick={removeAllMarkers}
       ariaLabel="Remove all markers"
     />
+
+    {/* Terrain Exaggeration Slider */}
+    <div className="terrain-control">
+      <label>
+        Terrain Exaggeration:
+        <input
+          type="range"
+          min="1"
+          max="5"
+          step="0.1"
+          value={terrainExaggeration}
+          onChange={(e) => setTerrainExaggeration(parseFloat(e.target.value))}
+          aria-label="Adjust terrain exaggeration"
+        />
+        <span>{terrainExaggeration}</span>
+      </label>
+    </div>
   </div>
 );
 
