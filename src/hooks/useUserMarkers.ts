@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 export interface UserMarker {
   lng: number;
@@ -14,6 +14,26 @@ const useUserMarkers = () => {
 
   // Check if localStorage is available
   const isLocalStorageAvailable = typeof localStorage !== 'undefined';
+
+  // Helper function to generate unique IDs
+  const generateUniqueId = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return Math.random().toString(36).substring(2, 15); // Fallback for older environments
+  };
+
+  // Helper function to validate UserMarker objects
+  const isValidUserMarker = (marker: any): marker is UserMarker => {
+    return (
+      typeof marker === 'object' &&
+      typeof marker.lng === 'number' &&
+      typeof marker.lat === 'number' &&
+      typeof marker.label === 'string' &&
+      typeof marker.id === 'string' &&
+      typeof marker.note === 'string'
+    );
+  };
 
   // Load markers from localStorage on component mount
   useEffect(() => {
@@ -55,7 +75,7 @@ const useUserMarkers = () => {
         lng,
         lat,
         label,
-        id: crypto.randomUUID(), // Use crypto.randomUUID() for unique IDs
+        id: generateUniqueId(), // Use the helper function for unique IDs
         note,
       };
       setUserMarkers((prev) => [...prev, newMarker]);
@@ -82,25 +102,19 @@ const useUserMarkers = () => {
     setUserMarkers((prev) => prev.filter((marker) => marker.id !== id));
   }, []);
 
-  return {
-    userMarkers,
-    addUserMarker,
-    updateMarkerNote,
-    removeAllMarkers,
-    deleteUserMarker,
-  };
-};
-
-// Helper function to validate UserMarker objects
-const isValidUserMarker = (marker: any): marker is UserMarker => {
-  return (
-    typeof marker === 'object' &&
-    typeof marker.lng === 'number' &&
-    typeof marker.lat === 'number' &&
-    typeof marker.label === 'string' &&
-    typeof marker.id === 'string' &&
-    typeof marker.note === 'string'
+  // Memoize the returned object to avoid unnecessary re-renders
+  const returnValue = useMemo(
+    () => ({
+      userMarkers,
+      addUserMarker,
+      updateMarkerNote,
+      removeAllMarkers,
+      deleteUserMarker,
+    }),
+    [userMarkers, addUserMarker, updateMarkerNote, removeAllMarkers, deleteUserMarker]
   );
+
+  return returnValue;
 };
 
 export default useUserMarkers;
