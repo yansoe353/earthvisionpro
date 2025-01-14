@@ -260,6 +260,114 @@ function App() {
     }
   };
 
+  // Analyze with a specific perspective
+  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
+    if (!currentLocation || !facts) return;
+    setAnalysisLoading(true);
+
+    // Save the current language
+    const currentLang = language;
+
+    try {
+      // Force language to English before analysis
+      setLanguage('en');
+
+      // Clear previous translated content
+      setTranslatedFacts('');
+
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const defaultPromptMap = {
+        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects...`,
+        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance...`,
+        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks,...`,
+      };
+
+      const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const newAnalysis = completion.choices[0].message.content;
+
+        // Update the facts state with the new analysis
+        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+
+        // Translate the analysis if the current language is not English
+        if (currentLang !== 'en') {
+          const translatedText = await translateText(newAnalysis, currentLang);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+        } else {
+          // If the language is English, set the translatedFacts to the new analysis
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error during analysis:', error);
+      setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
+    } finally {
+      // Restore the original language
+      setLanguage(currentLang);
+      setAnalysisLoading(false);
+    }
+  };
+
+  // Generate location-based news using AI
+  const generateNewsWithAI = async (location: string): Promise<string> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a brief news summary about ${location}. Include cultural highlights, interesting facts, and notable events.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+      return 'No news available at the moment.';
+    } catch (error) {
+      console.error('Error generating news with AI:', error);
+      return 'Error generating news. Please try again.';
+    }
+  };
+
+  // Handle language change
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+    if (newLanguage === 'en') {
+      setTranslatedFacts(facts);
+    } else {
+      const translatedText = await translateText(facts, newLanguage);
+      setTranslatedFacts(translatedText);
+    }
+    setTranslating(false);
+  };
+
   // Render YouTube videos section
   const renderYouTubeVideos = () => {
     if (youtubeVideos.length === 0) {
@@ -451,4 +559,4 @@ function App() {
   );
 }
 
-export default App; I
+export default App;
