@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -75,14 +76,11 @@ function App() {
           id: item.id.videoId,
           title: item.snippet.title,
         }));
-        setYoutubeVideos(videos); // Update the state with fetched videos
-      } else {
-        console.error('No videos found in the YouTube API response.');
-        setYoutubeVideos([]); // Clear the state if no videos are found
+        setYoutubeVideos(videos);
       }
     } catch (error) {
       console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]); // Clear the state on error
+      setYoutubeVideos([]);
     }
   };
 
@@ -115,6 +113,45 @@ function App() {
     return null;
   };
 
+  // Handle rewritten content from MarkdownContent
+  const handleRewrittenContent = (content: string) => {
+    if (language === 'en') {
+      setFacts(content); // Update facts if language is English
+    } else {
+      translateText(content, language).then((translated) => setTranslatedFacts(translated)); // Translate if needed
+    }
+  };
+
+  // Generate location-based news using AI
+  const generateNewsWithAI = async (location: string): Promise<string> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a brief news summary about ${location}. Include cultural highlights, interesting facts, and notable events.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+      return 'No news available at the moment.';
+    } catch (error) {
+      console.error('Error generating news with AI:', error);
+      return 'Error generating news. Please try again.';
+    }
+  };
+
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
@@ -128,7 +165,66 @@ function App() {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName); // Set currentLocation
       setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
-      await fetchYouTubeVideos(locationName); // Fetch YouTube videos for the location
+      await fetchYouTubeVideos(locationName);
+    }
+  };
+
+  // Fetch location name from Mapbox Geocoding API
+  const fetchLocationName = async (lng: number, lat: number) => {
+    const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name; // Returns the location name
+      }
+      return 'Unknown Location';
+    } catch (error) {
+      console.error('Error fetching location name:', error);
+      return 'Unknown Location';
+    }
+  };
+
+  // Analyze image and location with Groq API
+  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+            ],
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 8000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content; // Returns the AI-generated analysis
+      }
+      return 'No analysis available.';
+    } catch (error) {
+      console.error('Error analyzing with Groq:', error);
+      return 'Error analyzing the image. Please try again.';
     }
   };
 
@@ -156,72 +252,31 @@ function App() {
         map.once('idle', resolve); // Wait for the map to finish rendering
       });
 
-      // Capture the map canvas
+      // Capture the map canvas as an image
       const canvas = map.getCanvas();
       const dataUrl = canvas.toDataURL('image/png');
-
       console.log('Earth view captured:', dataUrl);
 
       // Set the captured image in the state
       setCapturedImage(dataUrl);
 
-      // Get the current center of the map (latitude and longitude)
+      // Get the current center coordinates
       const center = map.getCenter();
       const lng = center.lng;
       const lat = center.lat;
 
-      // Fetch location name using Mapbox Geocoding API
-      const geocodingResponse = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
-      );
-      const geocodingData = await geocodingResponse.json();
-
-      let locationName = 'Unknown Location';
-      if (geocodingData.features && geocodingData.features.length > 0) {
-        locationName = geocodingData.features[0].place_name;
-      }
-
-      console.log('Location Name:', locationName);
-
-      // Set the current location in the state
+      // Fetch the location name using Mapbox Geocoding API
+      const locationName = await fetchLocationName(lng, lat);
+      console.log('Location name:', locationName);
       setCurrentLocation(locationName);
 
-      // Analyze the captured image and location with Groq
-      console.log('Analyzing image and location with Groq...');
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
+      // Send the image and location name to Groq API for analysis
+      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      setFacts(analysis);
 
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}.`,
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: dataUrl,
-                },
-              },
-            ],
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 8000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const content = completion.choices[0].message.content;
-        setFacts(content);
-        await generateDynamicThemes(locationName);
-        await fetchYouTubeVideos(locationName);
-      }
+      // Generate dynamic themes and fetch YouTube videos
+      await generateDynamicThemes(locationName);
+      await fetchYouTubeVideos(locationName);
     } catch (error) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
@@ -325,33 +380,87 @@ function App() {
     }
   };
 
-  // Generate location-based news using AI
-  const generateNewsWithAI = async (location: string): Promise<string> => {
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
+  // Save analysis to a file
+  const saveAnalysis = () => {
+    const content = `=== Analysis Report ===\n\n` +
+      `Location: ${currentLocation}\n\n` +
+      `=== English Analysis ===\n${facts}\n\n` +
+      `=== Translated Analysis (${language}) ===\n${translatedFacts}`;
 
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a brief news summary about ${location}. Include cultural highlights, interesting facts, and notable events.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 500,
-      });
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analysis_report_${new Date().toISOString()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
-      }
-      return 'No news available at the moment.';
-    } catch (error) {
-      console.error('Error generating news with AI:', error);
-      return 'Error generating news. Please try again.';
+  // Voice command logic
+  const enableVoiceCommands = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Your browser does not support voice commands. Please use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+    setIsListening(true);
+
+    recognition.onresult = (event: any) => {
+      const command = event.results[0][0].transcript.toLowerCase();
+      handleVoiceCommand(command);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Voice recognition error:', event.error);
+      setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+  };
+
+  const handleVoiceCommand = (command: string) => {
+    if (command.includes('zoom in')) {
+      earthRef.current?.zoomIn();
+      setVoiceCommandFeedback('Zooming in.');
+    } else if (command.includes('zoom out')) {
+      earthRef.current?.zoomOut();
+      setVoiceCommandFeedback('Zooming out.');
+    } else if (command.includes('rotate left')) {
+      earthRef.current?.rotateLeft();
+      setVoiceCommandFeedback('Rotating left.');
+    } else if (command.includes('rotate right')) {
+      earthRef.current?.rotateRight();
+      setVoiceCommandFeedback('Rotating right.');
+    } else if (command.includes('search for')) {
+      const location = command.split('search for ')[1];
+      handleSearchByName(location); // Use handleSearchByName for location search
+      setVoiceCommandFeedback(`Searching for ${location}.`);
+    } else if (command.includes('tell me about')) {
+      const location = command.split('tell me about ')[1];
+      handleSearchByName(location); // Use handleSearchByName for location search
+      setVoiceCommandFeedback(`Fetching information about ${location}.`);
+    } else {
+      setVoiceCommandFeedback('Command not recognized.');
+    }
+  };
+
+  // Function to handle search by location name (used for voice commands)
+  const handleSearchByName = async (location: string) => {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
+    );
+    const data = await response.json();
+    if (data.features && data.features.length > 0) {
+      const [lng, lat] = data.features[0].center;
+      handleSearch(lng, lat); // Call the updated handleSearch function
     }
   };
 
@@ -368,43 +477,14 @@ function App() {
     setTranslating(false);
   };
 
-  // Render YouTube videos section
-  const renderYouTubeVideos = () => {
-    if (youtubeVideos.length === 0) {
-      return <p>No travel videos found for {currentLocation}.</p>;
-    }
-
-    return (
-      <div className="youtube-videos">
-        <h2>Travel Videos for {currentLocation}</h2>
-        <div className="video-grid">
-          {youtubeVideos.map((video) => (
-            <div key={video.id} className="video-item">
-              <iframe
-                width="100%"
-                height="200"
-                src={`https://www.youtube.com/embed/${video.id}`}
-                title={video.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-              <p>{video.title}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
-          showWeatherWidget={showWeatherWidget}
-          setShowWeatherWidget={setShowWeatherWidget}
+          showWeatherWidget={showWeatherWidget} // Pass state as prop
+          setShowWeatherWidget={setShowWeatherWidget} // Pass setter as prop
         />
       </div>
       <div className="info-panel">
@@ -430,7 +510,7 @@ function App() {
             </button>
             {translating && <p>Translating...</p>}
           </div>
-          <button onClick={() => {}} className="voice-button">
+          <button onClick={enableVoiceCommands} className="voice-button">
             {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
           </button>
           {voiceCommandFeedback && (
@@ -472,7 +552,7 @@ function App() {
             <MarkdownContent
               content={language === 'en' ? facts : translatedFacts}
               language={language}
-              onRewrite={() => {}}
+              onRewrite={handleRewrittenContent} // Pass the rewrite handler
             />
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
@@ -524,7 +604,7 @@ function App() {
                   </div>
                 )}
                 <button
-                  onClick={() => {}}
+                  onClick={saveAnalysis}
                   className="save-analysis-button"
                   disabled={!facts || translating || analysisLoading}
                 >
@@ -532,8 +612,28 @@ function App() {
                 </button>
               </div>
             )}
-            {/* Render YouTube Videos Section */}
-            {renderYouTubeVideos()}
+            {/* YouTube Videos Section */}
+            {youtubeVideos.length > 0 && (
+              <div className="youtube-videos">
+                <h2>Travel Videos for {currentLocation}</h2>
+                <div className="video-grid">
+                  {youtubeVideos.map((video) => (
+                    <div key={video.id} className="video-item">
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${video.id}`}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <p>{video.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
