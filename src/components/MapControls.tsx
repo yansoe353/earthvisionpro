@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
@@ -34,6 +34,16 @@ const MapControls = ({
   setShow3DBuildings,
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Update isMobile state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <>
@@ -42,16 +52,16 @@ const MapControls = ({
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'absolute',
-          bottom: 20,
-          right: 20,
+          bottom: isMobile ? '10px' : '20px',
+          right: isMobile ? '10px' : '20px',
           zIndex: 1,
           backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
           border: '1px solid #ccc',
           borderRadius: '50%',
-          width: '50px',
-          height: '50px',
+          width: isMobile ? '40px' : '50px',
+          height: isMobile ? '40px' : '50px',
           cursor: 'pointer',
-          fontSize: '20px',
+          fontSize: isMobile ? '18px' : '20px',
           color: isDarkTheme ? '#00ffff' : '#000',
           backdropFilter: 'blur(10px)',
           boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
@@ -71,17 +81,18 @@ const MapControls = ({
         <div
           style={{
             position: 'absolute',
-            bottom: 80,
-            right: 20,
+            bottom: isMobile ? '60px' : '80px',
+            right: isMobile ? '10px' : '20px',
             zIndex: 1,
             backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '8px',
-            padding: '16px',
+            padding: isMobile ? '12px' : '16px',
             color: isDarkTheme ? '#fff' : '#000',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
-            width: '250px',
+            width: isMobile ? '90%' : '250px',
+            maxWidth: '300px',
             transition: 'opacity 0.3s ease, transform 0.3s ease',
           }}
         >
@@ -89,14 +100,14 @@ const MapControls = ({
           <button
             onClick={toggleFeaturePanel}
             style={{
-              padding: '8px 16px',
+              padding: isMobile ? '6px 12px' : '8px 16px',
               backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
               border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
               borderRadius: '4px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: isMobile ? '12px' : '14px',
               color: isDarkTheme ? '#00ffff' : '#000',
-              marginBottom: '16px',
+              marginBottom: isMobile ? '12px' : '16px',
               width: '100%',
               transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
             }}
@@ -105,64 +116,28 @@ const MapControls = ({
           </button>
 
           {/* Layer Toggles */}
-          <div style={{ marginTop: '10px' }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: isDarkTheme ? '#00ffff' : '#000' }}>
+          <div style={{ marginTop: isMobile ? '8px' : '10px' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '14px' : '16px', color: isDarkTheme ? '#00ffff' : '#000' }}>
               Map Layers
             </h3>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={showHeatmap}
-                onChange={(e) => setShowHeatmap(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              Heatmap
-            </label>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={showTraffic}
-                onChange={(e) => setShowTraffic(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              Traffic
-            </label>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={showSatellite}
-                onChange={(e) => setShowSatellite(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              Satellite
-            </label>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={show3DTerrain}
-                onChange={(e) => setShow3DTerrain(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              3D Terrain
-            </label>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={showChoropleth}
-                onChange={(e) => setShowChoropleth(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              Choropleth
-            </label>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={show3DBuildings}
-                onChange={(e) => setShow3DBuildings(e.target.checked)}
-                style={{ marginRight: '8px', cursor: 'pointer' }}
-              />
-              3D Buildings
-            </label>
+            {[
+              { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
+              { label: 'Traffic', checked: showTraffic, onChange: setShowTraffic },
+              { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
+              { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
+              { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
+              { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
+            ].map(({ label, checked, onChange }) => (
+              <label key={label} style={{ display: 'block', marginBottom: '6px', fontSize: isMobile ? '12px' : '14px' }}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => onChange(e.target.checked)}
+                  style={{ marginRight: '8px', cursor: 'pointer' }}
+                />
+                {label}
+              </label>
+            ))}
           </div>
         </div>
       )}
