@@ -34,6 +34,7 @@ const MapControls = ({
   setShow3DBuildings,
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // State for collapsible control box
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Update isMobile state on window resize
@@ -49,7 +50,10 @@ const MapControls = ({
     <>
       {/* Floating Action Button (FAB) */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setIsCollapsed(true); // Collapse the control box when FAB is clicked
+        }}
         style={{
           position: 'fixed',
           bottom: isMobile ? '16px' : '20px',
@@ -96,53 +100,77 @@ const MapControls = ({
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
+            overflow: 'hidden',
+            transition: 'max-height 0.3s ease, opacity 0.3s ease',
+            maxHeight: isCollapsed ? '48px' : '400px', // Collapsed height vs expanded height
+            opacity: isCollapsed ? 0.9 : 1, // Slightly transparent when collapsed
           }}
         >
-          {/* Layer Toggles */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
-              Map Layers
-            </h3>
-            {[
-              { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
-              { label: 'Traffic', checked: showTraffic, onChange: setShowTraffic },
-              { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
-              { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
-              { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
-              { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
-            ].map(({ label, checked, onChange }) => (
-              <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => onChange(e.target.checked)}
-                  style={{ margin: 0, cursor: 'pointer' }}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          {/* Toggle Feature Panel Button */}
+          {/* Collapse/Expand Button */}
           <button
-            onClick={toggleFeaturePanel}
+            onClick={() => setIsCollapsed(!isCollapsed)}
             style={{
-              padding: '8px 12px',
-              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
-              borderRadius: '4px',
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
               cursor: 'pointer',
-              fontSize: isMobile ? '14px' : '16px',
+              fontSize: '16px',
               color: isDarkTheme ? '#00ffff' : '#000',
-              width: '100%',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+              textAlign: 'center',
             }}
           >
-            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+            {isCollapsed ? '▼' : '▲'} {/* Arrow icons for collapse/expand */}
           </button>
+
+          {/* Layer Toggles (Visible when expanded) */}
+          {!isCollapsed && (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
+                  Map Layers
+                </h3>
+                {[
+                  { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
+                  { label: 'Traffic', checked: showTraffic, onChange: setShowTraffic },
+                  { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
+                  { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
+                  { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
+                  { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
+                ].map(({ label, checked, onChange }) => (
+                  <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '14px' : '16px' }}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => onChange(e.target.checked)}
+                      style={{ margin: 0, cursor: 'pointer' }}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              {/* Toggle Feature Panel Button */}
+              <button
+                onClick={toggleFeaturePanel}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                  border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '14px' : '16px',
+                  color: isDarkTheme ? '#00ffff' : '#000',
+                  width: '100%',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+                }}
+              >
+                {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+              </button>
+            </>
+          )}
         </div>
       )}
     </>
