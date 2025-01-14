@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
+import React, { useCallback, useRef, forwardRef, useState, useMemo, useEffect } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
@@ -7,10 +7,12 @@ import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
 import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef, MapboxStyle } from './types';
-import useEarthquakes from '../hooks/useEarthquakes'; // Import custom hook for earthquakes
-import useWeatherData from '../hooks/useWeatherData'; // Import custom hook for weather data
-import useUserMarkers from '../hooks/useUserMarkers'; // Import custom hook for user markers
-import { MAPBOX_STYLES } from '../constants/mapboxStyles'; // Import from constants file
+import useEarthquakes from '../hooks/useEarthquakes';
+import useWeatherData from '../hooks/useWeatherData';
+import useUserMarkers from '../hooks/useUserMarkers';
+import { MAPBOX_STYLES } from '../constants/mapboxStyles';
+import Supercluster from 'supercluster';
+import { debounce } from 'lodash';
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -21,27 +23,50 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
   const [isCaptureEnabled, setIsCaptureEnabled] = useState(true);
-  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value); // Default map style
-  const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5); // Default terrain exaggeration
+  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
+  const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
+  const [clusters, setClusters] = useState([]);
 
   // Custom hooks
-  const { earthquakes } = useEarthquakes(showDisasterAlerts); // Fetch earthquake data
-  const { weatherData, fetchWeatherData } = useWeatherData(); // Fetch weather data
-  const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker } = useUserMarkers(); // Manage user markers
+  const { earthquakes } = useEarthquakes(showDisasterAlerts);
+  const { weatherData, fetchWeatherData } = useWeatherData();
+  const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker } = useUserMarkers();
+
+  // Initialize supercluster
+  const supercluster = useMemo(() => {
+    return new Supercluster({
+      radius: 40,
+      maxZoom: 16,
+    });
+  }, []);
+
+  // Load earthquake data into supercluster
+  useEffect(() => {
+    if (earthquakes.length > 0) {
+      const points = earthquakes.map((eq) => ({
+        type: 'Feature',
+        properties: { id: eq.id, mag: eq.properties.mag },
+        geometry: {
+          type: 'Point',
+          coordinates: [eq.geometry.coordinates[0], eq.geometry.coordinates[1]],
+        },
+      }));
+      supercluster.load(points);
+      setClusters(supercluster.getClusters([-180, -90, 180, 90], 1));
+    }
+  }, [earthquakes]);
 
   // Handle click on the map
   const handleClick = useCallback(
-    async (event: MapLayerMouseEvent) => {
+    debounce(async (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
-      setClickedLocation(lngLat); // Store the clicked location
+      setClickedLocation(lngLat);
       if (isCaptureEnabled) {
-        onCaptureView(); // Trigger the capture view function if enabled
+        onCaptureView();
       }
-
-      // Fetch weather data for the clicked location
       await fetchWeatherData(lngLat.lat, lngLat.lng);
-      setShowWeatherWidget(true); // Show the weather widget
-    },
+      setShowWeatherWidget(true);
+    }, 300),
     [onCaptureView, isCaptureEnabled, fetchWeatherData, setShowWeatherWidget]
   );
 
@@ -49,10 +74,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const handleSearch = useCallback((lng: number, lat: number) => {
     mapRef.current?.flyTo({
       center: [lng, lat],
-      zoom: 10, // Zoom closer for better 3D view
+      zoom: 10,
       duration: 2000,
     });
-    setClickedLocation({ lng, lat }); // Update the clicked location
+    setClickedLocation({ lng, lat });
   }, []);
 
   // Expose handleSearch to the parent component
@@ -82,7 +107,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Close weather widget
   const closeWeatherWidget = useCallback(() => {
-    setShowWeatherWidget(false); // Hide the weather widget
+    setShowWeatherWidget(false);
   }, [setShowWeatherWidget]);
 
   return (
@@ -119,7 +144,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       {/* Mapbox Map */}
       <Map
         ref={mapRef}
-        mapStyle={mapStyle} // Use the selected map style
+        mapStyle={mapStyle}
         initialViewState={{
           longitude: 0,
           latitude: 20,
@@ -133,7 +158,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         maxZoom={20}
         minZoom={1}
         projection={{ name: 'globe' }}
-        terrain={{ source: 'mapbox-dem', exaggeration: terrainExaggeration }} // Dynamic terrain exaggeration
+        terrain={{ source: 'mapbox-dem', exaggeration: terrainExaggeration }}
         fog={{
           range: [1, 10],
           color: isDarkTheme ? '#000' : '#242B4B',
@@ -150,23 +175,27 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           maxzoom={14}
         />
 
-        {/* Earthquake Markers */}
-        {showDisasterAlerts &&
-          earthquakes.map((earthquake) => (
-            <Marker
-              key={earthquake.id}
-              longitude={earthquake.geometry.coordinates[0]}
-              latitude={earthquake.geometry.coordinates[1]}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation(); // Prevent map click event
-                setSelectedEarthquake(earthquake);
-              }}
-            >
-              <div className="earthquake-marker">
-                <span>{earthquake.properties.mag}</span>
-              </div>
-            </Marker>
-          ))}
+        {/* Earthquake Markers (Clustered) */}
+        {clusters.map((cluster) => {
+          const [longitude, latitude] = cluster.geometry.coordinates;
+          if (cluster.properties.cluster) {
+            return (
+              <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
+                <div className="cluster-marker">
+                  {cluster.properties.point_count}
+                </div>
+              </Marker>
+            );
+          } else {
+            return (
+              <Marker key={cluster.properties.id} longitude={longitude} latitude={latitude}>
+                <div className="earthquake-marker">
+                  {cluster.properties.mag}
+                </div>
+              </Marker>
+            );
+          }
+        })}
 
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
@@ -175,7 +204,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             longitude={marker.lng}
             latitude={marker.lat}
             onClick={(e) => {
-              e.originalEvent.stopPropagation(); // Prevent map click event
+              e.originalEvent.stopPropagation();
               setSelectedMarker(marker);
             }}
           >
