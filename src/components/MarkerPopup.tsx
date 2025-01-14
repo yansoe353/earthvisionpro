@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Earthquake, UserMarker } from '../types';
 
 interface MarkerPopupProps {
@@ -16,11 +16,36 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
 
   // State for the note input
   const [note, setNote] = useState(isUserMarker(marker) ? marker.note : '');
+  const [charCount, setCharCount] = useState(note.length);
+
+  // Update note state when marker changes
+  useEffect(() => {
+    if (isUserMarker(marker)) {
+      setNote(marker.note);
+      setCharCount(marker.note.length);
+    }
+  }, [marker]);
 
   // Handle saving the note
   const handleSaveNote = () => {
     if (isUserMarker(marker) && onUpdateNote) {
       onUpdateNote(marker.id, note);
+    }
+  };
+
+  // Handle note input change
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= 500) {
+      setNote(value);
+      setCharCount(value.length);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDelete = () => {
+    if (isUserMarker(marker) && onDelete && window.confirm('Are you sure you want to delete this marker?')) {
+      onDelete(marker.id);
     }
   };
 
@@ -40,22 +65,30 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
             <textarea
               id="note"
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={handleNoteChange}
               placeholder="Add a note..."
               maxLength={500}
+              aria-label="Note input"
             />
+            <div className="char-count">{charCount}/500 characters</div>
           </div>
-          <button onClick={handleSaveNote}>Save Note</button>
+          <button onClick={handleSaveNote} className="save-button">
+            Save Note
+          </button>
         </>
       )}
 
       {/* Delete Button (only for UserMarker) */}
       {isUserMarker(marker) && onDelete && (
-        <button onClick={() => onDelete(marker.id)}>Delete Marker</button>
+        <button onClick={handleDelete} className="delete-button">
+          Delete Marker
+        </button>
       )}
 
       {/* Close Button */}
-      <button onClick={onClose}>Close</button>
+      <button onClick={onClose} className="close-button">
+        Close
+      </button>
     </div>
   );
 };
