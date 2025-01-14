@@ -23,6 +23,29 @@ export interface UserMarker {
   label: string; // Custom label for the marker
 }
 
+// src/components/Earth/types.ts
+
+export type MapboxStyle = {
+  label: string; // Display name for the style
+  value: string; // Mapbox style URL
+};
+
+export interface FeaturePanelProps {
+  isDarkTheme: boolean;
+  showDisasterAlerts: boolean;
+  isCaptureEnabled: boolean;
+  clickedLocation: { lng: number; lat: number } | null;
+  toggleDisasterAlerts: () => void;
+  toggleDarkTheme: () => void;
+  toggleCaptureFeature: () => void;
+  addUserMarker: (lng: number, lat: number) => void;
+  removeAllMarkers: () => void;
+  onClose: () => void;
+  mapStyle: string; // Current map style
+  setMapStyle: (style: string) => void; // Function to update map style
+}
+
+
 /**
  * Represents weather data for a specific location.
  */
