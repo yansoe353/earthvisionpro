@@ -87,11 +87,11 @@ const MapControls = ({
             backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '8px',
-            padding: isMobile ? '12px' : '16px',
+            padding: isMobile ? '8px' : '16px',
             color: isDarkTheme ? '#fff' : '#000',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
-            width: isMobile ? '90%' : '250px',
+            width: isMobile ? 'calc(100% - 20px)' : '250px', // Fit within screen width on mobile
             maxWidth: '300px',
             transition: 'opacity 0.3s ease, transform 0.3s ease',
           }}
@@ -100,15 +100,18 @@ const MapControls = ({
           <button
             onClick={toggleFeaturePanel}
             style={{
-              padding: isMobile ? '6px 12px' : '8px 16px',
+              padding: isMobile ? '6px 8px' : '8px 16px',
               backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
               border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: isMobile ? '12px' : '14px',
               color: isDarkTheme ? '#00ffff' : '#000',
-              marginBottom: isMobile ? '12px' : '16px',
+              marginBottom: isMobile ? '8px' : '16px',
               width: '100%',
+              whiteSpace: 'nowrap', // Prevent text wrapping
+              overflow: 'hidden', // Hide overflow
+              textOverflow: 'ellipsis', // Add ellipsis for long text
               transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
             }}
           >
