@@ -4,7 +4,7 @@
 export interface Earthquake {
   id: string; // Unique identifier for the earthquake
   geometry: {
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: [number, number, number]; // [longitude, latitude, depth]
   };
   properties: {
     title: string; // Title of the earthquake event
@@ -23,13 +23,17 @@ export interface UserMarker {
   label: string; // Custom label for the marker
 }
 
-// src/components/Earth/types.ts
-
+/**
+ * Represents a Mapbox style.
+ */
 export type MapboxStyle = {
   label: string; // Display name for the style
   value: string; // Mapbox style URL
 };
 
+/**
+ * Props for the FeaturePanel component.
+ */
 export interface FeaturePanelProps {
   isDarkTheme: boolean;
   showDisasterAlerts: boolean;
@@ -43,8 +47,8 @@ export interface FeaturePanelProps {
   onClose: () => void;
   mapStyle: string; // Current map style
   setMapStyle: (style: string) => void; // Function to update map style
+  mapStyles: MapboxStyle[]; // Array of available map styles
 }
-
 
 /**
  * Represents weather data for a specific location.
