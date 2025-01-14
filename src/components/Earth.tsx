@@ -33,6 +33,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(false);
+  const [show3DTerrain, setShow3DTerrain] = useState(false);
+  const [showChoropleth, setShowChoropleth] = useState(false);
+  const [show3DBuildings, setShow3DBuildings] = useState(false);
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -150,7 +156,22 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Map Controls */}
-      <MapControls toggleFeaturePanel={toggleFeaturePanel} isDarkTheme={isDarkTheme} />
+      <MapControls
+        toggleFeaturePanel={toggleFeaturePanel}
+        isDarkTheme={isDarkTheme}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        showTraffic={showTraffic}
+        setShowTraffic={setShowTraffic}
+        showSatellite={showSatellite}
+        setShowSatellite={setShowSatellite}
+        show3DTerrain={show3DTerrain}
+        setShow3DTerrain={setShow3DTerrain}
+        showChoropleth={showChoropleth}
+        setShowChoropleth={setShowChoropleth}
+        show3DBuildings={show3DBuildings}
+        setShow3DBuildings={setShow3DBuildings}
+      />
 
       {/* Feature Panel */}
       {showFeaturePanel && (
@@ -254,6 +275,177 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
             />
           </Popup>
+        )}
+
+        {/* Heatmap Layer */}
+        {showHeatmap && (
+          <Source
+            id="earthquake-data"
+            type="geojson"
+            data={{
+              type: 'FeatureCollection',
+              features: earthquakes.map((eq) => ({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [eq.geometry.coordinates[0], eq.geometry.coordinates[1]],
+                },
+                properties: {
+                  mag: eq.properties.mag,
+                },
+              })),
+            }}
+          >
+            <Layer
+              id="earthquake-heatmap"
+              type="heatmap"
+              paint={{
+                'heatmap-weight': ['interpolate', ['linear'], ['get', 'mag'], 0, 0, 6, 1],
+                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 3],
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0,
+                  'rgba(33, 102, 172, 0)',
+                  0.2,
+                  'rgb(103, 169, 207)',
+                  0.4,
+                  'rgb(209, 229, 240)',
+                  0.6,
+                  'rgb(253, 219, 199)',
+                  0.8,
+                  'rgb(239, 138, 98)',
+                  1,
+                  'rgb(178, 24, 43)',
+                ],
+                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 9, 20],
+                'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 9, 0],
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Traffic Layer */}
+        {showTraffic && (
+          <Source
+            id="traffic"
+            type="vector"
+            url="mapbox://mapbox.mapbox-traffic-v1"
+          >
+            <Layer
+              id="traffic-layer"
+              type="line"
+              source="traffic"
+              source-layer="traffic"
+              paint={{
+                'line-color': [
+                  'match',
+                  ['get', 'class'],
+                  'motorway',
+                  '#ff0000',
+                  'trunk',
+                  '#ff7f00',
+                  'primary',
+                  '#ffff00',
+                  'secondary',
+                  '#00ff00',
+                  '#0000ff',
+                ],
+                'line-width': 2,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Satellite Layer */}
+        {showSatellite && (
+          <Source
+            id="satellite"
+            type="raster"
+            url="mapbox://mapbox.satellite"
+            tileSize={512}
+          >
+            <Layer
+              id="satellite-layer"
+              type="raster"
+              source="satellite"
+              paint={{
+                'raster-opacity': 0.8,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* 3D Terrain Layer */}
+        {show3DTerrain && (
+          <Layer
+            id="terrain-layer"
+            type="hillshade"
+            source="mapbox-dem"
+            paint={{
+              'hillshade-exaggeration': 0.5,
+              'hillshade-shadow-color': '#000',
+              'hillshade-highlight-color': '#fff',
+              'hillshade-illumination-direction': 315,
+            }}
+          />
+        )}
+
+        {/* Choropleth Layer */}
+        {showChoropleth && (
+          <Source
+            id="population"
+            type="geojson"
+            data={{
+              type: 'FeatureCollection',
+              features: [], // Add your GeoJSON data here
+            }}
+          >
+            <Layer
+              id="population-density"
+              type="fill"
+              paint={{
+                'fill-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'density'],
+                  0,
+                  '#f7fbff',
+                  100,
+                  '#c6dbef',
+                  500,
+                  '#6baed6',
+                  1000,
+                  '#2171b5',
+                  5000,
+                  '#08306b',
+                ],
+                'fill-opacity': 0.7,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* 3D Buildings Layer */}
+        {show3DBuildings && (
+          <Source
+            id="buildings"
+            type="vector"
+            url="mapbox://mapbox.mapbox-streets-v8"
+            source-layer="building"
+          >
+            <Layer
+              id="3d-buildings"
+              type="fill-extrusion"
+              paint={{
+                'fill-extrusion-color': '#aaa',
+                'fill-extrusion-height': ['get', 'height'],
+                'fill-extrusion-base': ['get', 'min_height'],
+                'fill-extrusion-opacity': 0.6,
+              }}
+            />
+          </Source>
         )}
       </Map>
     </div>
