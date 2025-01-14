@@ -33,13 +33,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+
+  // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showTraffic, setShowTraffic] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showChoropleth, setShowChoropleth] = useState(false);
   const [show3DBuildings, setShow3DBuildings] = useState(false);
-  const [showContour, setShowContour] = useState(false); // Add Contour Layer state
+  const [showContour, setShowContour] = useState(false);
+  const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
+  const [showWeather, setShowWeather] = useState(false);
+  const [showTransit, setShowTransit] = useState(false);
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -172,8 +177,14 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setShowChoropleth={setShowChoropleth}
         show3DBuildings={show3DBuildings}
         setShow3DBuildings={setShow3DBuildings}
-        showContour={showContour} // Add Contour Layer
-        setShowContour={setShowContour} // Add Contour Layer
+        showContour={showContour}
+        setShowContour={setShowContour}
+        showPointsOfInterest={showPointsOfInterest}
+        setShowPointsOfInterest={setShowPointsOfInterest}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
       />
 
       {/* Feature Panel */}
