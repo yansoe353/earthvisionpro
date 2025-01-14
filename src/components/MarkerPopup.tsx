@@ -9,12 +9,12 @@ interface MarkerPopupProps {
 
 const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
   // Type guard for Earthquake
-  const isEarthquake = (marker: any): marker is Earthquake => {
+  const isEarthquake = (marker: Earthquake | UserMarker): marker is Earthquake => {
     return 'properties' in marker;
   };
 
   // Type guard for UserMarker
-  const isUserMarker = (marker: any): marker is UserMarker => {
+  const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
     return 'label' in marker && 'id' in marker;
   };
 
@@ -38,12 +38,14 @@ const MarkerPopup = ({ marker, onClose, onDelete }: MarkerPopupProps) => {
       {isUserMarker(marker) && (
         <>
           <p>Location: {`${marker.lat}, ${marker.lng}`}</p>
-          <button
-            onClick={() => onDelete && onDelete(marker.id)}
-            className="delete-button"
-          >
-            Delete Marker
-          </button>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(marker.id)}
+              className="delete-button"
+            >
+              Delete Marker
+            </button>
+          )}
         </>
       )}
 
