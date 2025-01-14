@@ -1,121 +1,147 @@
-/* MapControls.css */
-.map-controls {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1;
-  background-color: rgba(0, 0, 0, 0.7);
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  color: white;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-  max-width: 90%; /* Ensure it doesn't overflow on small screens */
-  width: auto; /* Default width (collapsed) */
-  transition: width 0.3s ease, padding 0.3s ease;
+import React, { useState } from 'react';
+
+interface MapControlsProps {
+  toggleFeaturePanel: () => void;
+  isDarkTheme: boolean;
+  showHeatmap: boolean;
+  setShowHeatmap: (value: boolean) => void;
+  showTraffic: boolean;
+  setShowTraffic: (value: boolean) => void;
+  showSatellite: boolean;
+  setShowSatellite: (value: boolean) => void;
+  show3DTerrain: boolean;
+  setShow3DTerrain: (value: boolean) => void;
+  showChoropleth: boolean;
+  setShowChoropleth: (value: boolean) => void;
+  show3DBuildings: boolean;
+  setShow3DBuildings: (value: boolean) => void;
 }
 
-.map-controls.expanded {
-  width: 300px; /* Expanded width */
-}
+const MapControls = ({
+  toggleFeaturePanel,
+  isDarkTheme,
+  showHeatmap,
+  setShowHeatmap,
+  showTraffic,
+  setShowTraffic,
+  showSatellite,
+  setShowSatellite,
+  show3DTerrain,
+  setShow3DTerrain,
+  showChoropleth,
+  setShowChoropleth,
+  show3DBuildings,
+  setShow3DBuildings,
+}: MapControlsProps) => {
+  const [showControls, setShowControls] = useState(false);
 
-.map-controls.light {
-  background-color: rgba(255, 255, 255, 0.7);
-  color: #000;
-}
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 1,
+        backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+        border: '1px solid #ccc',
+        borderRadius: '8px',
+        padding: '16px',
+        color: isDarkTheme ? '#fff' : '#000',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
+        maxWidth: '90%', // Ensure it doesn't overflow on small screens
+        width: showControls ? '300px' : 'auto', // Expand width when controls are shown
+      }}
+    >
+      {/* Toggle Controls Button */}
+      <button
+        onClick={() => setShowControls(!showControls)}
+        style={{
+          padding: '8px 16px',
+          backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          color: isDarkTheme ? '#00ffff' : '#000',
+          marginBottom: showControls ? '16px' : '0', // Add margin only when controls are shown
+          width: '100%',
+          transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+        }}
+      >
+        {showControls ? 'Hide Controls' : 'Show Controls'}
+      </button>
 
-.map-controls .control-button {
-  padding: 8px 16px;
-  background-color: rgba(0, 255, 255, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #00ffff;
-  margin-bottom: 16px;
-  width: 100%;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
+      {/* Layer Toggles (Conditionally Rendered) */}
+      {showControls && (
+        <div style={{ marginTop: '10px' }}>
+          <h3
+            style={{
+              margin: '0 0 12px',
+              fontSize: '16px',
+              color: isDarkTheme ? '#00ffff' : '#000',
+            }}
+          >
+            Map Layers
+          </h3>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={showHeatmap}
+              onChange={(e) => setShowHeatmap(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            Heatmap
+          </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={showTraffic}
+              onChange={(e) => setShowTraffic(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            Traffic
+          </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={showSatellite}
+              onChange={(e) => setShowSatellite(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            Satellite
+          </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={show3DTerrain}
+              onChange={(e) => setShow3DTerrain(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            3D Terrain
+          </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={showChoropleth}
+              onChange={(e) => setShowChoropleth(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            Choropleth
+          </label>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+            <input
+              type="checkbox"
+              checked={show3DBuildings}
+              onChange={(e) => setShow3DBuildings(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer' }}
+            />
+            3D Buildings
+          </label>
+        </div>
+      )}
+    </div>
+  );
+};
 
-.map-controls .control-button:hover {
-  background-color: rgba(0, 255, 255, 0.2);
-  border-color: rgba(0, 255, 255, 0.6);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-
-.map-controls .layer-toggles {
-  margin-top: 10px;
-}
-
-.map-controls .layer-toggles h3 {
-  margin: 0 0 12px;
-  font-size: 16px;
-  color: #00ffff;
-}
-
-.map-controls .layer-toggle {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.map-controls .layer-toggle input[type="checkbox"] {
-  margin-right: 8px;
-  cursor: pointer;
-}
-
-.map-controls .layer-toggle input[type="checkbox"]:checked {
-  accent-color: #00ffff;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .map-controls {
-    bottom: 10px;
-    right: 10px;
-    padding: 12px;
-  }
-
-  .map-controls.expanded {
-    width: 90%; /* Adjust width for smaller screens */
-  }
-
-  .map-controls .control-button {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  .map-controls .layer-toggles h3 {
-    font-size: 14px;
-  }
-
-  .map-controls .layer-toggle {
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .map-controls {
-    bottom: 5px;
-    right: 5px;
-    padding: 10px;
-  }
-
-  .map-controls.expanded {
-    width: 95%; /* Adjust width for very small screens */
-  }
-
-  .map-controls .control-button {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  .map-controls .layer-toggles h3 {
-    font-size: 14px;
-  }
-
-  .map-controls .layer-toggle {
-    font-size: 12px;
-  }
-}
+export default MapControls;
