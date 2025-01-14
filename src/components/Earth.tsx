@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle, useEffect } from 'react';
+import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
