@@ -21,6 +21,7 @@ export interface UserMarker {
   lng: number; // Longitude of the marker
   lat: number; // Latitude of the marker
   label: string; // Custom label for the marker
+  note: string; // Add the note property
 }
 
 /**
