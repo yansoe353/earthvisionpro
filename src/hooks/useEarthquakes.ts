@@ -1,19 +1,7 @@
-// useEarthquakeData.ts
-import { useEffect, useState } from 'react';
+// useEarthquakes.ts
+import { useState, useEffect } from 'react';
 
-interface Earthquake {
-  id: string;
-  geometry: {
-    coordinates: [number, number];
-  };
-  properties: {
-    title: string;
-    mag: number;
-    place: string;
-  };
-}
-
-export const useEarthquakeData = (showDisasterAlerts: boolean) => {
+const useEarthquakes = (showDisasterAlerts: boolean) => {
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
 
   useEffect(() => {
@@ -21,9 +9,7 @@ export const useEarthquakeData = (showDisasterAlerts: boolean) => {
 
     const fetchEarthquakes = async () => {
       try {
-        const response = await fetch(
-          'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'
-        );
+        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
         if (!response.ok) throw new Error('Failed to fetch earthquake data');
         const data = await response.json();
         setEarthquakes(data.features);
@@ -39,3 +25,5 @@ export const useEarthquakeData = (showDisasterAlerts: boolean) => {
 
   return earthquakes;
 };
+
+export default useEarthquakes;
