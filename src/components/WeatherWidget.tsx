@@ -1,5 +1,5 @@
 import React from 'react';
-import { WeatherData } from './types';
+import { WeatherData } from '../types';
 
 interface WeatherWidgetProps {
   weatherData: WeatherData | null;
