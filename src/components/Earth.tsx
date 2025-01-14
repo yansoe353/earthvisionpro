@@ -37,7 +37,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
   const { weatherData, fetchWeatherData } = useWeatherData();
-  const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker } = useUserMarkers();
+  const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker, updateMarkerNote } = useUserMarkers();
 
   // Initialize supercluster
   const supercluster = useMemo(() => {
@@ -251,6 +251,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               marker={selectedFeature}
               onClose={() => setSelectedFeature(null)}
               onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
+              onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
             />
           </Popup>
         )}
