@@ -1,84 +1,52 @@
-import React, { useState, useCallback } from 'react';
-import { UserMarker } from '../types';
+import React, { useState } from 'react';
+import { Earthquake, UserMarker } from '../types';
 
 interface MarkerPopupProps {
-  marker: UserMarker;
+  marker: Earthquake | UserMarker;
   onClose: () => void;
-  onDelete: (id: string) => void;
-  onUpdateNote: (id: string, note: string) => void;
+  onDelete?: (id: string) => void;
+  onUpdateNote?: (id: string, note: string) => void;
 }
 
 const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupProps) => {
-  const [note, setNote] = useState(marker.note || '');
-
-  // Check if the note has changed
-  const isNoteChanged = note !== marker.note;
-
-  // Handle saving the note
-  const handleSaveNote = useCallback(() => {
-    if (isNoteChanged) {
-      onUpdateNote(marker.id, note);
-    }
-  }, [isNoteChanged, marker.id, note, onUpdateNote]);
-
-  // Handle changes to the note input
-  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNote(e.target.value);
+  const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
+    return 'label' in marker && 'id' in marker;
   };
 
-  // Calculate remaining characters
-  const maxLength = 500;
-  const remainingChars = maxLength - note.length;
+  const [note, setNote] = useState(isUserMarker(marker) ? marker.note : '');
+
+  const handleSaveNote = () => {
+    if (isUserMarker(marker) && onUpdateNote) {
+      onUpdateNote(marker.id, note);
+    }
+  };
 
   return (
     <div className="marker-popup">
-      {/* Popup Header */}
-      <h3>{marker.label}</h3>
+      <h3>{isUserMarker(marker) ? marker.label : marker.properties.title}</h3>
+      <p>Location: {isUserMarker(marker) ? `${marker.lat}, ${marker.lng}` : marker.properties.place}</p>
 
-      {/* Popup Content */}
-      <p>Location: {`${marker.lat}, ${marker.lng}`}</p>
+      {isUserMarker(marker) && (
+        <>
+          <div className="note-input">
+            <label htmlFor="note">Notes:</label>
+            <textarea
+              id="note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Add a note..."
+              maxLength={500}
+            />
+          </div>
+          <button onClick={handleSaveNote}>Save Note</button>
+        </>
+      )}
 
-      {/* Note Input */}
-      <div className="note-input">
-        <label htmlFor="note">Notes:</label>
-        <textarea
-          id="note"
-          value={note}
-          onChange={handleNoteChange}
-          placeholder="Add a note..."
-          maxLength={maxLength}
-          aria-describedby="note-char-count"
-        />
-        <span id="note-char-count" className="char-count">
-          {remainingChars} characters remaining
-        </span>
-      </div>
+      {isUserMarker(marker) && onDelete && (
+        <button onClick={() => onDelete(marker.id)}>Delete Marker</button>
+      )}
 
-      {/* Action Buttons */}
-      <div className="button-group">
-        <button
-          onClick={handleSaveNote}
-          disabled={!isNoteChanged}
-          aria-label="Save Note"
-          aria-disabled={!isNoteChanged}
-        >
-          Save Note
-        </button>
-        <button
-          onClick={() => onDelete(marker.id)}
-          className="delete-button"
-          aria-label="Delete Marker"
-        >
-          Delete Marker
-        </button>
-        <button
-          onClick={onClose}
-          className="close-button"
-          aria-label="Close Popup"
-        >
-          Close
-        </button>
-      </div>
+      <button onClick={onClose}>Close</button>
     </div>
   );
 };
