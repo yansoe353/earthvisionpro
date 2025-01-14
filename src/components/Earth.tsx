@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, forwardRef, useState, useImperativeHandle } from 'react';
-import Map, { MapRef, Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
+import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
 import FeaturePanel from './FeaturePanel';
@@ -141,6 +141,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
+        {/* Add the mapbox-dem source */}
+        <Source
+          id="mapbox-dem"
+          type="raster-dem"
+          url="mapbox://mapbox.mapbox-terrain-dem-v1"
+          tileSize={512}
+          maxzoom={14}
+        />
+
         {/* Earthquake Markers */}
         {showDisasterAlerts &&
           earthquakes.map((earthquake) => (
