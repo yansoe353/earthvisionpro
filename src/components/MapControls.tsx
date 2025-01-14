@@ -96,8 +96,30 @@ const MapControls = ({
             transition: 'opacity 0.3s ease, transform 0.3s ease',
           }}
         >
+          {/* Toggle Feature Panel Button */}
+          <button
+            onClick={toggleFeaturePanel}
+            style={{
+              padding: isMobile ? '8px 12px' : '8px 16px',
+              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '14px' : '16px',
+              color: isDarkTheme ? '#00ffff' : '#000',
+              marginBottom: isMobile ? '12px' : '16px',
+              width: '100%',
+              whiteSpace: 'nowrap', // Prevent text wrapping
+              overflow: 'hidden', // Hide overflow
+              textOverflow: 'ellipsis', // Add ellipsis for long text
+              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+            }}
+          >
+            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+          </button>
+
           {/* Layer Toggles */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginTop: isMobile ? '8px' : '10px' }}>
             <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
               Map Layers
             </h3>
@@ -120,27 +142,6 @@ const MapControls = ({
               </label>
             ))}
           </div>
-
-          {/* Toggle Feature Panel Button */}
-          <button
-            onClick={toggleFeaturePanel}
-            style={{
-              padding: isMobile ? '8px 12px' : '8px 16px',
-              backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '14px' : '16px',
-              color: isDarkTheme ? '#00ffff' : '#000',
-              width: '100%',
-              whiteSpace: 'nowrap', // Prevent text wrapping
-              overflow: 'hidden', // Hide overflow
-              textOverflow: 'ellipsis', // Add ellipsis for long text
-              transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
-            }}
-          >
-            {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
-          </button>
         </div>
       )}
     </>
