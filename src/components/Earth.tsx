@@ -87,9 +87,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     setClickedLocation({ lng, lat });
   }, []);
 
-  // Expose handleSearch to the parent component
+  // Expose handleSearch and getMap to the parent component
   useImperativeHandle(ref, () => ({
     handleSearch,
+    getMap: () => mapRef.current, // Expose the Mapbox map instance
   }));
 
   // Toggle feature panel visibility
