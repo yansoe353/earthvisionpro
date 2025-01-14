@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
@@ -33,14 +33,12 @@ const MapControls = ({
   show3DBuildings,
   setShow3DBuildings,
 }: MapControlsProps) => {
-  const [showControls, setShowControls] = useState(false);
-
   return (
     <div
       style={{
         position: 'absolute',
-        bottom: '20px',
-        right: '20px',
+        bottom: 20,
+        right: 20,
         zIndex: 1,
         backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
         border: '1px solid #ccc',
@@ -49,13 +47,11 @@ const MapControls = ({
         color: isDarkTheme ? '#fff' : '#000',
         backdropFilter: 'blur(10px)',
         boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
-        maxWidth: '90%', // Ensure it doesn't overflow on small screens
-        width: showControls ? '300px' : 'auto', // Expand width when controls are shown
       }}
     >
-      {/* Toggle Controls Button */}
+      {/* Toggle Feature Panel Button */}
       <button
-        onClick={() => setShowControls(!showControls)}
+        onClick={toggleFeaturePanel}
         style={{
           padding: '8px 16px',
           backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
@@ -64,82 +60,74 @@ const MapControls = ({
           cursor: 'pointer',
           fontSize: '14px',
           color: isDarkTheme ? '#00ffff' : '#000',
-          marginBottom: showControls ? '16px' : '0', // Add margin only when controls are shown
+          marginBottom: '16px',
           width: '100%',
           transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
         }}
       >
-        {showControls ? 'Hide Controls' : 'Show Controls'}
+        {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
       </button>
 
-      {/* Layer Toggles (Conditionally Rendered) */}
-      {showControls && (
-        <div style={{ marginTop: '10px' }}>
-          <h3
-            style={{
-              margin: '0 0 12px',
-              fontSize: '16px',
-              color: isDarkTheme ? '#00ffff' : '#000',
-            }}
-          >
-            Map Layers
-          </h3>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={showHeatmap}
-              onChange={(e) => setShowHeatmap(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            Heatmap
-          </label>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={showTraffic}
-              onChange={(e) => setShowTraffic(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            Traffic
-          </label>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={showSatellite}
-              onChange={(e) => setShowSatellite(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            Satellite
-          </label>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={show3DTerrain}
-              onChange={(e) => setShow3DTerrain(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            3D Terrain
-          </label>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={showChoropleth}
-              onChange={(e) => setShowChoropleth(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            Choropleth
-          </label>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-            <input
-              type="checkbox"
-              checked={show3DBuildings}
-              onChange={(e) => setShow3DBuildings(e.target.checked)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
-            />
-            3D Buildings
-          </label>
-        </div>
-      )}
+      {/* Layer Toggles */}
+      <div style={{ marginTop: '10px' }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: isDarkTheme ? '#00ffff' : '#000' }}>
+          Map Layers
+        </h3>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={showHeatmap}
+            onChange={(e) => setShowHeatmap(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          Heatmap
+        </label>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={showTraffic}
+            onChange={(e) => setShowTraffic(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          Traffic
+        </label>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={showSatellite}
+            onChange={(e) => setShowSatellite(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          Satellite
+        </label>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={show3DTerrain}
+            onChange={(e) => setShow3DTerrain(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          3D Terrain
+        </label>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={showChoropleth}
+            onChange={(e) => setShowChoropleth(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          Choropleth
+        </label>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={show3DBuildings}
+            onChange={(e) => setShow3DBuildings(e.target.checked)}
+            style={{ marginRight: '8px', cursor: 'pointer' }}
+          />
+          3D Buildings
+        </label>
+      </div>
     </div>
   );
 };
