@@ -6,7 +6,7 @@ import FeaturePanel from './FeaturePanel';
 import WeatherWidget from './WeatherWidget';
 import MarkerPopup from './MarkerPopup';
 import MapControls from './MapControls';
-import { Earthquake, VolcanicEruption, Wildfire, UserMarker, WeatherData, EarthProps, EarthRef } from './types';
+import { Earthquake, UserMarker, WeatherData, EarthProps, EarthRef } from './types';
 
 const MAPBOX_STYLE = 'mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7';
 
@@ -14,15 +14,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
-  const [volcanicEruptions, setVolcanicEruptions] = useState<VolcanicEruption[]>([]);
-  const [wildfires, setWildfires] = useState<Wildfire[]>([]);
   const [selectedEarthquake, setSelectedEarthquake] = useState<Earthquake | null>(null);
-  const [selectedVolcanicEruption, setSelectedVolcanicEruption] = useState<VolcanicEruption | null>(null);
-  const [selectedWildfire, setSelectedWildfire] = useState<Wildfire | null>(null);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
-  const [showVolcanicEruptions, setShowVolcanicEruptions] = useState(true);
-  const [showWildfires, setShowWildfires] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<UserMarker | null>(null);
@@ -61,63 +55,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     const interval = setInterval(fetchEarthquakes, 60000); // Refresh every minute
     return () => clearInterval(interval);
   }, [showDisasterAlerts]);
-
-  // Fetch volcanic eruption data from USGS API
-  useEffect(() => {
-    if (!showVolcanicEruptions) return;
-
-    const fetchVolcanicEruptions = async () => {
-      try {
-        const response = await fetch('https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes');
-        if (!response.ok) throw new Error('Failed to fetch volcanic eruption data');
-        const data = await response.json();
-        console.log('Volcanic Eruption Data:', data); // Log the API response
-
-        // Validate and filter data to ensure it has the correct structure
-        const validEruptions = data.filter(
-          (eruption: VolcanicEruption) =>
-            typeof eruption.latitude === 'number' &&
-            typeof eruption.longitude === 'number'
-        );
-        console.log('Valid Volcanic Eruptions:', validEruptions); // Log filtered data
-        setVolcanicEruptions(validEruptions);
-      } catch (error) {
-        console.error('Error fetching volcanic eruption data:', error);
-      }
-    };
-
-    fetchVolcanicEruptions();
-    const interval = setInterval(fetchVolcanicEruptions, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, [showVolcanicEruptions]);
-
-  // Fetch wildfire data
-  useEffect(() => {
-    if (!showWildfires) return;
-
-    const fetchWildfires = async () => {
-      try {
-        const response = await fetch('https://firms.modaps.eosdis.nasa.gov/api/wildfires');
-        if (!response.ok) throw new Error('Failed to fetch wildfire data');
-        const data = await response.json();
-
-        // Validate and filter data to ensure it has the correct structure
-        const validWildfires = data.wildfires.filter(
-          (wildfire: Wildfire) =>
-            wildfire.location &&
-            typeof wildfire.location.lng === 'number' &&
-            typeof wildfire.location.lat === 'number'
-        );
-        setWildfires(validWildfires);
-      } catch (error) {
-        console.error('Error fetching wildfire data:', error);
-      }
-    };
-
-    fetchWildfires();
-    const interval = setInterval(fetchWildfires, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, [showWildfires]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -169,16 +106,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     setShowDisasterAlerts((prev) => !prev);
   }, []);
 
-  // Toggle Volcanic Eruptions
-  const toggleVolcanicEruptions = useCallback(() => {
-    setShowVolcanicEruptions((prev) => !prev);
-  }, []);
-
-  // Toggle Wildfires
-  const toggleWildfires = useCallback(() => {
-    setShowWildfires((prev) => !prev);
-  }, []);
-
   // Toggle dark theme
   const toggleDarkTheme = useCallback(() => {
     setIsDarkTheme((prev) => !prev);
@@ -227,13 +154,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         <FeaturePanel
           isDarkTheme={isDarkTheme}
           showDisasterAlerts={showDisasterAlerts}
-          showVolcanicEruptions={showVolcanicEruptions}
-          showWildfires={showWildfires}
           isCaptureEnabled={isCaptureEnabled}
           clickedLocation={clickedLocation}
           toggleDisasterAlerts={toggleDisasterAlerts}
-          toggleVolcanicEruptions={toggleVolcanicEruptions}
-          toggleWildfires={toggleWildfires}
           toggleDarkTheme={toggleDarkTheme}
           toggleCaptureFeature={toggleCaptureFeature}
           addUserMarker={addUserMarker}
@@ -290,42 +213,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             </Marker>
           ))}
 
-        {/* Volcanic Eruption Markers */}
-        {showVolcanicEruptions &&
-          volcanicEruptions.map((eruption) => (
-            <Marker
-              key={eruption.vnum} // Use vnum as the unique key
-              longitude={eruption.longitude || 0}
-              latitude={eruption.latitude || 0}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation(); // Prevent map click event
-                setSelectedVolcanicEruption(eruption);
-              }}
-            >
-              <div className="volcano-marker">
-                <span>🌋</span>
-              </div>
-            </Marker>
-          ))}
-
-        {/* Wildfire Markers */}
-        {showWildfires &&
-          wildfires.map((wildfire) => (
-            <Marker
-              key={wildfire.id}
-              longitude={wildfire.location?.lng || 0}
-              latitude={wildfire.location?.lat || 0}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation(); // Prevent map click event
-                setSelectedWildfire(wildfire);
-              }}
-            >
-              <div className="wildfire-marker">
-                <span>🔥</span>
-              </div>
-            </Marker>
-          ))}
-
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
           <Marker
@@ -353,32 +240,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             <MarkerPopup
               marker={selectedEarthquake}
               onClose={() => setSelectedEarthquake(null)}
-            />
-          </Popup>
-        )}
-
-        {selectedVolcanicEruption && (
-          <Popup
-            longitude={selectedVolcanicEruption.longitude || 0}
-            latitude={selectedVolcanicEruption.latitude || 0}
-            onClose={() => setSelectedVolcanicEruption(null)}
-          >
-            <MarkerPopup
-              marker={selectedVolcanicEruption}
-              onClose={() => setSelectedVolcanicEruption(null)}
-            />
-          </Popup>
-        )}
-
-        {selectedWildfire && (
-          <Popup
-            longitude={selectedWildfire.location?.lng || 0}
-            latitude={selectedWildfire.location?.lat || 0}
-            onClose={() => setSelectedWildfire(null)}
-          >
-            <MarkerPopup
-              marker={selectedWildfire}
-              onClose={() => setSelectedWildfire(null)}
             />
           </Popup>
         )}
