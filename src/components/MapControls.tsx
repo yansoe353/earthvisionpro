@@ -34,7 +34,7 @@ const MapControls = ({
   setShow3DBuildings,
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true); // State for collapsible control box
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Update isMobile state on window resize
@@ -52,13 +52,13 @@ const MapControls = ({
       <button
         onClick={() => {
           setIsOpen(!isOpen);
-          setIsCollapsed(true); // Collapse the control box when FAB is clicked
+          setIsCollapsed(true);
         }}
         style={{
           position: 'fixed',
           bottom: isMobile ? '16px' : '20px',
           right: isMobile ? '16px' : '20px',
-          zIndex: 1000,
+          zIndex: 1002, // Higher than info panel
           backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
           border: '1px solid #ccc',
           borderRadius: '50%',
@@ -87,7 +87,7 @@ const MapControls = ({
             position: 'fixed',
             bottom: isMobile ? '80px' : '80px',
             right: isMobile ? '16px' : '20px',
-            zIndex: 999,
+            zIndex: 1001, // Lower than FAB but higher than other elements
             backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             border: '1px solid #ccc',
             borderRadius: '8px',
@@ -102,8 +102,8 @@ const MapControls = ({
             gap: '12px',
             overflow: 'hidden',
             transition: 'max-height 0.3s ease, opacity 0.3s ease',
-            maxHeight: isCollapsed ? '48px' : '400px', // Collapsed height vs expanded height
-            opacity: isCollapsed ? 0.9 : 1, // Slightly transparent when collapsed
+            maxHeight: isCollapsed ? '48px' : '400px',
+            opacity: isCollapsed ? 0.9 : 1,
           }}
         >
           {/* Collapse/Expand Button */}
@@ -119,7 +119,7 @@ const MapControls = ({
               textAlign: 'center',
             }}
           >
-            {isCollapsed ? '▼' : '▲'} {/* Arrow icons for collapse/expand */}
+            {isCollapsed ? '▼' : '▲'}
           </button>
 
           {/* Layer Toggles (Visible when expanded) */}
