@@ -175,6 +175,27 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
+
+.terrain-control {
+  margin-top: 10px;
+}
+
+.terrain-control label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.terrain-control input[type="range"] {
+  width: 100%;
+}
+
+.terrain-control span {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 0.9em;
+}
+
 /* Weather Widget */
 .weather-widget {
   position: absolute;
