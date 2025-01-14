@@ -1,3 +1,32 @@
+import { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
+import Earth from './components/Earth';
+import { Groq } from 'groq-sdk';
+import NewsPanel from './components/NewsPanel';
+import SearchBar from './components/SearchBar';
+import MarkdownContent from './components/MarkdownContent';
+import VirtualTour from './components/VirtualTour';
+import './index.css';
+
+// Translation function using the free Google Translate endpoint
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  try {
+    const translatedSentences = await Promise.all(
+      sentences.map(async (sentence) => {
+        const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(sentence)}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        return data[0][0][0];
+      })
+    );
+    return translatedSentences.join(' ');
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text;
+  }
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
