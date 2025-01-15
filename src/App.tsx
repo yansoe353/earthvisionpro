@@ -23,7 +23,7 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     return translatedSentences.join(' ');
   } catch (error) {
     console.error('Translation error:', error);
-    return text;
+    return text; // Fallback to original text if translation fails
   }
 };
 
@@ -557,30 +557,59 @@ function App() {
     }
   };
 
-  // Handle language change for historical insights and timeline
+  // Handle language change for all insights and content
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
 
-    // Translate historical insights if they exist
-    if (historicalInsights) {
-      const translatedInsights = await translateText(historicalInsights, newLanguage);
-      setHistoricalInsights(translatedInsights);
-    }
+    // Translate all content
+    const translateAllContent = async () => {
+      if (facts) {
+        const translatedFactsText = await translateText(facts, newLanguage);
+        setTranslatedFacts(translatedFactsText);
+      }
 
-    // Translate historical events if they exist
-    if (historicalEvents.length > 0) {
-      const translatedEvents = await Promise.all(
-        historicalEvents.map(async (event) => ({
-          ...event,
-          cardTitle: await translateText(event.cardTitle, newLanguage),
-          cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
-          cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
-        }))
-      );
-      setHistoricalEvents(translatedEvents);
-    }
+      if (historicalInsights) {
+        const translatedHistoricalInsights = await translateText(historicalInsights, newLanguage);
+        setHistoricalInsights(translatedHistoricalInsights);
+      }
 
+      if (historicalEvents.length > 0) {
+        const translatedEvents = await Promise.all(
+          historicalEvents.map(async (event) => ({
+            ...event,
+            cardTitle: await translateText(event.cardTitle, newLanguage),
+            cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
+            cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
+          }))
+        );
+        setHistoricalEvents(translatedEvents);
+      }
+
+      if (newsArticles.length > 0) {
+        const translatedNewsArticles = await Promise.all(
+          newsArticles.map(async (article) => ({
+            ...article,
+            title: await translateText(article.title, newLanguage),
+            description: await translateText(article.description, newLanguage),
+          }))
+        );
+        setNewsArticles(translatedNewsArticles);
+      }
+
+      if (dynamicThemes.length > 0) {
+        const translatedThemes = await Promise.all(
+          dynamicThemes.map(async (theme) => ({
+            ...theme,
+            name: await translateText(theme.name, newLanguage),
+            prompt: await translateText(theme.prompt, newLanguage),
+          }))
+        );
+        setDynamicThemes(translatedThemes);
+      }
+    };
+
+    await translateAllContent();
     setTranslating(false);
   };
 
