@@ -111,6 +111,50 @@ const generateYouTubeSearchPrompt = async (location: string) => {
   return null;
 };
 
+// Generate news content using Groq API
+const generateNewsWithAI = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+    return 'No news available for this location.';
+  } catch (error) {
+    console.error('Error generating news:', error);
+    return 'Failed to generate news. Please try again.';
+  }
+};
+
+// Handle rewritten content from MarkdownContent
+const handleRewrittenContent = (newContent: string) => {
+  setFacts(newContent); // Update the facts state with the new content
+  if (language !== 'en') {
+    // If the language is not English, translate the new content
+    translateText(newContent, language).then((translatedText) => {
+      setTranslatedFacts(translatedText);
+    });
+  } else {
+    // If the language is English, set the translatedFacts to the new content
+    setTranslatedFacts(newContent);
+  }
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
