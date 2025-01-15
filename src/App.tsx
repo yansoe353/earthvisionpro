@@ -142,50 +142,6 @@ const generateNewsWithAI = async (location: string) => {
   }
 };
 
-// Fetch historical insights and events using Groq API
-const fetchHistoricalInsightsWithGroq = async (location: string) => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    // Fetch historical summary
-    const summaryCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Provide a detailed historical summary of ${location}. Include key events, cultural developments, and environmental changes. Keep the response concise and engaging.`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    // Fetch historical events
-    const eventsCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a list of 5 key historical events for ${location}. For each event, provide a title, a brief description, and the year it occurred. Format the response as a JSON array: [{ "title": "Event Title", "cardTitle": "Event Title", "cardSubtitle": "Year", "cardDetailedText": "Event Description" }]`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    const historicalSummary = summaryCompletion.choices[0]?.message?.content || 'No historical summary available.';
-    const historicalEvents = JSON.parse(eventsCompletion.choices[0]?.message?.content || '[]');
-
-    return { historicalSummary, historicalEvents };
-  } catch (error) {
-    console.error('Error fetching historical insights:', error);
-    return { historicalSummary: 'Failed to fetch historical insights. Please try again.', historicalEvents: [] };
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -209,7 +165,6 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string }>>([]);
-  const [isHistoricalLoading, setIsHistoricalLoading] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -229,35 +184,51 @@ function App() {
     }
   };
 
-  // Fetch historical insights and events
+  // Fetch historical insights using Groq API
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
 
-    setIsHistoricalLoading(true);
+    setLoading(true);
     try {
-      const { historicalSummary, historicalEvents } = await fetchHistoricalInsightsWithGroq(currentLocation);
-      setHistoricalInsights(historicalSummary);
-      setHistoricalEvents(historicalEvents);
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
 
-      // Translate historical insights if the language is not English
-      if (language !== 'en') {
-        const translatedSummary = await translateText(historicalSummary, language);
-        setHistoricalInsights(translatedSummary);
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Keep the response concise and engaging.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
 
-        const translatedEvents = await Promise.all(
-          historicalEvents.map(async (event) => ({
-            ...event,
-            cardDetailedText: await translateText(event.cardDetailedText, language),
-          }))
-        );
-        setHistoricalEvents(translatedEvents);
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        setHistoricalInsights(completion.choices[0].message.content);
+        setHistoricalEvents([
+          {
+            title: '753 BC',
+            cardTitle: 'Founding of Rome',
+            cardSubtitle: 'Rome was founded by Romulus and Remus.',
+            cardDetailedText: 'According to legend, Rome was founded in 753 BC by the twin brothers Romulus and Remus. It grew to become one of the most powerful empires in history.',
+          },
+          {
+            title: '44 BC',
+            cardTitle: 'Assassination of Julius Caesar',
+            cardSubtitle: 'Julius Caesar was assassinated by Roman senators.',
+            cardDetailedText: 'Julius Caesar, a Roman general and statesman, was assassinated on the Ides of March (March 15, 44 BC) by a group of Roman senators.',
+          },
+        ]);
       }
     } catch (error) {
       console.error('Error fetching historical insights:', error);
       setHistoricalInsights('Failed to fetch historical insights. Please try again.');
-      setHistoricalEvents([]);
     } finally {
-      setIsHistoricalLoading(false);
+      setLoading(false);
     }
   };
 
@@ -495,12 +466,12 @@ function App() {
     recognition.start();
     setIsListening(true);
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       const command = event.results[0][0].transcript.toLowerCase();
       handleVoiceCommand(command);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       console.error('Voice recognition error:', event.error);
       setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
     };
@@ -623,9 +594,9 @@ function App() {
           <button
             onClick={fetchHistoricalInsights}
             className="historical-insights-button"
-            disabled={!currentLocation || isHistoricalLoading}
+            disabled={!currentLocation || loading}
           >
-            {isHistoricalLoading ? 'Loading...' : '🕰️ View Historical Insights'}
+            🕰️ View Historical Insights
           </button>
         </div>
         {loading ? (
