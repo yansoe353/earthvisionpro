@@ -2,12 +2,22 @@
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types", "./src/types"], // Include custom type definitions
     "baseUrl": ".", // Base directory for module resolution
-    "lib": ["dom", "esnext"],
+    "lib": ["dom", "esnext"], // Include DOM and ESNext features
     "paths": {
       "@/*": ["./src/*"] // Map @/ to the src directory
-    }
+    },
+    "strict": true, // Enable all strict type-checking options
+    "noImplicitAny": true, // Ensure no implicit `any` types
+    "esModuleInterop": true, // Enable ES module interop
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file name casing
+    "moduleResolution": "node", // Use Node.js-style module resolution
+    "resolveJsonModule": true, // Allow importing JSON files
+    "isolatedModules": true, // Ensure each file can be transpiled independently
+    "noEmit": true // Disable emitting JavaScript files (if using a bundler like Vite)
   },
-  "files": [],
+  "include": ["src/**/*"], // Include all files in the src directory
+  "exclude": ["node_modules", "dist"], // Exclude node_modules and dist directories
   "references": [
     { "path": "./tsconfig.app.json" }, // Reference the app configuration
     { "path": "./tsconfig.node.json" } // Reference the Node.js configuration
