@@ -350,6 +350,14 @@ function App() {
       const analysis = await analyzeWithGroq(dataUrl, locationName);
       setFacts(analysis);
 
+      // Translate the analysis if the current language is not English
+      if (language !== 'en') {
+        const translatedAnalysis = await translateText(analysis, language);
+        setTranslatedFacts(translatedAnalysis);
+      } else {
+        setTranslatedFacts(analysis);
+      }
+
       await generateDynamicThemes(locationName);
       await fetchYouTubeVideos(locationName);
     } catch (error) {
