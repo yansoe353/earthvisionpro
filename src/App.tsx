@@ -495,12 +495,12 @@ function App() {
     recognition.start();
     setIsListening(true);
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const command = event.results[0][0].transcript.toLowerCase();
       handleVoiceCommand(command);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Voice recognition error:', event.error);
       setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
     };
