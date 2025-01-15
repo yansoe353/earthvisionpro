@@ -186,61 +186,62 @@ function App() {
 
   // Fetch historical insights and events using Groq API
   const fetchHistoricalInsights = async () => {
-    if (!currentLocation) return;
+  const fetchHistoricalInsights = async () => {
+  if (!currentLocation) return;
 
-    setLoading(true);
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
+  setLoading(true);
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
 
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also, provide a list of historical events in JSON format like this:
-            [
-              {
-                "title": "Event Year",
-                "cardTitle": "Event Title",
-                "cardSubtitle": "Event Subtitle",
-                "cardDetailedText": "Detailed description of the event."
-              }
-            ]
-            Keep the response concise and engaging.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also, provide a list of historical events in JSON format like this:
+          [
+            {
+              "title": "Event Year",
+              "cardTitle": "Event Title",
+              "cardSubtitle": "Event Subtitle",
+              "cardDetailedText": "Detailed description of the event."
+            }
+          ]
+          Keep the response concise and engaging.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const response = completion.choices[0].message.content;
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const response = completion.choices[0].message.content;
 
-        // Extract historical insights
-        const insights = response.split('JSON format like this:')[0].trim();
-        setHistoricalInsights(insights);
+      // Extract historical insights
+      const insights = response.split('JSON format like this:')[0].trim();
+      setHistoricalInsights(insights);
 
-        // Extract historical events from JSON
-        const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
-        if (eventsJson) {
-          const events = JSON.parse(eventsJson);
-          setHistoricalEvents(events);
-        } else {
-          console.error('No historical events found in the response.');
-          setHistoricalEvents([]);
-        }
+      // Extract historical events from JSON
+      const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
+      if (eventsJson) {
+        const events = JSON.parse(eventsJson);
+        setHistoricalEvents(events);
+      } else {
+        console.error('No historical events found in the response.');
+        setHistoricalEvents([]);
       }
-    } catch (error) {
-      console.error('Error fetching historical insights:', error);
-      setHistoricalInsights('Failed to fetch historical insights. Please try again.');
-      setHistoricalEvents([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching historical insights:', error);
+    setHistoricalInsights('Failed to fetch historical insights. Please try again.');
+    setHistoricalEvents([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
@@ -319,54 +320,58 @@ function App() {
   };
 
   // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
+const captureView = async () => {
+  if (!earthContainerRef.current || !earthRef.current) return;
 
-    setShowWeatherWidget(false);
-    setLoading(true);
-    setDynamicThemes([]);
+  // Reset historical insights and events
+  setHistoricalInsights('');
+  setHistoricalEvents([]);
 
-    try {
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
+  setShowWeatherWidget(false);
+  setLoading(true);
+  setDynamicThemes([]);
 
-      await new Promise((resolve) => {
-        map.once('idle', resolve);
-      });
-
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      setCapturedImage(dataUrl);
-
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      const locationName = await fetchLocationName(lng, lat);
-      setCurrentLocation(locationName);
-
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
-      setFacts(analysis);
-
-      // Translate the analysis if the current language is not English
-      if (language !== 'en') {
-        const translatedAnalysis = await translateText(analysis, language);
-        setTranslatedFacts(translatedAnalysis);
-      } else {
-        setTranslatedFacts(analysis);
-      }
-
-      await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
-    } catch (error) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
+  try {
+    const map = earthRef.current.getMap();
+    if (!map) {
+      throw new Error('Map instance not found.');
     }
-  };
+
+    await new Promise((resolve) => {
+      map.once('idle', resolve);
+    });
+
+    const canvas = map.getCanvas();
+    const dataUrl = canvas.toDataURL('image/png');
+    setCapturedImage(dataUrl);
+
+    const center = map.getCenter();
+    const lng = center.lng;
+    const lat = center.lat;
+
+    const locationName = await fetchLocationName(lng, lat);
+    setCurrentLocation(locationName);
+
+    const analysis = await analyzeWithGroq(dataUrl, locationName);
+    setFacts(analysis);
+
+    // Translate the analysis if the current language is not English
+    if (language !== 'en') {
+      const translatedAnalysis = await translateText(analysis, language);
+      setTranslatedFacts(translatedAnalysis);
+    } else {
+      setTranslatedFacts(analysis);
+    }
+
+    await generateDynamicThemes(locationName);
+    await fetchYouTubeVideos(locationName);
+  } catch (error) {
+    console.error('Error capturing view:', error);
+    setFacts('Error getting facts about this region. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
@@ -539,36 +544,36 @@ function App() {
 
   // Handle language change for historical insights and timeline
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
+  setTranslating(true);
+  setLanguage(newLanguage);
 
-    // Translate historical insights
-    if (historicalInsights) {
-      const translatedInsights = await translateText(historicalInsights, newLanguage);
-      setHistoricalInsights(translatedInsights);
-    }
+  // Translate historical insights
+  if (historicalInsights) {
+    const translatedInsights = await translateText(historicalInsights, newLanguage);
+    setHistoricalInsights(translatedInsights);
+  }
 
-    // Translate historical events
-    if (historicalEvents.length > 0) {
-      const translatedEvents = await Promise.all(
-        historicalEvents.map(async (event) => ({
-          ...event,
-          cardTitle: await translateText(event.cardTitle, newLanguage),
-          cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
-          cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
-        }))
-      );
-      setHistoricalEvents(translatedEvents);
-    }
+  // Translate historical events
+  if (historicalEvents.length > 0) {
+    const translatedEvents = await Promise.all(
+      historicalEvents.map(async (event) => ({
+        ...event,
+        cardTitle: await translateText(event.cardTitle, newLanguage),
+        cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
+        cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
+      }))
+    );
+    setHistoricalEvents(translatedEvents);
+  }
 
-    // Translate facts if they exist
-    if (facts) {
-      const translatedText = await translateText(facts, newLanguage);
-      setTranslatedFacts(translatedText);
-    }
+  // Translate facts if they exist
+  if (facts) {
+    const translatedText = await translateText(facts, newLanguage);
+    setTranslatedFacts(translatedText);
+  }
 
-    setTranslating(false);
-  };
+  setTranslating(false);
+};
 
   return (
     <div className="app">
