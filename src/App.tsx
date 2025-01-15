@@ -232,6 +232,22 @@ function App() {
         console.error('No historical events found in the response.');
         setHistoricalEvents([]);
       }
+
+      // Translate content if the current language is not English
+      if (language !== 'en') {
+        const translatedInsights = await translateText(insights, language);
+        setHistoricalInsights(translatedInsights);
+
+        const translatedEvents = await Promise.all(
+          events.map(async (event: any) => ({
+            ...event,
+            cardTitle: await translateText(event.cardTitle, language),
+            cardSubtitle: await translateText(event.cardSubtitle, language),
+            cardDetailedText: await translateText(event.cardDetailedText, language),
+          }))
+        );
+        setHistoricalEvents(translatedEvents);
+      }
     }
   } catch (error) {
     console.error('Error fetching historical insights:', error);
@@ -542,17 +558,17 @@ const captureView = async () => {
   };
 
   // Handle language change for historical insights and timeline
-  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
   setTranslating(true);
   setLanguage(newLanguage);
 
-  // Translate historical insights
+  // Translate historical insights if they exist
   if (historicalInsights) {
     const translatedInsights = await translateText(historicalInsights, newLanguage);
     setHistoricalInsights(translatedInsights);
   }
 
-  // Translate historical events
+  // Translate historical events if they exist
   if (historicalEvents.length > 0) {
     const translatedEvents = await Promise.all(
       historicalEvents.map(async (event) => ({
@@ -563,12 +579,6 @@ const captureView = async () => {
       }))
     );
     setHistoricalEvents(translatedEvents);
-  }
-
-  // Translate facts if they exist
-  if (facts) {
-    const translatedText = await translateText(facts, newLanguage);
-    setTranslatedFacts(translatedText);
   }
 
   setTranslating(false);
@@ -714,28 +724,28 @@ const captureView = async () => {
               </div>
             )}
             {historicalInsights && (
-              <div className="historical-insights">
-                <h2>Historical Insights for {currentLocation}</h2>
-                {translating ? (
-                  <p>Translating historical insights...</p>
-                ) : (
-                  <MarkdownContent
-                    content={historicalInsights}
-                    language={language}
-                    onRewrite={handleRewrittenContent}
-                  />
-                )}
-                {historicalEvents.length > 0 && (
-                  <div className="timeline-container">
-                    <Chrono
-                      items={historicalEvents}
-                      mode="HORIZONTAL"
-                      theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+  <div className="historical-insights">
+    <h2>Historical Insights for {currentLocation}</h2>
+    {translating ? (
+      <p>Translating historical insights...</p>
+    ) : (
+      <MarkdownContent
+        content={historicalInsights}
+        language={language}
+        onRewrite={handleRewrittenContent}
+      />
+    )}
+    {historicalEvents.length > 0 && (
+      <div className="timeline-container">
+        <Chrono
+          items={historicalEvents}
+          mode="HORIZONTAL"
+          theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
+        />
+      </div>
+    )}
+  </div>
+)}
             {youtubeVideos.length > 0 && (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
