@@ -141,20 +141,6 @@ const generateNewsWithAI = async (location: string) => {
   }
 };
 
-// Handle rewritten content from MarkdownContent
-const handleRewrittenContent = (newContent: string) => {
-  setFacts(newContent); // Update the facts state with the new content
-  if (language !== 'en') {
-    // If the language is not English, translate the new content
-    translateText(newContent, language).then((translatedText) => {
-      setTranslatedFacts(translatedText);
-    });
-  } else {
-    // If the language is English, set the translatedFacts to the new content
-    setTranslatedFacts(newContent);
-  }
-};
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -182,6 +168,20 @@ function App() {
   const factsContainerRef = useRef<HTMLDivElement>(null);
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
+
+  // Handle rewritten content from MarkdownContent
+  const handleRewrittenContent = (newContent: string) => {
+    setFacts(newContent); // Update the facts state with the new content
+    if (language !== 'en') {
+      // If the language is not English, translate the new content
+      translateText(newContent, language).then((translatedText) => {
+        setTranslatedFacts(translatedText);
+      });
+    } else {
+      // If the language is English, set the translatedFacts to the new content
+      setTranslatedFacts(newContent);
+    }
+  };
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
