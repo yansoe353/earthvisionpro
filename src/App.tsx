@@ -186,7 +186,6 @@ function App() {
 
   // Fetch historical insights and events using Groq API
   const fetchHistoricalInsights = async () => {
-  const fetchHistoricalInsights = async () => {
   if (!currentLocation) return;
 
   setLoading(true);
