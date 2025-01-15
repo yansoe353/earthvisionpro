@@ -26,6 +26,91 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
+// List of YouTube API keys
+const YOUTUBE_API_KEYS = [
+  import.meta.env.VITE_YOUTUBE_API_KEY_1,
+  import.meta.env.VITE_YOUTUBE_API_KEY_2,
+  import.meta.env.VITE_YOUTUBE_API_KEY_3,
+];
+
+// Fetch YouTube videos using the generated prompt
+const fetchYouTubeVideos = async (location: string) => {
+  const searchPrompt = await generateYouTubeSearchPrompt(location);
+  if (!searchPrompt) {
+    console.error('Failed to generate YouTube search prompt.');
+    return [];
+  }
+
+  // Try each API key until one succeeds
+  for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
+    const apiKey = YOUTUBE_API_KEYS[i];
+    if (!apiKey) {
+      console.error(`YouTube API key ${i + 1} is missing.`);
+      continue;
+    }
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          searchPrompt
+        )}&type=video&maxResults=5&key=${apiKey}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
+        continue; // Try the next key
+      }
+
+      const data = await response.json();
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+        }));
+      } else {
+        console.warn('No YouTube videos found for the location:', location);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
+      continue; // Try the next key
+    }
+  }
+
+  console.error('All YouTube API keys failed.');
+  return [];
+};
+
+// Generate YouTube search prompt using Groq API
+const generateYouTubeSearchPrompt = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 5000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+  } catch (error) {
+    console.error('Error generating YouTube search prompt:', error);
+  }
+  return null;
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -54,134 +139,20 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch YouTube videos using the generated prompt
-  const fetchYouTubeVideos = async (location: string) => {
-    try {
-      const searchPrompt = await generateYouTubeSearchPrompt(location);
-      if (!searchPrompt) {
-        console.error('Failed to generate YouTube search prompt.');
-        return;
-      }
-
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      if (!apiKey) {
-        console.error('YouTube API key is missing.');
-        return;
-      }
-
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json(); // Log the error details
-        console.error('YouTube API request failed:', response.status, response.statusText, errorData);
-        return;
-      }
-
-      const data = await response.json();
-      console.log('YouTube API response:', data);
-
-      if (data.items && data.items.length > 0) {
-        const videos = data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-        }));
-        setYoutubeVideos(videos);
-      } else {
-        console.warn('No videos found for the location:', location);
-        setYoutubeVideos([]);
-      }
-    } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
-      setYoutubeVideos([]);
-    }
-  };
-
-  // Generate YouTube search prompt using Groq API
-  const generateYouTubeSearchPrompt = async (location: string) => {
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 5000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
-      }
-    } catch (error) {
-      console.error('Error generating YouTube search prompt:', error);
-    }
-    return null;
-  };
-
-  // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = (content: string) => {
-    if (language === 'en') {
-      setFacts(content); // Update facts if language is English
-    } else {
-      translateText(content, language).then((translated) => setTranslatedFacts(translated)); // Translate if needed
-    }
-  };
-
-  // Generate location-based news using AI
-  const generateNewsWithAI = async (location: string): Promise<string> => {
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a brief news summary about ${location}. Include cultural highlights, interesting facts, and notable events.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
-      }
-      return 'No news available at the moment.';
-    } catch (error) {
-      console.error('Error generating news with AI:', error);
-      return 'Error generating news. Please try again.';
-    }
-  };
-
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
 
-    // Fetch location name and YouTube videos
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
     const data = await response.json();
     if (data.features && data.features.length > 0) {
       const locationName = data.features[0].place_name;
-      setCurrentLocation(locationName); // Set currentLocation
-      setVirtualTourLocation({ lat, lng, name: locationName }); // Set virtual tour location
-      await fetchYouTubeVideos(locationName);
+      setCurrentLocation(locationName);
+      setVirtualTourLocation({ lat, lng, name: locationName });
+      const videos = await fetchYouTubeVideos(locationName); // Fetch YouTube videos
+      setYoutubeVideos(videos);
     }
   };
 
@@ -499,8 +470,8 @@ function App() {
         <Earth
           ref={earthRef}
           onCaptureView={captureView}
-          showWeatherWidget={showWeatherWidget} // Pass state as prop
-          setShowWeatherWidget={setShowWeatherWidget} // Pass setter as prop
+          showWeatherWidget={showWeatherWidget}
+          setShowWeatherWidget={setShowWeatherWidget}
         />
       </div>
       <div className="info-panel">
@@ -509,7 +480,7 @@ function App() {
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
-        {/* Button Panel (Hidden by Default) */}
+        {/* Button Panel */}
         <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
           <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
             &times;
@@ -541,14 +512,13 @@ function App() {
           >
             {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
           </button>
-          {/* Read News Button */}
           <button
             onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
-              setIsNewsLoading(true); // Show loading state
+              setIsNewsLoading(true);
               const newsContent = await generateNewsWithAI(currentLocation);
               setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
-              setIsNewsLoading(false); // Hide loading state
+              setIsNewsLoading(false);
             }}
             className="news-button"
             disabled={!currentLocation}
@@ -568,7 +538,7 @@ function App() {
             <MarkdownContent
               content={language === 'en' ? facts : translatedFacts}
               language={language}
-              onRewrite={handleRewrittenContent} // Pass the rewrite handler
+              onRewrite={handleRewrittenContent}
             />
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
