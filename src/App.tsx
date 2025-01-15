@@ -5,7 +5,7 @@ import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
-import { Chrono } from 'react-chrono';
+import { Chrono } from 'react-chrono'; // Import Chrono
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -165,6 +165,7 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string }>>([]);
+
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
@@ -185,9 +186,7 @@ function App() {
     }
   };
 
-
-
-   // Fetch historical insights using Groq API
+  // Fetch historical insights using Groq API
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
 
@@ -235,8 +234,6 @@ function App() {
       setLoading(false);
     }
   };
-
-  
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
@@ -624,6 +621,14 @@ function App() {
           >
             📰 Read News
           </button>
+          {/* Historical Insights Button */}
+          <button
+            onClick={fetchHistoricalInsights}
+            className="historical-insights-button"
+            disabled={!currentLocation || loading}
+          >
+            🕰️ View Historical Insights
+          </button>
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -695,6 +700,22 @@ function App() {
                 >
                   Save Analysis
                 </button>
+              </div>
+            )}
+            {/* Historical Insights Section */}
+            {historicalInsights && (
+              <div className="historical-insights">
+                <h2>Historical Insights for {currentLocation}</h2>
+                <MarkdownContent content={historicalInsights} />
+                {historicalEvents.length > 0 && (
+                  <div className="timeline-container">
+                    <Chrono
+                      items={historicalEvents}
+                      mode="HORIZONTAL"
+                      theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
+                    />
+                  </div>
+                )}
               </div>
             )}
             {/* YouTube Videos Section */}
