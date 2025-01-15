@@ -5,6 +5,7 @@ import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
+import { Chrono } from 'react-chrono';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -162,7 +163,8 @@ function App() {
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
-
+  const [historicalInsights, setHistoricalInsights] = useState<string>('');
+  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string }>>([]);
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
   const factsContainerRef = useRef<HTMLDivElement>(null);
@@ -182,6 +184,59 @@ function App() {
       setTranslatedFacts(newContent);
     }
   };
+
+
+
+   // Fetch historical insights using Groq API
+  const fetchHistoricalInsights = async () => {
+    if (!currentLocation) return;
+
+    setLoading(true);
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Keep the response concise and engaging.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        setHistoricalInsights(completion.choices[0].message.content);
+        // Example of setting historical events (you can parse this dynamically from the API response)
+        setHistoricalEvents([
+          {
+            title: '753 BC',
+            cardTitle: 'Founding of Rome',
+            cardSubtitle: 'Rome was founded by Romulus and Remus.',
+            cardDetailedText: 'According to legend, Rome was founded in 753 BC by the twin brothers Romulus and Remus. It grew to become one of the most powerful empires in history.',
+          },
+          {
+            title: '44 BC',
+            cardTitle: 'Assassination of Julius Caesar',
+            cardSubtitle: 'Julius Caesar was assassinated by Roman senators.',
+            cardDetailedText: 'Julius Caesar, a Roman general and statesman, was assassinated on the Ides of March (March 15, 44 BC) by a group of Roman senators.',
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching historical insights:', error);
+      setHistoricalInsights('Failed to fetch historical insights. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
 
   // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
