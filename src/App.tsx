@@ -5,7 +5,7 @@ import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
-import { Chrono } from 'react-chrono'; // Import Chrono
+import { Chrono } from 'react-chrono';
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -174,14 +174,12 @@ function App() {
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = (newContent: string) => {
-    setFacts(newContent); // Update the facts state with the new content
+    setFacts(newContent);
     if (language !== 'en') {
-      // If the language is not English, translate the new content
       translateText(newContent, language).then((translatedText) => {
         setTranslatedFacts(translatedText);
       });
     } else {
-      // If the language is English, set the translatedFacts to the new content
       setTranslatedFacts(newContent);
     }
   };
@@ -211,7 +209,6 @@ function App() {
 
       if (completion.choices && completion.choices[0]?.message?.content) {
         setHistoricalInsights(completion.choices[0].message.content);
-        // Example of setting historical events (you can parse this dynamically from the API response)
         setHistoricalEvents([
           {
             title: '753 BC',
@@ -247,7 +244,7 @@ function App() {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
       setVirtualTourLocation({ lat, lng, name: locationName });
-      const videos = await fetchYouTubeVideos(locationName); // Fetch YouTube videos
+      const videos = await fetchYouTubeVideos(locationName);
       setYoutubeVideos(videos);
     }
   };
@@ -261,7 +258,7 @@ function App() {
       const response = await fetch(url);
       const data = await response.json();
       if (data.features && data.features.length > 0) {
-        return data.features[0].place_name; // Returns the location name
+        return data.features[0].place_name;
       }
       return 'Unknown Location';
     } catch (error) {
@@ -302,7 +299,7 @@ function App() {
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content; // Returns the AI-generated analysis
+        return completion.choices[0].message.content;
       }
       return 'No analysis available.';
     } catch (error) {
@@ -315,49 +312,34 @@ function App() {
   const captureView = async () => {
     if (!earthContainerRef.current || !earthRef.current) return;
 
-    // Close the weather widget before capturing
     setShowWeatherWidget(false);
-
     setLoading(true);
     setDynamicThemes([]);
 
     try {
-      console.log('Capturing Earth view...');
-
-      // Get the Mapbox map instance
       const map = earthRef.current.getMap();
       if (!map) {
         throw new Error('Map instance not found.');
       }
 
-      // Wait for the map to be fully rendered
       await new Promise((resolve) => {
-        map.once('idle', resolve); // Wait for the map to finish rendering
+        map.once('idle', resolve);
       });
 
-      // Capture the map canvas as an image
       const canvas = map.getCanvas();
       const dataUrl = canvas.toDataURL('image/png');
-      console.log('Earth view captured:', dataUrl);
-
-      // Set the captured image in the state
       setCapturedImage(dataUrl);
 
-      // Get the current center coordinates
       const center = map.getCenter();
       const lng = center.lng;
       const lat = center.lat;
 
-      // Fetch the location name using Mapbox Geocoding API
       const locationName = await fetchLocationName(lng, lat);
-      console.log('Location name:', locationName);
       setCurrentLocation(locationName);
 
-      // Send the image and location name to Groq API for analysis
       const analysis = await analyzeWithGroq(dataUrl, locationName);
       setFacts(analysis);
 
-      // Generate dynamic themes and fetch YouTube videos
       await generateDynamicThemes(locationName);
       await fetchYouTubeVideos(locationName);
     } catch (error) {
@@ -403,16 +385,11 @@ function App() {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
-    // Save the current language
     const currentLang = language;
+    setLanguage('en');
+    setTranslatedFacts('');
 
     try {
-      // Force language to English before analysis
-      setLanguage('en');
-
-      // Clear previous translated content
-      setTranslatedFacts('');
-
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
@@ -440,16 +417,12 @@ function App() {
 
       if (completion.choices && completion.choices[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
-
-        // Update the facts state with the new analysis
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
-        // Translate the analysis if the current language is not English
         if (currentLang !== 'en') {
           const translatedText = await translateText(newAnalysis, currentLang);
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
         } else {
-          // If the language is English, set the translatedFacts to the new analysis
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
         }
       }
@@ -457,7 +430,6 @@ function App() {
       console.error('Error during analysis:', error);
       setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
-      // Restore the original language
       setLanguage(currentLang);
       setAnalysisLoading(false);
     }
@@ -524,11 +496,11 @@ function App() {
       setVoiceCommandFeedback('Rotating right.');
     } else if (command.includes('search for')) {
       const location = command.split('search for ')[1];
-      handleSearchByName(location); // Use handleSearchByName for location search
+      handleSearchByName(location);
       setVoiceCommandFeedback(`Searching for ${location}.`);
     } else if (command.includes('tell me about')) {
       const location = command.split('tell me about ')[1];
-      handleSearchByName(location); // Use handleSearchByName for location search
+      handleSearchByName(location);
       setVoiceCommandFeedback(`Fetching information about ${location}.`);
     } else {
       setVoiceCommandFeedback('Command not recognized.');
@@ -543,7 +515,7 @@ function App() {
     const data = await response.json();
     if (data.features && data.features.length > 0) {
       const [lng, lat] = data.features[0].center;
-      handleSearch(lng, lat); // Call the updated handleSearch function
+      handleSearch(lng, lat);
     }
   };
 
@@ -572,11 +544,9 @@ function App() {
       </div>
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
-        {/* Menu Button */}
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
-        {/* Button Panel */}
         <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
           <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
             &times;
@@ -621,7 +591,6 @@ function App() {
           >
             📰 Read News
           </button>
-          {/* Historical Insights Button */}
           <button
             onClick={fetchHistoricalInsights}
             className="historical-insights-button"
@@ -702,11 +671,14 @@ function App() {
                 </button>
               </div>
             )}
-            {/* Historical Insights Section */}
             {historicalInsights && (
               <div className="historical-insights">
                 <h2>Historical Insights for {currentLocation}</h2>
-                <MarkdownContent content={historicalInsights} />
+                <MarkdownContent
+                  content={historicalInsights}
+                  language={language}
+                  onRewrite={handleRewrittenContent}
+                />
                 {historicalEvents.length > 0 && (
                   <div className="timeline-container">
                     <Chrono
@@ -718,7 +690,6 @@ function App() {
                 )}
               </div>
             )}
-            {/* YouTube Videos Section */}
             {youtubeVideos.length > 0 && (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
@@ -743,7 +714,6 @@ function App() {
           </div>
         )}
       </div>
-      {/* Virtual Tour Panel */}
       {isVirtualTourActive && virtualTourLocation && (
         <VirtualTour
           location={virtualTourLocation}
@@ -752,7 +722,6 @@ function App() {
           onTranslate={translateText}
         />
       )}
-      {/* News Panel */}
       {isNewsPanelActive && newsArticles.length > 0 && (
         <NewsPanel
           newsArticles={newsArticles}
