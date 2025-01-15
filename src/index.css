@@ -1066,6 +1066,23 @@ html, body, #root {
   color: black; /* Ensure paragraph text is black */
 }
 
+/* Add this to your CSS file */
+.timeline-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.react-chrono {
+  min-width: 600px; /* Adjust as needed */
+}
+
+@media (max-width: 768px) {
+  .react-chrono {
+    min-width: 100%;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .news-panel {
