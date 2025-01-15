@@ -529,246 +529,243 @@ function App() {
     }
   };
 
-  // Handle language change
-   // Rest of the code remains unchanged...
+  // Handle language change for historical insights and timeline
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
 
-// Handle language change for historical insights and timeline
-const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-  setTranslating(true);
-  setLanguage(newLanguage);
+    // Translate historical insights
+    if (historicalInsights) {
+      const translatedInsights = await translateText(historicalInsights, newLanguage);
+      setHistoricalInsights(translatedInsights);
+    }
 
-  // Translate historical insights
-  if (historicalInsights) {
-    const translatedInsights = await translateText(historicalInsights, newLanguage);
-    setHistoricalInsights(translatedInsights);
-  }
+    // Translate historical events
+    if (historicalEvents.length > 0) {
+      const translatedEvents = await Promise.all(
+        historicalEvents.map(async (event) => ({
+          ...event,
+          cardTitle: await translateText(event.cardTitle, newLanguage),
+          cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
+          cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
+        }))
+      );
+      setHistoricalEvents(translatedEvents);
+    }
 
-  // Translate historical events
-  if (historicalEvents.length > 0) {
-    const translatedEvents = await Promise.all(
-      historicalEvents.map(async (event) => ({
-        ...event,
-        cardTitle: await translateText(event.cardTitle, newLanguage),
-        cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
-        cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
-      }))
-    );
-    setHistoricalEvents(translatedEvents);
-  }
+    // Translate facts if they exist
+    if (facts) {
+      const translatedText = await translateText(facts, newLanguage);
+      setTranslatedFacts(translatedText);
+    }
 
-  // Translate facts if they exist
-  if (facts) {
-    const translatedText = await translateText(facts, newLanguage);
-    setTranslatedFacts(translatedText);
-  }
+    setTranslating(false);
+  };
 
-  setTranslating(false);
-};
-
-// Render the App component
-return (
-  <div className="app">
-    <div className="earth-container" ref={earthContainerRef}>
-      <Earth
-        ref={earthRef}
-        onCaptureView={captureView}
-        showWeatherWidget={showWeatherWidget}
-        setShowWeatherWidget={setShowWeatherWidget}
-      />
-    </div>
-    <div className="info-panel">
-      <SearchBar onSearch={handleSearch} />
-      <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-        ☰ Menu
-      </button>
-      <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
-        <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
-          &times;
-        </button>
-        <div className="language-buttons">
-          <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
-            English
-          </button>
-          <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
-            Myanmar
-          </button>
-          <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
-            Thai
-          </button>
-          {translating && <p>Translating...</p>}
-        </div>
-        <button onClick={enableVoiceCommands} className="voice-button">
-          {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
-        </button>
-        {voiceCommandFeedback && (
-          <div className="voice-feedback">
-            <p>{voiceCommandFeedback}</p>
-          </div>
-        )}
-        <button
-          onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
-          className="virtual-tour-button"
-          disabled={!currentLocation}
-        >
-          {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
-        </button>
-        <button
-          onClick={async () => {
-            setIsNewsPanelActive(!isNewsPanelActive);
-            setIsNewsLoading(true);
-            const newsContent = await generateNewsWithAI(currentLocation);
-            setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
-            setIsNewsLoading(false);
-          }}
-          className="news-button"
-          disabled={!currentLocation}
-        >
-          📰 Read News
-        </button>
-        <button
-          onClick={fetchHistoricalInsights}
-          className="historical-insights-button"
-          disabled={!currentLocation || loading}
-        >
-          🕰️ View Historical Insights
-        </button>
+  return (
+    <div className="app">
+      <div className="earth-container" ref={earthContainerRef}>
+        <Earth
+          ref={earthRef}
+          onCaptureView={captureView}
+          showWeatherWidget={showWeatherWidget}
+          setShowWeatherWidget={setShowWeatherWidget}
+        />
       </div>
-      {loading ? (
-        <p className="loading-text">Analyzing view...</p>
-      ) : (
-        <div className="facts" ref={factsContainerRef}>
-          {capturedImage && (
-            <div className="captured-image-container">
-              <img src={capturedImage} alt="Captured view" className="captured-image" />
+      <div className="info-panel">
+        <SearchBar onSearch={handleSearch} />
+        <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          ☰ Menu
+        </button>
+        <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
+          <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
+            &times;
+          </button>
+          <div className="language-buttons">
+            <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
+              English
+            </button>
+            <button onClick={() => handleLanguageChange('my')} disabled={language === 'my' || translating}>
+              Myanmar
+            </button>
+            <button onClick={() => handleLanguageChange('th')} disabled={language === 'th' || translating}>
+              Thai
+            </button>
+            {translating && <p>Translating...</p>}
+          </div>
+          <button onClick={enableVoiceCommands} className="voice-button">
+            {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
+          </button>
+          {voiceCommandFeedback && (
+            <div className="voice-feedback">
+              <p>{voiceCommandFeedback}</p>
             </div>
           )}
-          <MarkdownContent
-            content={language === 'en' ? facts : translatedFacts}
-            language={language}
-            onRewrite={handleRewrittenContent}
-          />
-          {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
-          {facts && !loading && (
-            <div>
-              <div className="analysis-buttons">
+          <button
+            onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
+            className="virtual-tour-button"
+            disabled={!currentLocation}
+          >
+            {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
+          </button>
+          <button
+            onClick={async () => {
+              setIsNewsPanelActive(!isNewsPanelActive);
+              setIsNewsLoading(true);
+              const newsContent = await generateNewsWithAI(currentLocation);
+              setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
+              setIsNewsLoading(false);
+            }}
+            className="news-button"
+            disabled={!currentLocation}
+          >
+            📰 Read News
+          </button>
+          <button
+            onClick={fetchHistoricalInsights}
+            className="historical-insights-button"
+            disabled={!currentLocation || loading}
+          >
+            🕰️ View Historical Insights
+          </button>
+        </div>
+        {loading ? (
+          <p className="loading-text">Analyzing view...</p>
+        ) : (
+          <div className="facts" ref={factsContainerRef}>
+            {capturedImage && (
+              <div className="captured-image-container">
+                <img src={capturedImage} alt="Captured view" className="captured-image" />
+              </div>
+            )}
+            <MarkdownContent
+              content={language === 'en' ? facts : translatedFacts}
+              language={language}
+              onRewrite={handleRewrittenContent}
+            />
+            {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
+            {facts && !loading && (
+              <div>
+                <div className="analysis-buttons">
+                  <button
+                    onClick={() => analyzeWithPerspective('Environmental Factors')}
+                    className="analysis-button environmental"
+                    disabled={analysisLoading}
+                  >
+                    Environmental Factors and Biodiversity
+                  </button>
+                  <button
+                    onClick={() => analyzeWithPerspective('Economic Areas')}
+                    className="analysis-button economic"
+                    disabled={analysisLoading}
+                  >
+                    Economic Areas and Market Strengths
+                  </button>
+                  <button
+                    onClick={() => analyzeWithPerspective('Travel Destinations')}
+                    className="analysis-button cultural"
+                    disabled={analysisLoading}
+                  >
+                    Analysis of Travel locations
+                  </button>
+                </div>
+                {dynamicThemes.length > 0 && (
+                  <div className="analysis-buttons dynamic-buttons">
+                    {currentLocation && (
+                      <button
+                        className="analysis-button refresh-button"
+                        onClick={() => generateDynamicThemes(currentLocation)}
+                        disabled={translating}
+                      >
+                        Refresh Themes
+                      </button>
+                    )}
+                    {dynamicThemes.map((theme, index) => (
+                      <button
+                        key={theme.name}
+                        className={`analysis-button dynamic-${index}`}
+                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        disabled={analysisLoading || translating}
+                      >
+                        {theme.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <button
-                  onClick={() => analyzeWithPerspective('Environmental Factors')}
-                  className="analysis-button environmental"
-                  disabled={analysisLoading}
+                  onClick={saveAnalysis}
+                  className="save-analysis-button"
+                  disabled={!facts || translating || analysisLoading}
                 >
-                  Environmental Factors and Biodiversity
-                </button>
-                <button
-                  onClick={() => analyzeWithPerspective('Economic Areas')}
-                  className="analysis-button economic"
-                  disabled={analysisLoading}
-                >
-                  Economic Areas and Market Strengths
-                </button>
-                <button
-                  onClick={() => analyzeWithPerspective('Travel Destinations')}
-                  className="analysis-button cultural"
-                  disabled={analysisLoading}
-                >
-                  Analysis of Travel locations
+                  Save Analysis
                 </button>
               </div>
-              {dynamicThemes.length > 0 && (
-                <div className="analysis-buttons dynamic-buttons">
-                  {currentLocation && (
-                    <button
-                      className="analysis-button refresh-button"
-                      onClick={() => generateDynamicThemes(currentLocation)}
-                      disabled={translating}
-                    >
-                      Refresh Themes
-                    </button>
-                  )}
-                  {dynamicThemes.map((theme, index) => (
-                    <button
-                      key={theme.name}
-                      className={`analysis-button dynamic-${index}`}
-                      onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
-                      disabled={analysisLoading || translating}
-                    >
-                      {theme.name}
-                    </button>
+            )}
+            {historicalInsights && (
+              <div className="historical-insights">
+                <h2>Historical Insights for {currentLocation}</h2>
+                {translating ? (
+                  <p>Translating historical insights...</p>
+                ) : (
+                  <MarkdownContent
+                    content={historicalInsights}
+                    language={language}
+                    onRewrite={handleRewrittenContent}
+                  />
+                )}
+                {historicalEvents.length > 0 && (
+                  <div className="timeline-container">
+                    <Chrono
+                      items={historicalEvents}
+                      mode="HORIZONTAL"
+                      theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            {youtubeVideos.length > 0 && (
+              <div className="youtube-videos">
+                <h2>Travel Videos for {currentLocation}</h2>
+                <div className="video-grid">
+                  {youtubeVideos.map((video) => (
+                    <div key={video.id} className="video-item">
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${video.id}`}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <p>{video.title}</p>
+                    </div>
                   ))}
                 </div>
-              )}
-              <button
-                onClick={saveAnalysis}
-                className="save-analysis-button"
-                disabled={!facts || translating || analysisLoading}
-              >
-                Save Analysis
-              </button>
-            </div>
-          )}
-          {historicalInsights && (
-            <div className="historical-insights">
-              <h2>Historical Insights for {currentLocation}</h2>
-              {translating ? (
-                <p>Translating historical insights...</p>
-              ) : (
-                <MarkdownContent
-                  content={historicalInsights}
-                  language={language}
-                  onRewrite={handleRewrittenContent}
-                />
-              )}
-              {historicalEvents.length > 0 && (
-                <div className="timeline-container">
-                  <Chrono
-                    items={historicalEvents}
-                    mode="HORIZONTAL"
-                    theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          {youtubeVideos.length > 0 && (
-            <div className="youtube-videos">
-              <h2>Travel Videos for {currentLocation}</h2>
-              <div className="video-grid">
-                {youtubeVideos.map((video) => (
-                  <div key={video.id} className="video-item">
-                    <iframe
-                      width="100%"
-                      height="200"
-                      src={`https://www.youtube.com/embed/${video.id}`}
-                      title={video.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                    <p>{video.title}</p>
-                  </div>
-                ))}
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+      </div>
+      {isVirtualTourActive && virtualTourLocation && (
+        <VirtualTour
+          location={virtualTourLocation}
+          onClose={() => setIsVirtualTourActive(false)}
+          language={language}
+          onTranslate={translateText}
+        />
+      )}
+      {isNewsPanelActive && newsArticles.length > 0 && (
+        <NewsPanel
+          newsArticles={newsArticles}
+          language={language}
+          onTranslate={translateText}
+          onClose={() => setIsNewsPanelActive(false)}
+        />
       )}
     </div>
-    {isVirtualTourActive && virtualTourLocation && (
-      <VirtualTour
-        location={virtualTourLocation}
-        onClose={() => setIsVirtualTourActive(false)}
-        language={language}
-        onTranslate={translateText}
-      />
-    )}
-    {isNewsPanelActive && newsArticles.length > 0 && (
-      <NewsPanel
-        newsArticles={newsArticles}
-        language={language}
-        onTranslate={translateText}
-        onClose={() => setIsNewsPanelActive(false)}
-      />
-    )}
-  </div>
-);
+  );
+}
 
 export default App;
