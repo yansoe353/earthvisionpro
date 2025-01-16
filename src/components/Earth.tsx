@@ -148,15 +148,14 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       source: '', // Initially empty, will be set dynamically
     });
 
-    // Debugging: Log the splats instance and its properties
+    // Debugging: Log the splats instance
     console.log(splats);
-    console.log(splats.scene);
 
-    // Add splats to the scene
-    if (splats.scene && splats.scene instanceof THREE.Object3D) {
-      scene.add(splats.scene);
+    // Add splats directly to the scene
+    if (splats instanceof THREE.Object3D) {
+      scene.add(splats);
     } else {
-      console.error('splats.scene is not a valid THREE.Object3D');
+      console.error('splats is not a valid THREE.Object3D');
     }
 
     // Set initial camera position
