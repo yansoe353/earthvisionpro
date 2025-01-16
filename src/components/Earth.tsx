@@ -17,6 +17,34 @@ import { Feature, Point } from 'geojson';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
 
+// Hotspot type
+type Hotspot = {
+  id: string;
+  name: string;
+  description: string;
+  coordinates: [number, number]; // [lng, lat]
+  iframeUrl: string; // URL of the embedded page
+};
+
+// Example hotspots
+const hotspots: Hotspot[] = [
+  {
+    id: '1',
+    name: 'Central Park',
+    description: 'A large public park in New York City.',
+    coordinates: [-73.9654, 40.7829],
+    iframeUrl: 'https://en.wikipedia.org/wiki/Central_Park', // Example URL
+  },
+  {
+    id: '2',
+    name: 'Eiffel Tower',
+    description: 'A famous landmark in Paris, France.',
+    coordinates: [2.2945, 48.8584],
+    iframeUrl: 'https://en.wikipedia.org/wiki/Eiffel_Tower', // Example URL
+  },
+  // Add more hotspots here
+];
+
 // Debounce function for map clicks
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
@@ -26,6 +54,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null); // State for selected hotspot
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -267,7 +296,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         ))}
 
-        {/* Popup */}
+        {/* Hotspots */}
+        {hotspots.map((hotspot) => (
+          <Marker
+            key={hotspot.id}
+            longitude={hotspot.coordinates[0]}
+            latitude={hotspot.coordinates[1]}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedHotspot(hotspot);
+            }}
+          >
+            <div className="hotspot-marker">
+              🔥
+            </div>
+          </Marker>
+        ))}
+
+        {/* Popup for Selected Feature */}
         {selectedFeature && (
           <Popup
             longitude={
@@ -288,6 +334,36 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
               onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
             />
+          </Popup>
+        )}
+
+        {/* Popup for Selected Hotspot */}
+        {selectedHotspot && (
+          <Popup
+            longitude={selectedHotspot.coordinates[0]}
+            latitude={selectedHotspot.coordinates[1]}
+            onClose={() => setSelectedHotspot(null)}
+            closeButton={false}
+            anchor="bottom"
+            maxWidth="400px"
+          >
+            <div className="hotspot-popup">
+              <h3>{selectedHotspot.name}</h3>
+              <p>{selectedHotspot.description}</p>
+              <iframe
+                src={selectedHotspot.iframeUrl}
+                width="100%"
+                height="300px"
+                style={{ border: 'none', borderRadius: '8px' }}
+                title={selectedHotspot.name}
+              />
+              <button
+                onClick={() => setSelectedHotspot(null)}
+                style={{ marginTop: '10px' }}
+              >
+                Close
+              </button>
+            </div>
           </Popup>
         )}
 
