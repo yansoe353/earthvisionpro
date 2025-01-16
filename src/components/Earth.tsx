@@ -33,14 +33,14 @@ const hotspots: Hotspot[] = [
     name: 'Central Park',
     description: 'A large public park in New York City.',
     coordinates: [-73.9654, 40.7829],
-    iframeUrl: 'https://lumalabs.ai/capture/14e3a9f3-21f7-433a-bc3c-f5e275aafe50', // Example URL
+    iframeUrl: 'https://captures-three.vercel.app/', // Example URL
   },
   {
     id: '2',
     name: 'Eiffel Tower',
     description: 'A famous landmark in Paris, France.',
     coordinates: [2.2945, 48.8584],
-    iframeUrl: 'https://earthvision.world/captures/helloworld', // Example URL
+    iframeUrl: 'https://captures-three.vercel.app/', // Example URL
   },
   // Add more hotspots here
 ];
