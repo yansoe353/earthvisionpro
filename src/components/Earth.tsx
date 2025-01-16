@@ -69,6 +69,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
 
+  // Add missing state variables
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(false);
+  const [show3DTerrain, setShow3DTerrain] = useState(false);
+  const [showChoropleth, setShowChoropleth] = useState(false);
+  const [show3DBuildings, setShow3DBuildings] = useState(false);
+  const [showContour, setShowContour] = useState(false);
+  const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
+  const [showWeather, setShowWeather] = useState(false);
+  const [showTransit, setShowTransit] = useState(false);
+
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
   const { weatherData, fetchWeatherData } = useWeatherData();
@@ -157,7 +169,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
             // Add click event to the hotspot
             marker.userData = hotspot;
-            marker.addEventListener('click', () => {
+            (marker as THREE.Object3D).addEventListener('click', () => {
               setSelectedHotspot(hotspot);
             });
           });
