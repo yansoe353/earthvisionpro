@@ -130,15 +130,19 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
       const splats = new LumaSplatsThree({
         source: '', // Initially empty, will be set dynamically
-        enableThreeShaderIntegration: false,
-        particleRevealEnabled: true,
       });
 
-      scene.add(splats);
+      // Add splats to the scene
+      scene.add(splats.scene);
 
       // Set initial camera position
-      splats.onInitialCameraTransform = (transform) => {
-        transform.decompose(camera.position, camera.quaternion, new THREE.Vector3());
+      splats.onInitialCameraTransform = (transform: THREE.Matrix4) => {
+        const position = new THREE.Vector3();
+        const quaternion = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        transform.decompose(position, quaternion, scale);
+        camera.position.copy(position);
+        camera.quaternion.copy(quaternion);
       };
 
       // Animation loop
@@ -208,7 +212,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
             const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, lumaScene.camera);
+            raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(lumaScene.scene.children);
 
             if (intersects.length > 0) {
