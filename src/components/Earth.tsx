@@ -17,6 +17,14 @@ import { Feature, Point } from 'geojson';
 import { LumaSplatsThree } from '@lumaai/luma-web';
 import * as THREE from 'three';
 
+// Define Cluster type
+type Cluster = Feature<Point, {
+  cluster?: boolean;
+  point_count?: number;
+  id?: string;
+  mag?: number;
+}>;
+
 // Define Luma captures
 type Capture = {
   id: string;
@@ -54,6 +62,8 @@ const captureHotspots: Record<string, { lng: number; lat: number; name: string; 
     { lng: -118.1445, lat: 34.1478, name: 'Griffith Observatory', description: 'Observatory with city views.' },
   ],
 };
+
+
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -173,24 +183,31 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           });
 
           // Add a click handler to detect clicks on 3D objects
-          const handleMouseClick = (e: MouseEvent) => {
-            // Convert mouse position to normalized device coordinates
-            const mouse = new THREE.Vector2();
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  const handleMouseClick = (e: MouseEvent) => {
+  // Convert mouse position to normalized device coordinates
+  const mouse = new THREE.Vector2();
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-            // Raycast to detect intersections
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, lumaScene.camera);
-            const intersects = raycaster.intersectObjects(lumaScene.scene.children);
+  // Raycast to detect intersections
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, lumaScene.camera);
+  const intersects = raycaster.intersectObjects(lumaScene.scene.children);
 
-            if (intersects.length > 0) {
-              const clickedObject = intersects[0].object;
-              if (clickedObject.userData) {
-                setSelectedHotspot(clickedObject.userData);
-              }
-            }
-          };
+  if (intersects.length > 0) {
+    const clickedObject = intersects[0].object;
+    if (clickedObject.userData) {
+      // Ensure the userData matches the expected type
+      const hotspot = clickedObject.userData as {
+        lng: number;
+        lat: number;
+        name: string;
+        description: string;
+      };
+      setSelectedHotspot(hotspot);
+    }
+  }
+};
 
           // Add the event listener
           window.addEventListener('click', handleMouseClick);
