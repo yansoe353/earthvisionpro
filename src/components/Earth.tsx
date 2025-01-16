@@ -198,6 +198,19 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     setCurrentHotspots(allHotspots); // Set all hotspots in state
   }, []);
 
+  // Capture map for analysis
+  const captureMap = () => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      const canvas = map.getCanvas();
+      const image = canvas.toDataURL('image/png'); // Capture the map as an image
+      console.log('Map captured:', image);
+
+      // Add your analysis logic here
+      // For example, send the image to an API for analysis
+    }
+  };
+
   // Handle click on the map
   const handleClick = useCallback(
     async (event: MapLayerMouseEvent) => {
@@ -206,8 +219,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       setClickedLocation(lngLat);
 
       if (isCaptureEnabled) {
-        onCaptureView();
+        onCaptureView(); // Trigger the capture map function
+        captureMap(); // Capture the map for analysis
       }
+
       await fetchWeatherData(lngLat.lat, lngLat.lng);
       setShowWeatherWidget(true);
     },
