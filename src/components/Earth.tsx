@@ -92,6 +92,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [currentHotspots, setCurrentHotspots] = useState<{ lng: number; lat: number; name: string; description: string }[]>([]);
 
   // Add missing state variables
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -218,7 +219,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
           // Add hotspots for the nearest capture
           const hotspots = captureHotspots[nearestCapture.id];
-          hotspots.forEach((hotspot: { lng: number; lat: number; name: string; description: string }) => {
+          setCurrentHotspots(hotspots); // Update state with hotspots
+
+          // Add hotspots to the 3D scene (optional, if you still want them in the 3D view)
+          hotspots.forEach((hotspot) => {
             const marker = new THREE.Mesh(
               new THREE.SphereGeometry(0.01, 16, 16),
               new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -229,38 +233,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             // Store hotspot data in the marker
             marker.userData = hotspot;
           });
-
-          // Add a click handler to detect clicks on 3D objects
-          const handleMouseClick = (e: MouseEvent) => {
-            const mouse = new THREE.Vector2();
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, cameraRef.current!);
-            const intersects = raycaster.intersectObjects(lumaScene.scene.children);
-
-            if (intersects.length > 0) {
-              const clickedObject = intersects[0].object;
-              if (clickedObject.userData) {
-                const hotspot = clickedObject.userData as {
-                  lng: number;
-                  lat: number;
-                  name: string;
-                  description: string;
-                };
-                setSelectedHotspot(hotspot);
-              }
-            }
-          };
-
-          // Add the event listener
-          window.addEventListener('click', handleMouseClick);
-
-          // Cleanup the event listener
-          return () => {
-            window.removeEventListener('click', handleMouseClick);
-          };
         }
       }
 
@@ -453,6 +425,23 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           >
             <div className="user-marker">
               <span>{marker.label}</span>
+            </div>
+          </Marker>
+        ))}
+
+        {/* Hotspot Markers */}
+        {currentHotspots.map((hotspot, index) => (
+          <Marker
+            key={index}
+            longitude={hotspot.lng}
+            latitude={hotspot.lat}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedHotspot(hotspot);
+            }}
+          >
+            <div className="hotspot-marker">
+              <span>{hotspot.name}</span>
             </div>
           </Marker>
         ))}
