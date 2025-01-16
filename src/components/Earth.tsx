@@ -186,23 +186,17 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, []);
 
-  // Find the nearest Luma capture
-  const findNearestCapture = (lng: number, lat: number): Capture | null => {
-    let nearestCapture = null;
-    let minDistance = Infinity;
-
+  // Initialize hotspots when the component mounts
+  useEffect(() => {
+    const allHotspots: { lng: number; lat: number; name: string; description: string }[] = [];
     captureData.forEach((capture) => {
-      const distance = Math.sqrt(
-        Math.pow(capture.lng - lng, 2) + Math.pow(capture.lat - lat, 2)
-      );
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestCapture = capture;
+      const hotspots = captureHotspots[capture.id];
+      if (hotspots) {
+        allHotspots.push(...hotspots);
       }
     });
-
-    return nearestCapture;
-  };
+    setCurrentHotspots(allHotspots); // Set all hotspots in state
+  }, []);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -211,38 +205,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       console.log('Map clicked at:', lngLat);
       setClickedLocation(lngLat);
 
-      if (lumaScene) {
-        const nearestCapture = findNearestCapture(lngLat.lng, lngLat.lat);
-        if (nearestCapture) {
-          console.log('Nearest capture:', nearestCapture);
-          lumaScene.source = nearestCapture.source;
-
-          // Add hotspots for the nearest capture
-          const hotspots = captureHotspots[nearestCapture.id];
-          setCurrentHotspots(hotspots); // Update state with hotspots
-
-          // Add hotspots to the 3D scene (optional, if you still want them in the 3D view)
-          hotspots.forEach((hotspot) => {
-            const marker = new THREE.Mesh(
-              new THREE.SphereGeometry(0.01, 16, 16),
-              new THREE.MeshBasicMaterial({ color: 0xff0000 })
-            );
-            marker.position.set(hotspot.lng, hotspot.lat, 0);
-            lumaScene.scene.add(marker);
-
-            // Store hotspot data in the marker
-            marker.userData = hotspot;
-          });
-        }
-      }
-
       if (isCaptureEnabled) {
         onCaptureView();
       }
       await fetchWeatherData(lngLat.lat, lngLat.lng);
       setShowWeatherWidget(true);
     },
-    [isCaptureEnabled, onCaptureView, fetchWeatherData, setShowWeatherWidget, lumaScene]
+    [isCaptureEnabled, onCaptureView, fetchWeatherData, setShowWeatherWidget]
   );
 
   // Handle search for a location
