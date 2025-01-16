@@ -63,8 +63,6 @@ const captureHotspots: Record<string, { lng: number; lat: number; name: string; 
   ],
 };
 
-
-
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const lumaContainerRef = useRef<HTMLDivElement>(null);
@@ -124,17 +122,38 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Initialize LumaSplatsThree
   useEffect(() => {
     if (lumaContainerRef.current) {
-      const scene = new LumaSplatsThree({
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      lumaContainerRef.current.appendChild(renderer.domElement);
+
+      const splats = new LumaSplatsThree({
         source: '', // Initially empty, will be set dynamically
+        enableThreeShaderIntegration: false,
+        particleRevealEnabled: true,
       });
-      lumaContainerRef.current.appendChild(scene.renderer.domElement);
-      setLumaScene(scene);
+
+      scene.add(splats);
+
+      // Set initial camera position
+      splats.onInitialCameraTransform = (transform) => {
+        transform.decompose(camera.position, camera.quaternion, new THREE.Vector3());
+      };
+
+      // Animation loop
+      const animate = () => {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      setLumaScene(splats);
 
       // Cleanup on unmount
       return () => {
-        if (scene) {
-          scene.dispose();
-        }
+        renderer.dispose();
+        splats.dispose();
       };
     }
   }, []);
@@ -183,31 +202,28 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           });
 
           // Add a click handler to detect clicks on 3D objects
-  const handleMouseClick = (e: MouseEvent) => {
-  // Convert mouse position to normalized device coordinates
-  const mouse = new THREE.Vector2();
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+          const handleMouseClick = (e: MouseEvent) => {
+            const mouse = new THREE.Vector2();
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-  // Raycast to detect intersections
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, lumaScene.camera);
-  const intersects = raycaster.intersectObjects(lumaScene.scene.children);
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, lumaScene.camera);
+            const intersects = raycaster.intersectObjects(lumaScene.scene.children);
 
-  if (intersects.length > 0) {
-    const clickedObject = intersects[0].object;
-    if (clickedObject.userData) {
-      // Ensure the userData matches the expected type
-      const hotspot = clickedObject.userData as {
-        lng: number;
-        lat: number;
-        name: string;
-        description: string;
-      };
-      setSelectedHotspot(hotspot);
-    }
-  }
-};
+            if (intersects.length > 0) {
+              const clickedObject = intersects[0].object;
+              if (clickedObject.userData) {
+                const hotspot = clickedObject.userData as {
+                  lng: number;
+                  lat: number;
+                  name: string;
+                  description: string;
+                };
+                setSelectedHotspot(hotspot);
+              }
+            }
+          };
 
           // Add the event listener
           window.addEventListener('click', handleMouseClick);
