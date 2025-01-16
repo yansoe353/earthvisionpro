@@ -4,7 +4,20 @@
   width: 100%;
   height: 100vh; /* Full viewport height */
   overflow: hidden;
+  z-index: 1; /* Ensure the map container is above other elements */
 }
+
+/* Ensure the map canvas is visible and properly layered */
+.mapboxgl-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Ensure the canvas is above other elements */
+}
+
+/* Hotspot marker styles */
 .hotspot-marker {
   background-color: #ff0000;
   color: #fff;
@@ -14,7 +27,7 @@
   cursor: pointer;
 }
 
-
+/* Luma 3D Scene Container */
 .luma-scene-container {
   position: absolute;
   top: 0;
@@ -23,10 +36,6 @@
   height: 100%;
   z-index: 0; /* Ensure Three.js is below Mapbox */
 }
-
-
-
-
 
 /* Marker styles */
 .marker {
@@ -76,10 +85,6 @@
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
   backdrop-filter: blur(5px);
 }
-
-
-
-
 
 .mapboxgl-popup-content h3 {
   margin: 0 0 8px;
@@ -407,8 +412,6 @@
     font-size: 12px;
   }
 }
-
-
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
