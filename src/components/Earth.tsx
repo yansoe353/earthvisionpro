@@ -16,6 +16,20 @@ import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { LumaSplatsThree } from '@lumaai/luma-web';
 import * as THREE from 'three';
+import { Object3DNode, extend } from '@react-three/fiber';
+
+// Extend @react-three/fiber to support LumaSplatsThree
+extend({ LumaSplatsThree });
+
+// Add TypeScript support for LumaSplatsThree
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    lumaSplatsThree: Object3DNode<LumaSplatsThree, typeof LumaSplatsThree> & {
+      source?: string;
+      onInitialCameraTransform?: (transform: THREE.Matrix4) => void;
+    };
+  }
+}
 
 // Define Cluster type
 type Cluster = Feature<Point, {
@@ -66,6 +80,7 @@ const captureHotspots: Record<string, { lng: number; lat: number; name: string; 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
   const lumaContainerRef = useRef<HTMLDivElement>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const [lumaScene, setLumaScene] = useState<LumaSplatsThree | null>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
@@ -124,6 +139,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     if (lumaContainerRef.current) {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      cameraRef.current = camera; // Store the camera instance
       const renderer = new THREE.WebGLRenderer();
       renderer.setSize(window.innerWidth, window.innerHeight);
       lumaContainerRef.current.appendChild(renderer.domElement);
@@ -136,7 +152,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       scene.add(splats.scene);
 
       // Set initial camera position
-      splats.onInitialCameraTransform = (transform: THREE.Matrix4) => {
+      (splats as any).onInitialCameraTransform = (transform: THREE.Matrix4) => {
         const position = new THREE.Vector3();
         const quaternion = new THREE.Quaternion();
         const scale = new THREE.Vector3();
@@ -212,7 +228,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
             const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
+            raycaster.setFromCamera(mouse, cameraRef.current!);
             const intersects = raycaster.intersectObjects(lumaScene.scene.children);
 
             if (intersects.length > 0) {
