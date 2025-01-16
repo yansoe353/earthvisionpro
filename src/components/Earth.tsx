@@ -17,6 +17,18 @@ import { Feature, Point } from 'geojson';
 import { LumaSplatsThree } from '@lumaai/luma-web';
 import * as THREE from 'three';
 
+// Define custom type for LumaSplatsThree
+declare module '@lumaai/luma-web' {
+  export class LumaSplatsThree {
+    constructor(options: { source: string });
+    source: string;
+    renderer: { domElement: HTMLElement };
+    scene: THREE.Scene;
+    camera: THREE.Camera;
+    dispose(): void;
+  }
+}
+
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
 
 // Define Luma captures
