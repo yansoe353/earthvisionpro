@@ -136,54 +136,54 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Initialize LumaSplatsThree
   useEffect(() => {
-  if (lumaContainerRef.current) {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    cameraRef.current = camera; // Store the camera instance
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    lumaContainerRef.current.appendChild(renderer.domElement);
+    if (lumaContainerRef.current) {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      cameraRef.current = camera; // Store the camera instance
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      lumaContainerRef.current.appendChild(renderer.domElement);
 
-    const splats = new LumaSplatsThree({
-      source: '', // Initially empty, will be set dynamically
-    });
+      const splats = new LumaSplatsThree({
+        source: '', // Initially empty, will be set dynamically
+      });
 
-    // Debugging: Log the splats instance
-    console.log(splats);
+      // Debugging: Log the splats instance
+      console.log(splats);
 
-    // Add splats directly to the scene
-    if (splats instanceof THREE.Object3D) {
-      scene.add(splats);
-    } else {
-      console.error('splats is not a valid THREE.Object3D');
+      // Add splats directly to the scene
+      if (splats instanceof THREE.Object3D) {
+        scene.add(splats);
+      } else {
+        console.error('splats is not a valid THREE.Object3D');
+      }
+
+      // Set initial camera position
+      (splats as any).onInitialCameraTransform = (transform: THREE.Matrix4) => {
+        const position = new THREE.Vector3();
+        const quaternion = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        transform.decompose(position, quaternion, scale);
+        camera.position.copy(position);
+        camera.quaternion.copy(quaternion);
+      };
+
+      // Animation loop
+      const animate = () => {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      setLumaScene(splats);
+
+      // Cleanup on unmount
+      return () => {
+        renderer.dispose();
+        splats.dispose();
+      };
     }
-
-    // Set initial camera position
-    (splats as any).onInitialCameraTransform = (transform: THREE.Matrix4) => {
-      const position = new THREE.Vector3();
-      const quaternion = new THREE.Quaternion();
-      const scale = new THREE.Vector3();
-      transform.decompose(position, quaternion, scale);
-      camera.position.copy(position);
-      camera.quaternion.copy(quaternion);
-    };
-
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    setLumaScene(splats);
-
-    // Cleanup on unmount
-    return () => {
-      renderer.dispose();
-      splats.dispose();
-    };
-  }
-}, []);
+  }, []);
 
   // Find the nearest Luma capture
   const findNearestCapture = (lng: number, lat: number): Capture | null => {
@@ -207,11 +207,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const handleClick = useCallback(
     async (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
+      console.log('Map clicked at:', lngLat);
       setClickedLocation(lngLat);
 
       if (lumaScene) {
         const nearestCapture = findNearestCapture(lngLat.lng, lngLat.lat);
         if (nearestCapture) {
+          console.log('Nearest capture:', nearestCapture);
           lumaScene.source = nearestCapture.source;
 
           // Add hotspots for the nearest capture
