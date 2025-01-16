@@ -2,6 +2,7 @@
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types", "./src/types"], // Include custom type definitions
     "baseUrl": ".", // Base directory for module resolution
+    "typeRoots": ["./node_modules/@types", "./src"]
     "lib": ["dom", "esnext"],
     "paths": {
       "@/*": ["./src/*"] // Map @/ to the src directory
