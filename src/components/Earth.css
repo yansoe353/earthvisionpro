@@ -63,7 +63,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Ensure Mapbox is above other elements */
+  z-index: 22; /* Ensure Mapbox is above other elements */
 }
 
 .luma-scene-container {
