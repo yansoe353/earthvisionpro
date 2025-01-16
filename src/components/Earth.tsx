@@ -54,14 +54,14 @@ const captureData: Capture[] = [
     lng: -122.4194,
     lat: 37.7749,
     name: 'San Francisco',
-    source: 'https://lumalabs.ai/capture/capture-1',
+    source: 'https://lumalabs.ai/capture/4f362242-ad43-4851-9b04-88adf71f24f5',
   },
   {
     id: 'capture-2',
     lng: -118.2437,
     lat: 34.0522,
     name: 'Los Angeles',
-    source: 'https://lumalabs.ai/capture/capture-2',
+    source: 'https://lumalabs.ai/capture/6e02c0a0-e182-431b-88aa-110b2eeff8f1',
   },
 ];
 
