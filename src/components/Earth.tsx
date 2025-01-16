@@ -40,11 +40,10 @@ const captureData = [
     name: 'Los Angeles',
     source: 'https://lumalabs.ai/capture/capture-2',
   },
-  // Add more captures as needed
 ];
 
 // Define hotspots for each capture
-const captureHotspots = {
+const captureHotspots: Record<string, { lng: number; lat: number; name: string; description: string }[]> = {
   'capture-1': [
     { lng: -122.4194, lat: 37.7749, name: 'Golden Gate Bridge', description: 'Iconic suspension bridge.' },
     { lng: -122.4166, lat: 37.7855, name: 'Fisherman\'s Wharf', description: 'Popular tourist area.' },
@@ -69,18 +68,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
-
-  // Layer visibility states
-  const [showHeatmap, setShowHeatmap] = useState(false);
-  const [showTraffic, setShowTraffic] = useState(false);
-  const [showSatellite, setShowSatellite] = useState(false);
-  const [show3DTerrain, setShow3DTerrain] = useState(false);
-  const [showChoropleth, setShowChoropleth] = useState(false);
-  const [show3DBuildings, setShow3DBuildings] = useState(false);
-  const [showContour, setShowContour] = useState(false);
-  const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
-  const [showWeather, setShowWeather] = useState(false);
-  const [showTransit, setShowTransit] = useState(false);
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -117,7 +104,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       const scene = new LumaSplatsThree({
         source: '', // Initially empty, will be set dynamically
       });
-      lumaContainerRef.current.appendChild(scene.domElement);
+      lumaContainerRef.current.appendChild(scene.renderer.domElement);
       setLumaScene(scene);
 
       // Cleanup on unmount
@@ -160,7 +147,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
           // Add hotspots for the nearest capture
           const hotspots = captureHotspots[nearestCapture.id];
-          hotspots.forEach((hotspot) => {
+          hotspots.forEach((hotspot: { lng: number; lat: number; name: string; description: string }) => {
             const marker = new THREE.Mesh(
               new THREE.SphereGeometry(0.01, 16, 16),
               new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -170,9 +157,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
             // Add click event to the hotspot
             marker.userData = hotspot;
-            marker.onClick = () => {
+            marker.addEventListener('click', () => {
               setSelectedHotspot(hotspot);
-            };
+            });
           });
         }
       }
