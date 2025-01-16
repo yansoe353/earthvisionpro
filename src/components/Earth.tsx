@@ -33,14 +33,14 @@ const hotspots: Hotspot[] = [
     name: 'Central Park',
     description: 'A large public park in New York City.',
     coordinates: [-73.9654, 40.7829],
-    iframeUrl: 'https://en.wikipedia.org/wiki/Central_Park', // Example URL
+    iframeUrl: 'https://earthvision.world/captures/helloworld.html', // Example URL
   },
   {
     id: '2',
     name: 'Eiffel Tower',
     description: 'A famous landmark in Paris, France.',
     coordinates: [2.2945, 48.8584],
-    iframeUrl: 'https://en.wikipedia.org/wiki/Eiffel_Tower', // Example URL
+    iframeUrl: 'https://earthvision.world/captures/helloworld.html', // Example URL
   },
   // Add more hotspots here
 ];
