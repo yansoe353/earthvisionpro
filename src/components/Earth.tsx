@@ -33,7 +33,7 @@ const hotspots: Hotspot[] = [
     name: 'Central Park',
     description: 'A large public park in New York City.',
     coordinates: [-73.9654, 40.7829],
-    iframeUrl: 'https://earthvision.world/captures/helloworld', // Example URL
+    iframeUrl: 'https://waloneai.com', // Example URL
   },
   {
     id: '2',
