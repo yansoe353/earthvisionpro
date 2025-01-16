@@ -17,20 +17,6 @@ import { Feature, Point } from 'geojson';
 import { LumaSplatsThree } from '@lumaai/luma-web';
 import * as THREE from 'three';
 
-// Define custom type for LumaSplatsThree
-declare module '@lumaai/luma-web' {
-  export class LumaSplatsThree {
-    constructor(options: { source: string });
-    source: string;
-    renderer: { domElement: HTMLElement };
-    scene: THREE.Scene;
-    camera: THREE.Camera;
-    dispose(): void;
-  }
-}
-
-type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
-
 // Define Luma captures
 type Capture = {
   id: string;
@@ -189,10 +175,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           // Add a click handler to detect clicks on 3D objects
           const handleMouseClick = (e: MouseEvent) => {
             // Convert mouse position to normalized device coordinates
+            const mouse = new THREE.Vector2();
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
             // Raycast to detect intersections
+            const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(mouse, lumaScene.camera);
             const intersects = raycaster.intersectObjects(lumaScene.scene.children);
 
@@ -365,7 +353,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           pitch: 0,
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        onClick={(e) => debouncedClick(e, () => handleClick(e))}
+        onClick={(e) => debounce(() => handleClick(e), 300)}
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
