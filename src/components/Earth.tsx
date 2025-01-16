@@ -14,18 +14,77 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
+import { LumaSplatsThree } from '@lumaai/luma-web';
+import * as THREE from 'three';
+import { Object3DNode, extend } from '@react-three/fiber';
 
-type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
+// Extend @react-three/fiber to support LumaSplatsThree
+extend({ LumaSplatsThree });
 
-// Debounce function for map clicks
-const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
-  callback();
-}, 300);
+// Add TypeScript support for LumaSplatsThree
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    lumaSplatsThree: Object3DNode<LumaSplatsThree, typeof LumaSplatsThree> & {
+      source?: string;
+      onInitialCameraTransform?: (transform: THREE.Matrix4) => void;
+    };
+  }
+}
+
+// Define Cluster type
+type Cluster = Feature<Point, {
+  cluster?: boolean;
+  point_count?: number;
+  id?: string;
+  mag?: number;
+}>;
+
+// Define Luma captures
+type Capture = {
+  id: string;
+  lng: number;
+  lat: number;
+  name: string;
+  source: string;
+};
+
+const captureData: Capture[] = [
+  {
+    id: 'capture-1',
+    lng: -122.4194,
+    lat: 37.7749,
+    name: 'San Francisco',
+    source: 'https://lumalabs.ai/capture/4f362242-ad43-4851-9b04-88adf71f24f5',
+  },
+  {
+    id: 'capture-2',
+    lng: -118.2437,
+    lat: 34.0522,
+    name: 'Los Angeles',
+    source: 'https://lumalabs.ai/capture/6e02c0a0-e182-431b-88aa-110b2eeff8f1',
+  },
+];
+
+// Define hotspots for each capture
+const captureHotspots: Record<string, { lng: number; lat: number; name: string; description: string }[]> = {
+  'capture-1': [
+    { lng: -122.4194, lat: 37.7749, name: 'Golden Gate Bridge', description: 'Iconic suspension bridge.' },
+    { lng: -122.4166, lat: 37.7855, name: 'Fisherman\'s Wharf', description: 'Popular tourist area.' },
+  ],
+  'capture-2': [
+    { lng: -118.2437, lat: 34.0522, name: 'Hollywood Sign', description: 'Famous landmark in Los Angeles.' },
+    { lng: -118.1445, lat: 34.1478, name: 'Griffith Observatory', description: 'Observatory with city views.' },
+  ],
+};
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
+  const lumaContainerRef = useRef<HTMLDivElement>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const [lumaScene, setLumaScene] = useState<LumaSplatsThree | null>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
+  const [selectedHotspot, setSelectedHotspot] = useState<{ lng: number; lat: number; name: string; description: string } | null>(null);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -34,7 +93,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
 
-  // Layer visibility states
+  // Add missing state variables
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showTraffic, setShowTraffic] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
@@ -75,18 +134,143 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, [earthquakes, supercluster]);
 
+  // Initialize LumaSplatsThree
+  useEffect(() => {
+    if (lumaContainerRef.current) {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      cameraRef.current = camera; // Store the camera instance
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      lumaContainerRef.current.appendChild(renderer.domElement);
+
+      const splats = new LumaSplatsThree({
+        source: '', // Initially empty, will be set dynamically
+      });
+
+      // Debugging: Log the splats instance
+      console.log(splats);
+
+      // Add splats directly to the scene
+      if (splats instanceof THREE.Object3D) {
+        scene.add(splats);
+      } else {
+        console.error('splats is not a valid THREE.Object3D');
+      }
+
+      // Set initial camera position
+      (splats as any).onInitialCameraTransform = (transform: THREE.Matrix4) => {
+        const position = new THREE.Vector3();
+        const quaternion = new THREE.Quaternion();
+        const scale = new THREE.Vector3();
+        transform.decompose(position, quaternion, scale);
+        camera.position.copy(position);
+        camera.quaternion.copy(quaternion);
+      };
+
+      // Animation loop
+      const animate = () => {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      setLumaScene(splats);
+
+      // Cleanup on unmount
+      return () => {
+        renderer.dispose();
+        splats.dispose();
+      };
+    }
+  }, []);
+
+  // Find the nearest Luma capture
+  const findNearestCapture = (lng: number, lat: number): Capture | null => {
+    let nearestCapture = null;
+    let minDistance = Infinity;
+
+    captureData.forEach((capture) => {
+      const distance = Math.sqrt(
+        Math.pow(capture.lng - lng, 2) + Math.pow(capture.lat - lat, 2)
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestCapture = capture;
+      }
+    });
+
+    return nearestCapture;
+  };
+
   // Handle click on the map
   const handleClick = useCallback(
     async (event: MapLayerMouseEvent) => {
       const { lngLat } = event;
+      console.log('Map clicked at:', lngLat);
       setClickedLocation(lngLat);
+
+      if (lumaScene) {
+        const nearestCapture = findNearestCapture(lngLat.lng, lngLat.lat);
+        if (nearestCapture) {
+          console.log('Nearest capture:', nearestCapture);
+          lumaScene.source = nearestCapture.source;
+
+          // Add hotspots for the nearest capture
+          const hotspots = captureHotspots[nearestCapture.id];
+          hotspots.forEach((hotspot: { lng: number; lat: number; name: string; description: string }) => {
+            const marker = new THREE.Mesh(
+              new THREE.SphereGeometry(0.01, 16, 16),
+              new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            );
+            marker.position.set(hotspot.lng, hotspot.lat, 0);
+            lumaScene.scene.add(marker);
+
+            // Store hotspot data in the marker
+            marker.userData = hotspot;
+          });
+
+          // Add a click handler to detect clicks on 3D objects
+          const handleMouseClick = (e: MouseEvent) => {
+            const mouse = new THREE.Vector2();
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, cameraRef.current!);
+            const intersects = raycaster.intersectObjects(lumaScene.scene.children);
+
+            if (intersects.length > 0) {
+              const clickedObject = intersects[0].object;
+              if (clickedObject.userData) {
+                const hotspot = clickedObject.userData as {
+                  lng: number;
+                  lat: number;
+                  name: string;
+                  description: string;
+                };
+                setSelectedHotspot(hotspot);
+              }
+            }
+          };
+
+          // Add the event listener
+          window.addEventListener('click', handleMouseClick);
+
+          // Cleanup the event listener
+          return () => {
+            window.removeEventListener('click', handleMouseClick);
+          };
+        }
+      }
+
       if (isCaptureEnabled) {
         onCaptureView();
       }
       await fetchWeatherData(lngLat.lat, lngLat.lng);
       setShowWeatherWidget(true);
     },
-    [isCaptureEnabled, onCaptureView, fetchWeatherData, setShowWeatherWidget]
+    [isCaptureEnabled, onCaptureView, fetchWeatherData, setShowWeatherWidget, lumaScene]
   );
 
   // Handle search for a location
@@ -161,6 +345,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Luma 3D Scene Container */}
+      <div
+        ref={lumaContainerRef}
+        className="luma-scene-container"
+      />
+
       {/* Map Controls */}
       <MapControls
         toggleFeaturePanel={toggleFeaturePanel}
@@ -225,7 +415,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           pitch: 0,
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        onClick={(e) => debouncedClick(e, () => handleClick(e))}
+        onClick={(e) => debounce(() => handleClick(e), 300)}
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
@@ -288,6 +478,20 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
               onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
             />
+          </Popup>
+        )}
+
+        {/* Hotspot Popup */}
+        {selectedHotspot && (
+          <Popup
+            longitude={selectedHotspot.lng}
+            latitude={selectedHotspot.lat}
+            onClose={() => setSelectedHotspot(null)}
+          >
+            <div>
+              <h3>{selectedHotspot.name}</h3>
+              <p>{selectedHotspot.description}</p>
+            </div>
           </Popup>
         )}
 
