@@ -5,6 +5,14 @@
   height: 100vh; /* Full viewport height */
   overflow: hidden;
 }
+.hotspot-marker {
+  background-color: #ff0000;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
 
 
 
