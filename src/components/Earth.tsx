@@ -197,7 +197,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           const earthquake: Earthquake = {
             type: 'Feature',
             geometry: {
-              type: 'Point',
               coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
             },
             properties: {
@@ -236,7 +235,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               const earthquake: Earthquake = {
                 type: 'Feature',
                 geometry: {
-                  type: 'Point',
                   coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
                 },
                 properties: {
