@@ -17,35 +17,37 @@ import { Feature, Point } from 'geojson';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
-// Hotspot type
 type Hotspot = {
   id: string;
   name: string;
   description: string;
-  coordinates: [number, number]; // [lng, lat]
-  iframeUrl: string; // URL of the embedded page
+  coordinates: [number, number];
+  iframeUrl: string;
 };
 
-// Example hotspots
 const hotspots: Hotspot[] = [
   {
     id: '1',
     name: 'Central Park',
     description: 'A large public park in New York City.',
     coordinates: [-73.9654, 40.7829],
-    iframeUrl: 'https://captures-three.vercel.app/', // Example URL
+    iframeUrl: 'https://captures-three.vercel.app/',
   },
   {
     id: '2',
     name: 'Eiffel Tower',
     description: 'A famous landmark in Paris, France.',
     coordinates: [2.2945, 48.8584],
-    iframeUrl: 'https://captures-three.vercel.app/', // Example URL
+    iframeUrl: 'https://captures-three.vercel.app/',
   },
-  // Add more hotspots here
 ];
 
-// Debounce function for map clicks
+const WEATHER_LAYERS = [
+  { id: 'MODIS_Terra_Cloud_Top_Temperature_Day', label: 'Cloud Cover' },
+  { id: 'MODIS_Terra_Precipitation_Day', label: 'Precipitation' },
+  { id: 'MODIS_Terra_Land_Surface_Temp_Day', label: 'Temperature' },
+];
+
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
@@ -54,8 +56,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const mapRef = useRef<MapRef>(null);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
-  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null); // State for selected hotspot
-  const [iframeLoaded, setIframeLoaded] = useState(false); // State for iframe loading
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -63,6 +65,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('2023-10-01');
+  const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
 
   // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -73,7 +78,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [show3DBuildings, setShow3DBuildings] = useState(false);
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
-  const [showWeather, setShowWeather] = useState(false);
   const [showTransit, setShowTransit] = useState(false);
 
   // Custom hooks
@@ -102,7 +106,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       }));
       supercluster.load(points);
 
-      // Get the current map bounds and zoom level
       const bounds = mapRef.current?.getBounds();
       const zoom = mapRef.current?.getZoom();
 
@@ -149,7 +152,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Expose handleSearch and getMap to the parent component
   useImperativeHandle(ref, () => ({
     handleSearch,
-    getMap: () => mapRef.current, // Expose the Mapbox map instance
+    getMap: () => mapRef.current,
   }));
 
   // Toggle feature panel visibility
@@ -182,27 +185,24 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return clusters.map((cluster) => {
       const [longitude, latitude] = cluster.geometry.coordinates;
 
-      // Handle cluster click
       const handleClusterClick = () => {
         if (cluster.properties.cluster) {
-          // Get the cluster's bounding box and zoom into it
           const bbox = supercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
           mapRef.current?.flyTo({
             center: [longitude, latitude],
             zoom: bbox,
-            duration: 1000, // Smooth transition
+            duration: 1000,
           });
         } else {
-          // Convert the cluster to an Earthquake object
           const earthquake: Earthquake = {
-            id: cluster.properties.id || 'default-id', // Provide a default ID if not available
+            id: cluster.properties.id || 'default-id',
             geometry: {
-              coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
+              coordinates: [longitude, latitude, 0],
             },
             properties: {
-              title: `Earthquake - ${cluster.properties.id}`, // Provide a default title
-              mag: cluster.properties.mag || 0, // Provide a default magnitude
-              place: 'Unknown', // Provide a default place
+              title: `Earthquake - ${cluster.properties.id}`,
+              mag: cluster.properties.mag || 0,
+              place: 'Unknown',
             },
           };
           setSelectedFeature(earthquake);
@@ -210,7 +210,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       };
 
       if (cluster.properties.cluster) {
-        // Render cluster marker
         return (
           <Marker
             key={`cluster-${cluster.properties.cluster_id}`}
@@ -224,7 +223,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         );
       } else {
-        // Render individual earthquake marker
         return (
           <Marker
             key={`earthquake-${cluster.properties.id}`}
@@ -233,14 +231,14 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               const earthquake: Earthquake = {
-                id: cluster.properties.id || 'default-id', // Provide a default ID if not available
+                id: cluster.properties.id || 'default-id',
                 geometry: {
-                  coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
+                  coordinates: [longitude, latitude, 0],
                 },
                 properties: {
-                  title: `Earthquake - ${cluster.properties.id}`, // Provide a default title
-                  mag: cluster.properties.mag || 0, // Provide a default magnitude
-                  place: 'Unknown', // Provide a default place
+                  title: `Earthquake - ${cluster.properties.id}`,
+                  mag: cluster.properties.mag || 0,
+                  place: 'Unknown',
                 },
               };
               setSelectedFeature(earthquake);
@@ -262,7 +260,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Map Controls */}
       <MapControls
         toggleFeaturePanel={toggleFeaturePanel}
         isDarkTheme={isDarkTheme}
@@ -282,13 +279,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setShowContour={setShowContour}
         showPointsOfInterest={showPointsOfInterest}
         setShowPointsOfInterest={setShowPointsOfInterest}
-        showWeather={showWeather}
-        setShowWeather={setShowWeather}
         showTransit={showTransit}
         setShowTransit={setShowTransit}
       />
 
-      {/* Feature Panel */}
       {showFeaturePanel && (
         <FeaturePanel
           isDarkTheme={isDarkTheme}
@@ -309,12 +303,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         />
       )}
 
-      {/* Weather Widget */}
       {showWeatherWidget && weatherData && (
         <WeatherWidget weatherData={weatherData} closeWeatherWidget={closeWeatherWidget} />
       )}
 
-      {/* Mapbox Map */}
       <Map
         ref={mapRef}
         mapStyle={mapStyle}
@@ -327,7 +319,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         onClick={(e) => debouncedClick(e, () => handleClick(e))}
-        onMove={handleMapMove} // Update clusters on map move
+        onMove={handleMapMove}
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
@@ -340,7 +332,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
-        {/* Add the mapbox-dem source */}
         <Source
           id="mapbox-dem"
           type="raster-dem"
@@ -378,7 +369,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               setSelectedHotspot(hotspot);
-              setIframeLoaded(false); // Reset iframe loading state
+              setIframeLoaded(false);
             }}
           >
             <div className="hotspot-marker">
@@ -464,8 +455,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   onClick={() => {
                     mapRef.current?.flyTo({
                       center: selectedHotspot.coordinates,
-                      zoom: 14, // Adjust zoom level as needed
-                      duration: 2000, // Smooth transition
+                      zoom: 14,
+                      duration: 2000,
                     });
                   }}
                   className="zoom-button"
@@ -667,7 +658,45 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             />
           </Source>
         )}
+
+        {/* GIBS Weather Layer */}
+        {selectedWeatherLayer && (
+          <Source
+            id="gibs-weather-layer"
+            type="raster"
+            tiles={[
+              `https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/${selectedWeatherLayer}/default/${selectedDate}/250m/{z}/{y}/{x}.jpg`,
+            ]}
+            tileSize={256}
+          >
+            <Layer
+              id="gibs-weather-layer-render"
+              type="raster"
+              source="gibs-weather-layer"
+              paint={{
+                'raster-opacity': 0.7,
+              }}
+            />
+          </Source>
+        )}
       </Map>
+
+      {/* Weather Layer Selector */}
+      <div className="weather-layer-selector">
+        <select onChange={(e) => setSelectedWeatherLayer(e.target.value)}>
+          <option value="">Select a Weather Layer</option>
+          {WEATHER_LAYERS.map((layer) => (
+            <option key={layer.id} value={layer.id}>
+              {layer.label}
+            </option>
+          ))}
+        </select>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+      </div>
     </div>
   );
 });
