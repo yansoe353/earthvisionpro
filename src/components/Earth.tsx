@@ -14,7 +14,6 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
-import { Groq } from 'groq-sdk'; // Import Groq SDK
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -46,36 +45,6 @@ const hotspots: Hotspot[] = [
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
-
-// Function to generate news with AI
-const generateNewsWithAI = async (location: string) => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
-    return 'No news available for this location.';
-  } catch (error) {
-    console.error('Error generating news:', error);
-    return 'Failed to generate news. Please try again.';
-  }
-};
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -302,47 +271,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return 'label' in marker && 'id' in marker;
   };
 
-  // State for AI-generated content and language
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [locationInfo, setLocationInfo] = useState<string | null>(null);
-  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Default to English
-
-  // Fetch AI-generated content about the location
-  const fetchLocationInfo = async (hotspot: Hotspot) => {
-    try {
-      setLoadingInfo(true);
-      const news = await generateNewsWithAI(hotspot.name);
-      setLocationInfo(news);
-    } catch (error) {
-      console.error('Error fetching location info:', error);
-      setLocationInfo('Failed to fetch information. Please try again.');
-    } finally {
-      setLoadingInfo(false);
-    }
-  };
-
-  // Localized button labels
-  const buttonLabels = {
-    en: {
-      close: 'Close',
-      fullscreen: 'Fullscreen',
-      zoom: 'Zoom to Location',
-      info: 'Info',
-    },
-    my: {
-      close: 'ပိတ်မည်',
-      fullscreen: 'ဖန်သားပြင်အပြည့်',
-      zoom: 'တည်နေရာသို့ချဲ့ကြည့်မည်',
-      info: 'အချက်အလက်',
-    },
-    th: {
-      close: 'ปิด',
-      fullscreen: 'เต็มหน้าจอ',
-      zoom: 'ขยายไปที่ตำแหน่ง',
-      info: 'ข้อมูล',
-    },
-  };
-
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <MapControls
@@ -525,7 +453,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   onClick={() => setSelectedHotspot(null)}
                   className="close-button"
                 >
-                  {buttonLabels[language].close}
+                  Close
                 </button>
                 <button
                   onClick={() => {
@@ -536,7 +464,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   }}
                   className="fullscreen-button"
                 >
-                  {buttonLabels[language].fullscreen}
+                  Fullscreen
                 </button>
                 <button
                   onClick={() => {
@@ -548,32 +476,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   }}
                   className="zoom-button"
                 >
-                  {buttonLabels[language].zoom}
-                </button>
-                <button
-                  onClick={() => fetchLocationInfo(selectedHotspot)}
-                  className="info-button"
-                >
-                  {buttonLabels[language].info}
+                  Zoom to Location
                 </button>
               </div>
-              {/* AI-Generated Content */}
-              {loadingInfo && (
-                <div className="info-loading">
-                  <div className="spinner"></div>
-                  <p>Generating info...</p>
-                </div>
-              )}
-              {locationInfo && !loadingInfo && (
-  <div className={`location-info ${isDarkTheme ? 'dark-theme' : ''}`}>
-    <h4>
-      {language === 'en' && `About ${selectedHotspot.name}`}
-      {language === 'my' && `${selectedHotspot.name} အကြောင်း`}
-      {language === 'th' && `เกี่ยวกับ ${selectedHotspot.name}`}
-    </h4>
-    <p>{locationInfo}</p>
-  </div>
-)}
             </div>
           </Popup>
         )}
@@ -798,15 +703,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               {layer.label}
             </option>
           ))}
-        </select>
-      </div>
-
-      {/* Language Selector */}
-      <div className="language-selector">
-        <select value={language} onChange={(e) => setLanguage(e.target.value as 'en' | 'my' | 'th')}>
-          <option value="en">English</option>
-          <option value="my">မြန်မာ (Myanmar)</option>
-          <option value="th">ไทย (Thai)</option>
         </select>
       </div>
     </div>
