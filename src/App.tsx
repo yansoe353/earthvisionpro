@@ -6,6 +6,7 @@ import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
 import { Chrono } from 'react-chrono';
+import axios from 'axios'; // For making API requests
 import './index.css';
 
 // Translation function using the free Google Translate endpoint
@@ -24,6 +25,33 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Fallback to original text if translation fails
+  }
+};
+
+// Generate AI image using Stable Diffusion API
+const generateImage = async (prompt: string): Promise<string | null> => {
+  const API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1';
+  const API_TOKEN = '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'; // Replace with your Hugging Face API token
+
+  try {
+    const response = await axios.post(
+      API_URL,
+      { inputs: prompt },
+      {
+        headers: {
+          Authorization: `Bearer ${API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        responseType: 'arraybuffer',
+      }
+    );
+
+    // Convert the response to a base64 image URL
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    return `data:image/png;base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error generating image:', error);
+    return null;
   }
 };
 
@@ -164,7 +192,7 @@ function App() {
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
-  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string }>>([]);
+  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -227,7 +255,17 @@ function App() {
         const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
         if (eventsJson) {
           const events = JSON.parse(eventsJson);
-          setHistoricalEvents(events);
+
+          // Generate images for each event
+          const eventsWithImages = await Promise.all(
+            events.map(async (event: any) => {
+              const imagePrompt = `Historical event: ${event.cardTitle}, ${event.cardSubtitle}, ${event.cardDetailedText}`;
+              const image = await generateImage(imagePrompt);
+              return { ...event, image: image || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
+            })
+          );
+
+          setHistoricalEvents(eventsWithImages);
 
           // Translate content if the current language is not English
           if (language !== 'en') {
@@ -235,7 +273,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              events.map(async (event: any) => ({
+              eventsWithImages.map(async (event: any) => ({
                 ...event,
                 cardTitle: await translateText(event.cardTitle, language),
                 cardSubtitle: await translateText(event.cardSubtitle, language),
@@ -767,7 +805,18 @@ function App() {
                 {historicalEvents.length > 0 && (
                   <div className="timeline-container">
                     <Chrono
-                      items={historicalEvents}
+                      items={historicalEvents.map((event) => ({
+                        title: event.title,
+                        cardTitle: event.cardTitle,
+                        cardSubtitle: event.cardSubtitle,
+                        cardDetailedText: event.cardDetailedText,
+                        media: {
+                          type: 'IMAGE',
+                          source: {
+                            url: event.image || 'https://via.placeholder.com/300x200',
+                          },
+                        },
+                      }))}
                       mode="HORIZONTAL"
                       theme={{ primary: '#4CAF50', secondary: '#FFC107' }}
                     />
