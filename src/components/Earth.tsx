@@ -45,7 +45,7 @@ const hotspots: Hotspot[] = [
     name: 'Arosa Hörnli - Switzerland',
     description: 'A famous Arosa Hörnli in Switzerland.',
     coordinates: [9.714189134324783, 46.52136798216034],
-    iframeUrl: 'https://captures-three.vercel.app/',
+    iframeUrl: 'https://captures-three.vercel.app/swis.html',
   },
 ];
 
