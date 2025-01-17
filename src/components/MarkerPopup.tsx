@@ -42,9 +42,9 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
     }
   };
 
-  // Handle delete confirmation
+  // Handle delete (no confirmation dialog)
   const handleDelete = () => {
-    if (isUserMarker(marker) && onDelete && window.confirm('Are you sure you want to delete this marker?')) {
+    if (isUserMarker(marker) && onDelete) {
       onDelete(marker.id);
     }
   };
@@ -55,11 +55,9 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
       <h3>{isUserMarker(marker) ? marker.label : marker.properties.title}</h3>
 
       {/* Popup Content */}
-      <p>Location: {isUserMarker(marker) ? `${marker.lat}, ${marker.lng}` : marker.properties.place}</p>
-
-      {/* Note Input (only for UserMarker) */}
-      {isUserMarker(marker) && (
+      {isUserMarker(marker) ? (
         <>
+          <p><strong>Location:</strong> {marker.lat}, {marker.lng}</p>
           <div className="note-input">
             <label htmlFor="note">Notes:</label>
             <textarea
@@ -75,6 +73,14 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
           <button onClick={handleSaveNote} className="save-button">
             Save Note
           </button>
+        </>
+      ) : (
+        <>
+          <p><strong>Magnitude:</strong> {marker.properties.mag}</p>
+          <p><strong>Location:</strong> {marker.properties.place}</p>
+          <p>
+            <strong>Coordinates:</strong> {marker.geometry.coordinates[0]}, {marker.geometry.coordinates[1]}
+          </p>
         </>
       )}
 
