@@ -54,7 +54,7 @@ const fetchYouTubeVideos = async (location: string) => {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchPrompt
-        )}&type=video&maxResults=5&relevanceLanguage=en&regionCode=US&videoCategoryId=19&key=${apiKey}`
+        )}&type=video&maxResults=5&relevanceLanguage=en&regionCode=SG&videoCategoryId=19&key=${apiKey}`
       );
 
       if (!response.ok) {
@@ -99,9 +99,9 @@ const generateYouTubeSearchPrompt = async (location: string) => {
         {
           role: 'user',
           content: `Generate a YouTube search prompt for travel videos about ${location}. 
-                    Include keywords like "travel guide," "tourist attractions," "cultural highlights," 
-                    and "scenic views." The prompt should be concise and optimized for finding 
-                    relevant travel content.`,
+                    Include keywords like "travel guide," "tourist attractions," "hiking trails," 
+                    "scenic views," and "nature spots." The prompt should be concise and optimized 
+                    for finding relevant travel content.`,
         },
       ],
       model: 'llama-3.2-90b-vision-preview',
@@ -284,13 +284,17 @@ function App() {
   // Fetch location name from Mapbox Geocoding API
   const fetchLocationName = async (lng: number, lat: number) => {
     const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}&types=poi,place`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
       if (data.features && data.features.length > 0) {
-        return data.features[0].place_name;
+        // Look for a meaningful location name (e.g., MacRitchie Reservoir)
+        const location = data.features.find((feature: any) =>
+          feature.place_type.includes('poi') || feature.place_type.includes('place')
+        );
+        return location ? location.text : data.features[0].place_name;
       }
       return 'Unknown Location';
     } catch (error) {
@@ -385,7 +389,8 @@ function App() {
       }
 
       await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
+      const videos = await fetchYouTubeVideos(locationName);
+      setYoutubeVideos(videos);
     } catch (error) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
@@ -781,7 +786,7 @@ function App() {
                 )}
               </div>
             )}
-            {youtubeVideos.length > 0 && (
+            {youtubeVideos.length > 0 ? (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
                 <div className="video-grid">
@@ -808,6 +813,8 @@ function App() {
                   ))}
                 </div>
               </div>
+            ) : (
+              <p className="no-videos-message">No YouTube videos found for this location.</p>
             )}
           </div>
         )}
