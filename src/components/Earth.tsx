@@ -55,6 +55,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null); // State for selected hotspot
+  const [iframeLoaded, setIframeLoaded] = useState(false); // State for iframe loading
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -305,6 +306,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               setSelectedHotspot(hotspot);
+              setIframeLoaded(false); // Reset iframe loading state
             }}
           >
             <div className="hotspot-marker">
@@ -352,13 +354,20 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               <h3>{selectedHotspot.name}</h3>
               <p>{selectedHotspot.description}</p>
               <div className="iframe-container">
+                {!iframeLoaded && (
+                  <div className="iframe-loading">
+                    <div className="spinner"></div>
+                    <p>Loading...</p>
+                  </div>
+                )}
                 <iframe
                   src={selectedHotspot.iframeUrl}
                   width="100%"
                   height="300px"
-                  style={{ border: 'none', borderRadius: '8px' }}
+                  style={{ border: 'none', borderRadius: '8px', display: iframeLoaded ? 'block' : 'none' }}
                   title={selectedHotspot.name}
                   allowFullScreen
+                  onLoad={() => setIframeLoaded(true)}
                 />
               </div>
               <div className="hotspot-popup-buttons">
@@ -378,6 +387,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   className="fullscreen-button"
                 >
                   Fullscreen
+                </button>
+                <button
+                  onClick={() => {
+                    mapRef.current?.flyTo({
+                      center: selectedHotspot.coordinates,
+                      zoom: 14, // Adjust zoom level as needed
+                      duration: 2000, // Smooth transition
+                    });
+                  }}
+                  className="zoom-button"
+                >
+                  Zoom to Location
                 </button>
               </div>
             </div>
