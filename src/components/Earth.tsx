@@ -14,6 +14,7 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
+import { Groq } from 'groq-sdk'; // Import Groq SDK
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -45,6 +46,36 @@ const hotspots: Hotspot[] = [
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
+
+// Function to generate news with AI
+const generateNewsWithAI = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+    return 'No news available for this location.';
+  } catch (error) {
+    console.error('Error generating news:', error);
+    return 'Failed to generate news. Please try again.';
+  }
+};
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -280,37 +311,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const fetchLocationInfo = async (hotspot: Hotspot) => {
     try {
       setLoadingInfo(true);
-
-      // Define language-specific prompts
-      const prompts = {
-        en: `Generate a detailed description in English about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
-        my: `Generate a detailed description in Burmese (မြန်မာဘာသာ) about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
-        th: `Generate a detailed description in Thai (ภาษาไทย) about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
-      };
-
-      // Call the Groq API with the selected language prompt
-      const response = await fetch('https://api.groq.com/v1/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-        },
-        body: JSON.stringify({
-          prompt: prompts[language],
-          max_tokens: 500,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch location info');
-      }
-
-      const data = await response.json();
-      setLocationInfo(data.choices[0].text);
+      const news = await generateNewsWithAI(hotspot.name);
+      setLocationInfo(news);
     } catch (error) {
       console.error('Error fetching location info:', error);
-      setLocationInfo('Failed to fetch information. Please try again later.');
+      setLocationInfo('Failed to fetch information. Please try again.');
     } finally {
       setLoadingInfo(false);
     }
