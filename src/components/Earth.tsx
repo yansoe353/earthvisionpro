@@ -15,7 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 
-type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number }>;
+type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
 // Hotspot type
 type Hotspot = {
@@ -186,7 +186,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       const handleClusterClick = () => {
         if (cluster.properties.cluster) {
           // Get the cluster's bounding box and zoom into it
-          const bbox = supercluster.getClusterExpansionZoom(cluster.properties.cluster_id);
+          const bbox = supercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
           mapRef.current?.flyTo({
             center: [longitude, latitude],
             zoom: bbox,
@@ -218,7 +218,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={latitude}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelectedFeature(cluster as Earthquake);
+              setSelectedFeature({
+                ...cluster,
+                geometry: {
+                  ...cluster.geometry,
+                  coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
+                },
+              } as Earthquake); // Cast to Earthquake type
             }}
           >
             <div className="earthquake-marker">
