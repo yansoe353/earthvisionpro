@@ -79,6 +79,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
   const [showTransit, setShowTransit] = useState(false);
+  const [showWeather, setShowWeather] = useState(false); // Add this line
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
