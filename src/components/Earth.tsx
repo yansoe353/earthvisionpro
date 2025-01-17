@@ -565,15 +565,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                 </div>
               )}
               {locationInfo && !loadingInfo && (
-                <div className="location-info">
-                  <h4>
-                    {language === 'en' && `About ${selectedHotspot.name}`}
-                    {language === 'my' && `${selectedHotspot.name} အကြောင်း`}
-                    {language === 'th' && `เกี่ยวกับ ${selectedHotspot.name}`}
-                  </h4>
-                  <p>{locationInfo}</p>
-                </div>
-              )}
+  <div className={`location-info ${isDarkTheme ? 'dark-theme' : ''}`}>
+    <h4>
+      {language === 'en' && `About ${selectedHotspot.name}`}
+      {language === 'my' && `${selectedHotspot.name} အကြောင်း`}
+      {language === 'th' && `เกี่ยวกับ ${selectedHotspot.name}`}
+    </h4>
+    <p>{locationInfo}</p>
+  </div>
+)}
             </div>
           </Popup>
         )}
