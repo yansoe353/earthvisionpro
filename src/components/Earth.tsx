@@ -271,6 +271,73 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return 'label' in marker && 'id' in marker;
   };
 
+  // State for AI-generated content and language
+  const [loadingInfo, setLoadingInfo] = useState(false);
+  const [locationInfo, setLocationInfo] = useState<string | null>(null);
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en'); // Default to English
+
+  // Fetch AI-generated content about the location
+  const fetchLocationInfo = async (hotspot: Hotspot) => {
+    try {
+      setLoadingInfo(true);
+
+      // Define language-specific prompts
+      const prompts = {
+        en: `Generate a detailed description in English about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
+        my: `Generate a detailed description in Burmese (မြန်မာဘာသာ) about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
+        th: `Generate a detailed description in Thai (ภาษาไทย) about ${hotspot.name}, located at ${hotspot.coordinates}. Focus on its significance, history, and interesting facts.`,
+      };
+
+      // Call the Groq API with the selected language prompt
+      const response = await fetch('https://api.groq.com/v1/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          prompt: prompts[language],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch location info');
+      }
+
+      const data = await response.json();
+      setLocationInfo(data.choices[0].text);
+    } catch (error) {
+      console.error('Error fetching location info:', error);
+      setLocationInfo('Failed to fetch information. Please try again later.');
+    } finally {
+      setLoadingInfo(false);
+    }
+  };
+
+  // Localized button labels
+  const buttonLabels = {
+    en: {
+      close: 'Close',
+      fullscreen: 'Fullscreen',
+      zoom: 'Zoom to Location',
+      info: 'Info',
+    },
+    my: {
+      close: 'ပိတ်မည်',
+      fullscreen: 'ဖန်သားပြင်အပြည့်',
+      zoom: 'တည်နေရာသို့ချဲ့ကြည့်မည်',
+      info: 'အချက်အလက်',
+    },
+    th: {
+      close: 'ปิด',
+      fullscreen: 'เต็มหน้าจอ',
+      zoom: 'ขยายไปที่ตำแหน่ง',
+      info: 'ข้อมูล',
+    },
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <MapControls
@@ -453,7 +520,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   onClick={() => setSelectedHotspot(null)}
                   className="close-button"
                 >
-                  Close
+                  {buttonLabels[language].close}
                 </button>
                 <button
                   onClick={() => {
@@ -464,7 +531,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   }}
                   className="fullscreen-button"
                 >
-                  Fullscreen
+                  {buttonLabels[language].fullscreen}
                 </button>
                 <button
                   onClick={() => {
@@ -476,9 +543,32 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   }}
                   className="zoom-button"
                 >
-                  Zoom to Location
+                  {buttonLabels[language].zoom}
+                </button>
+                <button
+                  onClick={() => fetchLocationInfo(selectedHotspot)}
+                  className="info-button"
+                >
+                  {buttonLabels[language].info}
                 </button>
               </div>
+              {/* AI-Generated Content */}
+              {loadingInfo && (
+                <div className="info-loading">
+                  <div className="spinner"></div>
+                  <p>Generating info...</p>
+                </div>
+              )}
+              {locationInfo && !loadingInfo && (
+                <div className="location-info">
+                  <h4>
+                    {language === 'en' && `About ${selectedHotspot.name}`}
+                    {language === 'my' && `${selectedHotspot.name} အကြောင်း`}
+                    {language === 'th' && `เกี่ยวกับ ${selectedHotspot.name}`}
+                  </h4>
+                  <p>{locationInfo}</p>
+                </div>
+              )}
             </div>
           </Popup>
         )}
@@ -703,6 +793,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               {layer.label}
             </option>
           ))}
+        </select>
+      </div>
+
+      {/* Language Selector */}
+      <div className="language-selector">
+        <select value={language} onChange={(e) => setLanguage(e.target.value as 'en' | 'my' | 'th')}>
+          <option value="en">English</option>
+          <option value="my">မြန်မာ (Myanmar)</option>
+          <option value="th">ไทย (Thai)</option>
         </select>
       </div>
     </div>
