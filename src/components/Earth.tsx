@@ -261,27 +261,29 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <MapControls
-        toggleFeaturePanel={toggleFeaturePanel}
-        isDarkTheme={isDarkTheme}
-        showHeatmap={showHeatmap}
-        setShowHeatmap={setShowHeatmap}
-        showTraffic={showTraffic}
-        setShowTraffic={setShowTraffic}
-        showSatellite={showSatellite}
-        setShowSatellite={setShowSatellite}
-        show3DTerrain={show3DTerrain}
-        setShow3DTerrain={setShow3DTerrain}
-        showChoropleth={showChoropleth}
-        setShowChoropleth={setShowChoropleth}
-        show3DBuildings={show3DBuildings}
-        setShow3DBuildings={setShow3DBuildings}
-        showContour={showContour}
-        setShowContour={setShowContour}
-        showPointsOfInterest={showPointsOfInterest}
-        setShowPointsOfInterest={setShowPointsOfInterest}
-        showTransit={showTransit}
-        setShowTransit={setShowTransit}
-      />
+  toggleFeaturePanel={toggleFeaturePanel}
+  isDarkTheme={isDarkTheme}
+  showHeatmap={showHeatmap}
+  setShowHeatmap={setShowHeatmap}
+  showTraffic={showTraffic}
+  setShowTraffic={setShowTraffic}
+  showSatellite={showSatellite}
+  setShowSatellite={setShowSatellite}
+  show3DTerrain={show3DTerrain}
+  setShow3DTerrain={setShow3DTerrain}
+  showChoropleth={showChoropleth}
+  setShowChoropleth={setShowChoropleth}
+  show3DBuildings={show3DBuildings}
+  setShow3DBuildings={setShow3DBuildings}
+  showContour={showContour}
+  setShowContour={setShowContour}
+  showPointsOfInterest={showPointsOfInterest}
+  setShowPointsOfInterest={setShowPointsOfInterest}
+  showWeather={showWeather} // Add this line
+  setShowWeather={setShowWeather} // Add this line
+  showTransit={showTransit}
+  setShowTransit={setShowTransit}
+/>
 
       {showFeaturePanel && (
         <FeaturePanel
