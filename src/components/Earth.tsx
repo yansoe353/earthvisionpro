@@ -192,6 +192,21 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             zoom: bbox,
             duration: 1000, // Smooth transition
           });
+        } else {
+          // Convert the cluster to an Earthquake object
+          const earthquake: Earthquake = {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
+            },
+            properties: {
+              title: `Earthquake - ${cluster.properties.id}`, // Provide a default title
+              mag: cluster.properties.mag || 0, // Provide a default magnitude
+              place: 'Unknown', // Provide a default place
+            },
+          };
+          setSelectedFeature(earthquake);
         }
       };
 
@@ -218,13 +233,19 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={latitude}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelectedFeature({
-                ...cluster,
+              const earthquake: Earthquake = {
+                type: 'Feature',
                 geometry: {
-                  ...cluster.geometry,
+                  type: 'Point',
                   coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
                 },
-              } as Earthquake); // Cast to Earthquake type
+                properties: {
+                  title: `Earthquake - ${cluster.properties.id}`, // Provide a default title
+                  mag: cluster.properties.mag || 0, // Provide a default magnitude
+                  place: 'Unknown', // Provide a default place
+                },
+              };
+              setSelectedFeature(earthquake);
             }}
           >
             <div className="earthquake-marker">
