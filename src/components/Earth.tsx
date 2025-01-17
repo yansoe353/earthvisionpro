@@ -40,6 +40,13 @@ const hotspots: Hotspot[] = [
     coordinates: [2.2945, 48.8584],
     iframeUrl: 'https://captures-three.vercel.app/',
   },
+  {
+    id: '3',
+    name: 'Arosa Hörnli - Switzerland',
+    description: 'A famous Arosa Hörnli in Switzerland.',
+    coordinates: [46.52136798216034, 9.714189134324783],
+    iframeUrl: 'https://captures-three.vercel.app/',
+  },
 ];
 
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
