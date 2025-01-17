@@ -28,36 +28,27 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Generate AI image using Pixel API
-const generateImage = async (prompt: string): Promise<string | null> => {
-  const API_URL = 'https://api.pixelapi.ai/v1/images/generate';
-  const API_KEY = 'wqJUbhH078SgfdsD8QCXL5Qh1lKQigncml9pbcWC3yhb5t78TCFxEa7D'; // Replace with your Pixel API key
-
+// Fetch image using Pexels API
+const fetchImage = async (query: string): Promise<string | null> => {
   try {
-    const response = await axios.post(
-      API_URL,
-      {
-        prompt: prompt,
-        size: '512x512', // Adjust size as needed
-        num_images: 1, // Number of images to generate
+    const response = await axios.get('https://api.pexels.com/v1/search', {
+      headers: {
+        Authorization: import.meta.env.VITE_PIXEL_API_KEY, // Replace with your Pexels API key
       },
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+      params: {
+        query: query, // Use the query (e.g., location name or event title)
+        per_page: 1, // Fetch only one image
+      },
+    });
 
-    // Extract the image URL from the response
-    if (response.data && response.data.images && response.data.images.length > 0) {
-      return response.data.images[0].url; // Return the URL of the generated image
+    if (response.data.photos && response.data.photos.length > 0) {
+      return response.data.photos[0].src.large; // Return the URL of the large-sized image
     } else {
-      console.error('No image URL found in the response.');
+      console.warn('No images found for the query:', query);
       return null;
     }
   } catch (error) {
-    console.error('Error generating image:', error);
+    console.error('Error fetching image:', error);
     return null;
   }
 };
@@ -263,12 +254,11 @@ function App() {
         if (eventsJson) {
           const events = JSON.parse(eventsJson);
 
-          // Generate images for each event using Pixel API
+          // Fetch images for each event using Pexels API
           const eventsWithImages = await Promise.all(
             events.map(async (event: any) => {
-              const imagePrompt = `Historical event: ${event.cardTitle}, ${event.cardSubtitle}, ${event.cardDetailedText}`;
-              const image = await generateImage(imagePrompt);
-              return { ...event, image: image || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
+              const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
+              return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
             })
           );
 
