@@ -195,6 +195,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         } else {
           // Convert the cluster to an Earthquake object
           const earthquake: Earthquake = {
+            id: cluster.properties.id || 'default-id', // Provide a default ID if not available
             geometry: {
               coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
             },
@@ -232,6 +233,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               const earthquake: Earthquake = {
+                id: cluster.properties.id || 'default-id', // Provide a default ID if not available
                 geometry: {
                   coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
                 },
