@@ -73,6 +73,19 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showTransit, setShowTransit] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
 
+  // Weather layer state
+  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
+
+  // OpenWeatherMap tile URL
+  const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}`;
+
+  // Weather layers
+  const WEATHER_LAYERS = [
+    { id: 'clouds_new', label: 'Cloud Cover' },
+    { id: 'precipitation_new', label: 'Precipitation' },
+    { id: 'temp_new', label: 'Temperature' },
+  ];
+
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
   const { weatherData, fetchWeatherData } = useWeatherData();
@@ -653,7 +666,38 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             />
           </Source>
         )}
+
+        {/* OpenWeatherMap Weather Layer */}
+        {showWeather && selectedWeatherLayer && (
+          <Source
+            id="openweathermap-layer"
+            type="raster"
+            tiles={[OPENWEATHERMAP_TILES.replace('{layer}', selectedWeatherLayer)]}
+            tileSize={256}
+          >
+            <Layer
+              id="openweathermap-layer-render"
+              type="raster"
+              source="openweathermap-layer"
+              paint={{
+                'raster-opacity': 0.7,
+              }}
+            />
+          </Source>
+        )}
       </Map>
+
+      {/* Weather Layer Selector */}
+      <div className="weather-layer-selector">
+        <select onChange={(e) => setSelectedWeatherLayer(e.target.value)}>
+          <option value="">Select a Weather Layer</option>
+          {WEATHER_LAYERS.map((layer) => (
+            <option key={layer.id} value={layer.id}>
+              {layer.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 });
