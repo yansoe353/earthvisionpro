@@ -686,44 +686,44 @@ html, body, #root {
 }
 
 .video-item {
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #1e1e1e; /* Dark background for video items */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .video-thumbnail img {
   width: 100%;
   height: auto;
+  display: block; /* Ensure the image is block-level to avoid extra space */
 }
 
 .video-details {
   padding: 15px;
 }
 
-
 .video-details h3 {
   margin: 0 0 10px;
   font-size: 1.2em;
+  color: #fff; /* White text for headings */
 }
 
 .video-details p {
   margin: 0 0 10px;
   font-size: 0.9em;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8); /* Slightly transparent white for text */
 }
 
 .video-published {
   font-size: 0.8em;
-  color: #888;
+  color: rgba(255, 255, 255, 0.6); /* Lighter color for less important text */
 }
 
-
-
 .video-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px); /* Slightly larger hover effect */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); /* More pronounced shadow on hover */
 }
 
 .video-item iframe {
@@ -735,7 +735,7 @@ html, body, #root {
 .video-item p {
   padding: 0.75rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9); /* Consistent text color */
   margin: 0;
 }
 
