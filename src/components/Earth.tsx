@@ -42,12 +42,6 @@ const hotspots: Hotspot[] = [
   },
 ];
 
-const WEATHER_LAYERS = [
-  { id: 'MODIS_Terra_Cloud_Top_Temperature_Day', label: 'Cloud Cover' },
-  { id: 'MODIS_Terra_Precipitation_Day', label: 'Precipitation' },
-  { id: 'MODIS_Terra_Land_Surface_Temp_Day', label: 'Temperature' },
-];
-
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
@@ -65,8 +59,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
-  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('2023-10-01');
   const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
 
   // Layer visibility states
@@ -79,7 +71,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
   const [showTransit, setShowTransit] = useState(false);
-  const [showWeather, setShowWeather] = useState(false); // Add this line
+  const [showWeather, setShowWeather] = useState(false);
 
   // Custom hooks
   const { earthquakes } = useEarthquakes(showDisasterAlerts);
@@ -262,29 +254,29 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <MapControls
-  toggleFeaturePanel={toggleFeaturePanel}
-  isDarkTheme={isDarkTheme}
-  showHeatmap={showHeatmap}
-  setShowHeatmap={setShowHeatmap}
-  showTraffic={showTraffic}
-  setShowTraffic={setShowTraffic}
-  showSatellite={showSatellite}
-  setShowSatellite={setShowSatellite}
-  show3DTerrain={show3DTerrain}
-  setShow3DTerrain={setShow3DTerrain}
-  showChoropleth={showChoropleth}
-  setShowChoropleth={setShowChoropleth}
-  show3DBuildings={show3DBuildings}
-  setShow3DBuildings={setShow3DBuildings}
-  showContour={showContour}
-  setShowContour={setShowContour}
-  showPointsOfInterest={showPointsOfInterest}
-  setShowPointsOfInterest={setShowPointsOfInterest}
-  showWeather={showWeather} // Add this line
-  setShowWeather={setShowWeather} // Add this line
-  showTransit={showTransit}
-  setShowTransit={setShowTransit}
-/>
+        toggleFeaturePanel={toggleFeaturePanel}
+        isDarkTheme={isDarkTheme}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        showTraffic={showTraffic}
+        setShowTraffic={setShowTraffic}
+        showSatellite={showSatellite}
+        setShowSatellite={setShowSatellite}
+        show3DTerrain={show3DTerrain}
+        setShow3DTerrain={setShow3DTerrain}
+        showChoropleth={showChoropleth}
+        setShowChoropleth={setShowChoropleth}
+        show3DBuildings={show3DBuildings}
+        setShow3DBuildings={setShow3DBuildings}
+        showContour={showContour}
+        setShowContour={setShowContour}
+        showPointsOfInterest={showPointsOfInterest}
+        setShowPointsOfInterest={setShowPointsOfInterest}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
+      />
 
       {showFeaturePanel && (
         <FeaturePanel
@@ -661,45 +653,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             />
           </Source>
         )}
-
-        {/* GIBS Weather Layer */}
-        {selectedWeatherLayer && (
-          <Source
-            id="gibs-weather-layer"
-            type="raster"
-            tiles={[
-              `https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/${selectedWeatherLayer}/default/${selectedDate}/250m/{z}/{y}/{x}.jpg`,
-            ]}
-            tileSize={256}
-          >
-            <Layer
-              id="gibs-weather-layer-render"
-              type="raster"
-              source="gibs-weather-layer"
-              paint={{
-                'raster-opacity': 0.7,
-              }}
-            />
-          </Source>
-        )}
       </Map>
-
-      {/* Weather Layer Selector */}
-      <div className="weather-layer-selector">
-        <select onChange={(e) => setSelectedWeatherLayer(e.target.value)}>
-          <option value="">Select a Weather Layer</option>
-          {WEATHER_LAYERS.map((layer) => (
-            <option key={layer.id} value={layer.id}>
-              {layer.label}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
-      </div>
     </div>
   );
 });
