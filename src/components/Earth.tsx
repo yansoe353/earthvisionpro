@@ -101,9 +101,26 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         },
       }));
       supercluster.load(points);
-      setClusters(supercluster.getClusters([-180, -90, 180, 90], 1));
+
+      // Get the current map bounds and zoom level
+      const bounds = mapRef.current?.getBounds();
+      const zoom = mapRef.current?.getZoom();
+
+      if (bounds && zoom) {
+        setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      }
     }
-  }, [earthquakes, supercluster]);
+  }, [earthquakes, supercluster, mapRef]);
+
+  // Handle map move and zoom events
+  const handleMapMove = useCallback(() => {
+    const bounds = mapRef.current?.getBounds();
+    const zoom = mapRef.current?.getZoom();
+
+    if (bounds && zoom) {
+      setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+    }
+  }, [supercluster, mapRef]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -164,17 +181,46 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const renderClusters = useMemo(() => {
     return clusters.map((cluster) => {
       const [longitude, latitude] = cluster.geometry.coordinates;
+
+      // Handle cluster click
+      const handleClusterClick = () => {
+        if (cluster.properties.cluster) {
+          // Get the cluster's bounding box and zoom into it
+          const bbox = supercluster.getClusterExpansionZoom(cluster.properties.cluster_id);
+          mapRef.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: bbox,
+            duration: 1000, // Smooth transition
+          });
+        }
+      };
+
       if (cluster.properties.cluster) {
+        // Render cluster marker
         return (
-          <Marker key={cluster.id} longitude={longitude} latitude={latitude}>
+          <Marker
+            key={`cluster-${cluster.properties.cluster_id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={handleClusterClick}
+          >
             <div className="cluster-marker">
               {cluster.properties.point_count}
             </div>
           </Marker>
         );
       } else {
+        // Render individual earthquake marker
         return (
-          <Marker key={cluster.properties.id} longitude={longitude} latitude={latitude}>
+          <Marker
+            key={`earthquake-${cluster.properties.id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedFeature(cluster as Earthquake);
+            }}
+          >
             <div className="earthquake-marker">
               {cluster.properties.mag}
             </div>
@@ -182,7 +228,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         );
       }
     });
-  }, [clusters]);
+  }, [clusters, supercluster, mapRef]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
@@ -256,6 +302,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         onClick={(e) => debouncedClick(e, () => handleClick(e))}
+        onMove={handleMapMove} // Update clusters on map move
         style={{ width: '100%', height: '100%' }}
         maxZoom={20}
         minZoom={1}
