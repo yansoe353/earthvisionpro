@@ -77,13 +77,20 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
 
   // OpenWeatherMap tile URL
-  const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${import.meta.env.VITE_OPENWEATHERMAP_API_KEY}`;
+  const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
+  const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`;
 
   // Weather layers
   const WEATHER_LAYERS = [
     { id: 'clouds_new', label: 'Cloud Cover' },
     { id: 'precipitation_new', label: 'Precipitation' },
     { id: 'temp_new', label: 'Temperature' },
+    { id: 'wind_new', label: 'Wind Speed' },
+    { id: 'pressure_new', label: 'Pressure' },
+    { id: 'humidity_new', label: 'Humidity' },
+    { id: 'snow_new', label: 'Snow Cover' },
+    { id: 'pressure_cntr_new', label: 'Sea Level Pressure' },
+    { id: 'visibility_new', label: 'Visibility' },
   ];
 
   // Custom hooks
@@ -668,7 +675,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         )}
 
         {/* OpenWeatherMap Weather Layer */}
-        {showWeather && selectedWeatherLayer && (
+        {showWeather && selectedWeatherLayer && OPENWEATHERMAP_API_KEY && (
           <Source
             id="openweathermap-layer"
             type="raster"
