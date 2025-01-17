@@ -47,9 +47,18 @@
 .location-info {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* Light theme background */
   border-radius: 8px;
   border: 1px solid #ddd;
+  max-height: 200px; /* Set a max height for the scrollable area */
+  overflow-y: auto; /* Add vertical scrollbar */
+}
+
+/* Dark theme styles for location-info */
+.dark-theme .location-info {
+  background-color: #333; /* Dark theme background */
+  color: #fff; /* Dark theme text color */
+  border-color: #555; /* Dark theme border color */
 }
 
 .location-info h4 {
@@ -58,6 +67,37 @@
 
 .location-info p {
   margin-bottom: 0;
+}
+
+/* Scrollbar styling */
+.location-info::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.location-info::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light theme scrollbar track */
+  border-radius: 4px;
+}
+
+.dark-theme .location-info::-webkit-scrollbar-track {
+  background: #444; /* Dark theme scrollbar track */
+}
+
+.location-info::-webkit-scrollbar-thumb {
+  background: #888; /* Light theme scrollbar thumb */
+  border-radius: 4px;
+}
+
+.dark-theme .location-info::-webkit-scrollbar-thumb {
+  background: #666; /* Dark theme scrollbar thumb */
+}
+
+.location-info::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Light theme scrollbar thumb hover */
+}
+
+.dark-theme .location-info::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Dark theme scrollbar thumb hover */
 }
 
 /* Language Selector */
@@ -75,7 +115,6 @@
   background-color: white;
   cursor: pointer;
 }
-
 
 /* Hotspot marker styles */
 .hotspot-marker {
