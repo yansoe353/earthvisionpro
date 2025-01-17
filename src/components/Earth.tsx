@@ -195,7 +195,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         } else {
           // Convert the cluster to an Earthquake object
           const earthquake: Earthquake = {
-            type: 'Feature',
             geometry: {
               coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
             },
@@ -233,7 +232,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               const earthquake: Earthquake = {
-                type: 'Feature',
                 geometry: {
                   coordinates: [longitude, latitude, 0], // Ensure coordinates is a tuple of three numbers
                 },
