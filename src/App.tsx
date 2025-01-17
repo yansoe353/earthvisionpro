@@ -54,7 +54,7 @@ const fetchYouTubeVideos = async (location: string) => {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchPrompt
-        )}&type=video&maxResults=5&relevanceLanguage=en&regionCode=SG&videoCategoryId=19&key=${apiKey}`
+        )}&type=video&maxResults=5&key=${apiKey}`
       );
 
       if (!response.ok) {
@@ -68,9 +68,6 @@ const fetchYouTubeVideos = async (location: string) => {
         return data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium.url,
-          publishedAt: item.snippet.publishedAt,
         }));
       } else {
         console.warn('No YouTube videos found for the location:', location);
@@ -98,10 +95,7 @@ const generateYouTubeSearchPrompt = async (location: string) => {
       messages: [
         {
           role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}. 
-                    Include keywords like "travel guide," "tourist attractions," "hiking trails," 
-                    "scenic views," and "nature spots." The prompt should be concise and optimized 
-                    for finding relevant travel content.`,
+          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
         },
       ],
       model: 'llama-3.2-90b-vision-preview',
@@ -162,7 +156,7 @@ function App() {
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string, publishedAt: string }>>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
@@ -284,17 +278,13 @@ function App() {
   // Fetch location name from Mapbox Geocoding API
   const fetchLocationName = async (lng: number, lat: number) => {
     const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}&types=poi,place`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
       if (data.features && data.features.length > 0) {
-        // Look for a meaningful location name (e.g., MacRitchie Reservoir)
-        const location = data.features.find((feature: any) =>
-          feature.place_type.includes('poi') || feature.place_type.includes('place')
-        );
-        return location ? location.text : data.features[0].place_name;
+        return data.features[0].place_name;
       }
       return 'Unknown Location';
     } catch (error) {
@@ -389,8 +379,7 @@ function App() {
       }
 
       await generateDynamicThemes(locationName);
-      const videos = await fetchYouTubeVideos(locationName);
-      setYoutubeVideos(videos);
+      await fetchYouTubeVideos(locationName);
     } catch (error) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
@@ -786,35 +775,26 @@ function App() {
                 )}
               </div>
             )}
-            {youtubeVideos.length > 0 ? (
+            {youtubeVideos.length > 0 && (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
                 <div className="video-grid">
                   {youtubeVideos.map((video) => (
                     <div key={video.id} className="video-item">
-                      <div className="video-thumbnail">
-                        <img src={video.thumbnail} alt={video.title} />
-                      </div>
-                      <div className="video-details">
-                        <h3>{video.title}</h3>
-                        <p>{video.description}</p>
-                        <p className="video-published">Published: {new Date(video.publishedAt).toLocaleDateString()}</p>
-                        <iframe
-                          width="100%"
-                          height="200"
-                          src={`https://www.youtube.com/embed/${video.id}`}
-                          title={video.title}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${video.id}`}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <p>{video.title}</p>
                     </div>
                   ))}
                 </div>
               </div>
-            ) : (
-              <p className="no-videos-message">No YouTube videos found for this location.</p>
             )}
           </div>
         )}
