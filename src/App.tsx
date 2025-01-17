@@ -54,7 +54,7 @@ const fetchYouTubeVideos = async (location: string) => {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
+        )}&type=video&maxResults=5&relevanceLanguage=en&regionCode=US&videoCategoryId=19&key=${apiKey}`
       );
 
       if (!response.ok) {
@@ -68,6 +68,9 @@ const fetchYouTubeVideos = async (location: string) => {
         return data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium.url,
+          publishedAt: item.snippet.publishedAt,
         }));
       } else {
         console.warn('No YouTube videos found for the location:', location);
@@ -95,7 +98,10 @@ const generateYouTubeSearchPrompt = async (location: string) => {
       messages: [
         {
           role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+          content: `Generate a YouTube search prompt for travel videos about ${location}. 
+                    Include keywords like "travel guide," "tourist attractions," "cultural highlights," 
+                    and "scenic views." The prompt should be concise and optimized for finding 
+                    relevant travel content.`,
         },
       ],
       model: 'llama-3.2-90b-vision-preview',
@@ -156,7 +162,7 @@ function App() {
   const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string, publishedAt: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
@@ -781,16 +787,23 @@ function App() {
                 <div className="video-grid">
                   {youtubeVideos.map((video) => (
                     <div key={video.id} className="video-item">
-                      <iframe
-                        width="100%"
-                        height="200"
-                        src={`https://www.youtube.com/embed/${video.id}`}
-                        title={video.title}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                      <p>{video.title}</p>
+                      <div className="video-thumbnail">
+                        <img src={video.thumbnail} alt={video.title} />
+                      </div>
+                      <div className="video-details">
+                        <h3>{video.title}</h3>
+                        <p>{video.description}</p>
+                        <p className="video-published">Published: {new Date(video.publishedAt).toLocaleDateString()}</p>
+                        <iframe
+                          width="100%"
+                          height="200"
+                          src={`https://www.youtube.com/embed/${video.id}`}
+                          title={video.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
                     </div>
                   ))}
                 </div>
