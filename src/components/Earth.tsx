@@ -346,23 +346,40 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             closeButton={false}
             anchor="bottom"
             maxWidth="400px"
+            className="hotspot-popup-container"
           >
             <div className="hotspot-popup">
               <h3>{selectedHotspot.name}</h3>
               <p>{selectedHotspot.description}</p>
-              <iframe
-                src={selectedHotspot.iframeUrl}
-                width="100%"
-                height="300px"
-                style={{ border: 'none', borderRadius: '8px' }}
-                title={selectedHotspot.name}
-              />
-              <button
-                onClick={() => setSelectedHotspot(null)}
-                style={{ marginTop: '10px' }}
-              >
-                Close
-              </button>
+              <div className="iframe-container">
+                <iframe
+                  src={selectedHotspot.iframeUrl}
+                  width="100%"
+                  height="300px"
+                  style={{ border: 'none', borderRadius: '8px' }}
+                  title={selectedHotspot.name}
+                  allowFullScreen
+                />
+              </div>
+              <div className="hotspot-popup-buttons">
+                <button
+                  onClick={() => setSelectedHotspot(null)}
+                  className="close-button"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    const iframe = document.querySelector('.iframe-container iframe');
+                    if (iframe && iframe.requestFullscreen) {
+                      iframe.requestFullscreen();
+                    }
+                  }}
+                  className="fullscreen-button"
+                >
+                  Fullscreen
+                </button>
+              </div>
             </div>
           </Popup>
         )}
