@@ -417,6 +417,92 @@
   }
 }
 
+/* Hotspot Popup Container */
+.hotspot-popup-container {
+  max-width: 90vw; /* Responsive width */
+  width: 400px; /* Default width */
+}
+
+/* Hotspot Popup Content */
+.hotspot-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Iframe Container */
+.iframe-container {
+  position: relative;
+  width: 100%;
+  padding-top: 75%; /* 4:3 aspect ratio (adjust as needed) */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.iframe-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Hotspot Popup Buttons */
+.hotspot-popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.hotspot-popup-buttons button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.close-button {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.close-button:hover {
+  background-color: #ff7875;
+}
+
+.fullscreen-button {
+  background-color: #1890ff;
+  color: white;
+}
+
+.fullscreen-button:hover {
+  background-color: #40a9ff;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .hotspot-popup-container {
+    width: 90vw; /* Adjust width for smaller screens */
+  }
+
+  .hotspot-popup h3 {
+    font-size: 18px;
+  }
+
+  .hotspot-popup p {
+    font-size: 14px;
+  }
+
+  .hotspot-popup-buttons button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
+
 @media (max-width: 480px) {
   .feature-panel,
   .weather-widget {
