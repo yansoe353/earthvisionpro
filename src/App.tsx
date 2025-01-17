@@ -28,27 +28,34 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
   }
 };
 
-// Generate AI image using Stable Diffusion API
+// Generate AI image using Pixel API
 const generateImage = async (prompt: string): Promise<string | null> => {
-  const API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1';
-  const API_TOKEN = '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'; // Replace with your Hugging Face API token
+  const API_URL = 'https://api.pixelapi.ai/v1/images/generate';
+  const API_KEY = 'wqJUbhH078SgfdsD8QCXL5Qh1lKQigncml9pbcWC3yhb5t78TCFxEa7D'; // Replace with your Pixel API key
 
   try {
     const response = await axios.post(
       API_URL,
-      { inputs: prompt },
+      {
+        prompt: prompt,
+        size: '512x512', // Adjust size as needed
+        num_images: 1, // Number of images to generate
+      },
       {
         headers: {
-          Authorization: `Bearer ${API_TOKEN}`,
+          Authorization: `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
         },
-        responseType: 'arraybuffer',
       }
     );
 
-    // Convert the response to a base64 image URL
-    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
-    return `data:image/png;base64,${base64Image}`;
+    // Extract the image URL from the response
+    if (response.data && response.data.images && response.data.images.length > 0) {
+      return response.data.images[0].url; // Return the URL of the generated image
+    } else {
+      console.error('No image URL found in the response.');
+      return null;
+    }
   } catch (error) {
     console.error('Error generating image:', error);
     return null;
@@ -256,7 +263,7 @@ function App() {
         if (eventsJson) {
           const events = JSON.parse(eventsJson);
 
-          // Generate images for each event
+          // Generate images for each event using Pixel API
           const eventsWithImages = await Promise.all(
             events.map(async (event: any) => {
               const imagePrompt = `Historical event: ${event.cardTitle}, ${event.cardSubtitle}, ${event.cardDetailedText}`;
