@@ -7,8 +7,6 @@
   z-index: 1; /* Ensure the map container is above other elements */
 }
 
-
-
 /* Hotspot marker styles */
 .hotspot-marker {
   background-color: #ff0000;
@@ -18,8 +16,6 @@
   font-size: 12px;
   cursor: pointer;
 }
-
-
 
 /* Marker styles */
 .marker {
