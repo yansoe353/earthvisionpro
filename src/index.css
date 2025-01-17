@@ -680,16 +680,46 @@ html, body, #root {
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .video-item {
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+.video-thumbnail img {
+  width: 100%;
+  height: auto;
+}
+
+.video-details {
+  padding: 15px;
+}
+
+
+.video-details h3 {
+  margin: 0 0 10px;
+  font-size: 1.2em;
+}
+
+.video-details p {
+  margin: 0 0 10px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.video-published {
+  font-size: 0.8em;
+  color: #888;
+}
+
+
 
 .video-item:hover {
   transform: translateY(-2px);
@@ -709,7 +739,7 @@ html, body, #root {
   margin: 0;
 }
 
-/* Base styles for translated content */
+/* Base styles for translated in */
 .translated-content {
   margin: 20px 0;
   padding: 15px;
