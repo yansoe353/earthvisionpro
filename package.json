@@ -12,7 +12,7 @@
   "dependencies": {
     "@huggingface/inference": "^2.6.0",
     "@mapbox/mapbox-gl-draw": "^1.5.0",
-    "geolib": "^3.3.3",
+    "geolib": "^3.3.4",
     "@react-google-maps/api": "^2.20.3",
     "axios": "^1.6.2",
     "@react-three/drei": "^9.120.4",
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^20.11.19",
-    "@types/geolib": "^3.3.3",
+    "@types/geolib": "^3.3.4",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.3.4",
