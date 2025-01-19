@@ -8,22 +8,54 @@
 }
 
 
-.weather-tabs-container {
+/* Call Tab Button */
+.call-tab-button {
   position: absolute;
   bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 20px;
+  padding: 10px 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.call-tab-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* Weather Tabs Container */
+.weather-tabs-container {
+  position: absolute;
+  bottom: 80px; /* Position above the call tab button */
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
   max-width: 400px;
   overflow-x: auto;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.7); /* Transparent dark background */
   border-radius: 12px;
   padding: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+.weather-tabs-container.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Weather Tabs */
 .weather-tabs {
   display: flex;
   gap: 8px;
@@ -35,16 +67,22 @@
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.1); /* Transparent light background */
   border-radius: 8px;
   cursor: pointer;
-  border: none;
-  transition: background 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Sci-fi border */
+  color: white;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.weather-tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 .weather-tab.active {
-  background: #007bff;
-  color: white;
+  background: rgba(0, 123, 255, 0.7); /* Active state with blue tint */
+  border-color: rgba(0, 123, 255, 0.9);
 }
 
 .weather-tab .weather-icon {
