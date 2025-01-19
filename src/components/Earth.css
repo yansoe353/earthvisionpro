@@ -9,6 +9,7 @@
 
 
 /* Call Tab Button */
+/* Call Tab Button */
 .call-tab-button {
   position: absolute;
   bottom: 20px;
@@ -29,6 +30,23 @@
   background: rgba(0, 0, 0, 0.9);
   transform: translateX(-50%) scale(1.1);
 }
+
+@media (max-width: 400px) {
+  .call-tab-button {
+    font-size: 14px; /* Even smaller font size */
+    padding: 6px 12px; /* Even smaller padding */
+  }
+}
+
+
+/* Smaller Call Tab Button for Mobile View */
+@media (max-width: 768px) {
+  .call-tab-button {
+    font-size: 16px; /* Smaller font size */
+    padding: 8px 16px; /* Smaller padding */
+  }
+}
+
 
 /* Weather Tabs Container */
 .weather-tabs-container {
