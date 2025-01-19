@@ -82,6 +82,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Weather layer state
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
+  const [showWeatherTabs, setShowWeatherTabs] = useState(false); // State to toggle weather tabs visibility
 
   // OpenWeatherMap tile URL
   const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
@@ -701,8 +702,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         )}
       </Map>
 
+      {/* Call Tab Button */}
+      <button
+        className="call-tab-button"
+        onClick={() => setShowWeatherTabs(!showWeatherTabs)}
+      >
+        {showWeatherTabs ? '✖' : '🌦️'}
+      </button>
+
       {/* Weather Layer Selector - Horizontal Scrolling Tabs */}
-      <div className="weather-tabs-container">
+      <div className={`weather-tabs-container ${showWeatherTabs ? 'visible' : ''}`}>
         <div className="weather-tabs">
           {WEATHER_LAYERS.map((layer) => (
             <button
