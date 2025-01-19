@@ -14,7 +14,6 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
-import { getDistance } from 'geolib';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -24,15 +23,6 @@ type Hotspot = {
   description: string;
   coordinates: [number, number];
   iframeUrl: string;
-};
-
-type EnvironmentalElement = {
-  id: string;
-  name: string;
-  type: 'animal' | 'energy' | 'tip';
-  image: string;
-  description: string;
-  coordinates: [number, number];
 };
 
 const hotspots: Hotspot[] = [
@@ -59,33 +49,6 @@ const hotspots: Hotspot[] = [
   },
 ];
 
-const ENVIRONMENTAL_ELEMENTS: EnvironmentalElement[] = [
-  {
-    id: '1',
-    name: 'Polar Bear',
-    type: 'animal',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/6/66/Polar_Bear_-_Alaska.jpg',
-    description: 'Polar bears are endangered due to climate change and melting Arctic ice.',
-    coordinates: [0, 0], // Default coordinates
-  },
-  {
-    id: '2',
-    name: 'Solar Farm',
-    type: 'energy',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Solar_farm.jpg',
-    description: 'Solar farms generate clean energy and reduce reliance on fossil fuels.',
-    coordinates: [0, 0],
-  },
-  {
-    id: '3',
-    name: 'Reduce Plastic Use',
-    type: 'tip',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Plastic_bottles.jpg',
-    description: 'Use reusable bags and bottles to reduce plastic waste.',
-    coordinates: [0, 0],
-  },
-];
-
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
@@ -95,7 +58,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
-  const [selectedElement, setSelectedElement] = useState<EnvironmentalElement | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
@@ -105,11 +67,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
-  const [environmentalElements, setEnvironmentalElements] = useState<EnvironmentalElement[]>([]);
-  const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
-  const [isLocationPermissionGranted, setIsLocationPermissionGranted] = useState(false);
-  const [nearbyElements, setNearbyElements] = useState<EnvironmentalElement[]>([]);
 
   // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -125,7 +82,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Weather layer state
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
-  const [showWeatherTabs, setShowWeatherTabs] = useState(false);
+  const [showWeatherTabs, setShowWeatherTabs] = useState(false); // State to toggle weather tabs visibility
 
   // OpenWeatherMap tile URL
   const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
@@ -244,58 +201,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     setShowWeatherWidget(false);
   }, [setShowWeatherWidget]);
 
-  // Get user location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      setIsLoadingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { longitude, latitude } = position.coords;
-          setUserLocation({ lng: longitude, lat: latitude });
-          setIsLoadingLocation(false);
-          setIsLocationPermissionGranted(true);
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-          setIsLoadingLocation(false);
-        }
-      );
-    } else {
-      console.error('Geolocation is not supported by this browser.');
-      setIsLoadingLocation(false);
-    }
-  }, []);
-
-  // Spawn environmental elements
-  useEffect(() => {
-    const spawnElement = () => {
-      const randomElement = ENVIRONMENTAL_ELEMENTS[Math.floor(Math.random() * ENVIRONMENTAL_ELEMENTS.length)];
-      const randomCoordinates: [number, number] = [
-        Math.random() * 360 - 180, // Random longitude (-180 to 180)
-        Math.random() * 180 - 90,  // Random latitude (-90 to 90)
-      ];
-      const newElement = { ...randomElement, coordinates: randomCoordinates };
-      setEnvironmentalElements((prev) => [...prev, newElement]);
-    };
-
-    const spawnInterval = setInterval(spawnElement, 30000); // Spawn every 30 seconds
-    return () => clearInterval(spawnInterval);
-  }, []);
-
-  // Update nearby elements based on user location
-  useEffect(() => {
-    if (userLocation) {
-      const nearby = environmentalElements.filter((element) => {
-        const distance = getDistance(
-          { latitude: userLocation.lat, longitude: userLocation.lng },
-          { latitude: element.coordinates[1], longitude: element.coordinates[0] }
-        );
-        return distance < 1000; // Within 1 km
-      });
-      setNearbyElements(nearby);
-    }
-  }, [userLocation, environmentalElements]);
-
   // Render clusters
   const renderClusters = useMemo(() => {
     return clusters.map((cluster) => {
@@ -376,54 +281,55 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Center on User Button */}
-      <button
-        className="center-user-button"
-        onClick={() => {
-          if (userLocation) {
-            mapRef.current?.flyTo({
-              center: [userLocation.lng, userLocation.lat],
-              zoom: 14,
-              duration: 2000,
-            });
-          }
-        }}
-        disabled={!userLocation}
-      >
-        🎯 Center on Me
-      </button>
+      <MapControls
+        toggleFeaturePanel={toggleFeaturePanel}
+        isDarkTheme={isDarkTheme}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        showTraffic={showTraffic}
+        setShowTraffic={setShowTraffic}
+        showSatellite={showSatellite}
+        setShowSatellite={setShowSatellite}
+        show3DTerrain={show3DTerrain}
+        setShow3DTerrain={setShow3DTerrain}
+        showChoropleth={showChoropleth}
+        setShowChoropleth={setShowChoropleth}
+        show3DBuildings={show3DBuildings}
+        setShow3DBuildings={setShow3DBuildings}
+        showContour={showContour}
+        setShowContour={setShowContour}
+        showPointsOfInterest={showPointsOfInterest}
+        setShowPointsOfInterest={setShowPointsOfInterest}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
+      />
 
-      {/* Loading Spinner */}
-      {isLoadingLocation && (
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Fetching your location...</p>
-        </div>
+      {showFeaturePanel && (
+        <FeaturePanel
+          isDarkTheme={isDarkTheme}
+          showDisasterAlerts={showDisasterAlerts}
+          isCaptureEnabled={isCaptureEnabled}
+          clickedLocation={clickedLocation}
+          toggleDisasterAlerts={toggleDisasterAlerts}
+          toggleDarkTheme={toggleDarkTheme}
+          toggleCaptureFeature={toggleCaptureFeature}
+          addUserMarker={addUserMarker}
+          removeAllMarkers={removeAllMarkers}
+          onClose={toggleFeaturePanel}
+          mapStyle={mapStyle}
+          setMapStyle={setMapStyle}
+          mapStyles={MAPBOX_STYLES}
+          terrainExaggeration={terrainExaggeration}
+          setTerrainExaggeration={setTerrainExaggeration}
+        />
       )}
 
-      {/* Permission Denied Message */}
-      {!isLocationPermissionGranted && (
-        <div className="permission-denied-message">
-          <p>Location access is required to use this feature. Please enable it in your browser settings.</p>
-        </div>
+      {showWeatherWidget && weatherData && (
+        <WeatherWidget weatherData={weatherData} closeWeatherWidget={closeWeatherWidget} />
       )}
 
-      {/* Nearby Elements Panel */}
-      <div className="nearby-elements-panel">
-        <h3>Nearby Elements</h3>
-        {nearbyElements.length === 0 ? (
-          <p>No elements nearby.</p>
-        ) : (
-          nearbyElements.map((element) => (
-            <div key={element.id} className="nearby-element">
-              <img src={element.image} alt={element.name} width={30} height={30} />
-              <span>{element.name}</span>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Existing map and controls */}
       <Map
         ref={mapRef}
         mapStyle={mapStyle}
@@ -449,47 +355,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
-        {/* User Location Marker */}
-        {userLocation && (
-          <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
-            <div className="user-location-marker">
-              <img src="/user-icon.png" alt="Your Location" width={30} height={30} />
-            </div>
-          </Marker>
-        )}
-
-        {/* Environmental Elements */}
-        {environmentalElements.map((element) => (
-          <Marker
-            key={element.id}
-            longitude={element.coordinates[0]}
-            latitude={element.coordinates[1]}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setSelectedElement(element);
-            }}
-          >
-            <div className="environment-marker">
-              <img src={element.image} alt={element.name} width={30} height={30} />
-            </div>
-          </Marker>
-        ))}
-
-        {/* Popup for Selected Environmental Element */}
-        {selectedElement && (
-          <Popup
-            longitude={selectedElement.coordinates[0]}
-            latitude={selectedElement.coordinates[1]}
-            onClose={() => setSelectedElement(null)}
-          >
-            <div className="environment-popup">
-              <h3>{selectedElement.name}</h3>
-              <img src={selectedElement.image} alt={selectedElement.name} width={50} height={50} />
-              <p>{selectedElement.description}</p>
-              <button onClick={() => setSelectedElement(null)}>Close</button>
-            </div>
-          </Popup>
-        )}
+        <Source
+          id="mapbox-dem"
+          type="raster-dem"
+          url="mapbox://mapbox.mapbox-terrain-dem-v1"
+          tileSize={512}
+          maxzoom={14}
+        />
 
         {/* Earthquake Markers (Clustered) */}
         {renderClusters}
