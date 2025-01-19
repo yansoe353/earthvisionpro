@@ -87,17 +87,17 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
   const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`;
 
-  // Weather layers
+  // Weather layers with icons
   const WEATHER_LAYERS = [
-    { id: 'clouds_new', label: 'Cloud Cover' },
-    { id: 'precipitation_new', label: 'Precipitation' },
-    { id: 'temp_new', label: 'Temperature' },
-    { id: 'wind_new', label: 'Wind Speed' },
-    { id: 'pressure_new', label: 'Pressure' },
-    { id: 'humidity_new', label: 'Humidity' },
-    { id: 'snow_new', label: 'Snow Cover' },
-    { id: 'pressure_cntr_new', label: 'Sea Level Pressure' },
-    { id: 'visibility_new', label: 'Visibility' },
+    { id: 'clouds_new', label: 'Clouds', icon: '☁️' },
+    { id: 'precipitation_new', label: 'Rain', icon: '🌧️' },
+    { id: 'temp_new', label: 'Temp', icon: '🌡️' },
+    { id: 'wind_new', label: 'Wind', icon: '💨' },
+    { id: 'pressure_new', label: 'Pressure', icon: '📊' },
+    { id: 'humidity_new', label: 'Humidity', icon: '💧' },
+    { id: 'snow_new', label: 'Snow', icon: '❄️' },
+    { id: 'pressure_cntr_new', label: 'Sea Pressure', icon: '🌊' },
+    { id: 'visibility_new', label: 'Visibility', icon: '👁️' },
   ];
 
   // Custom hooks
@@ -701,16 +701,20 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         )}
       </Map>
 
-      {/* Weather Layer Selector */}
-      <div className="weather-layer-selector">
-        <select onChange={(e) => setSelectedWeatherLayer(e.target.value)}>
-          <option value="">Select a Weather Layer</option>
+      {/* Weather Layer Selector - Horizontal Scrolling Tabs */}
+      <div className="weather-tabs-container">
+        <div className="weather-tabs">
           {WEATHER_LAYERS.map((layer) => (
-            <option key={layer.id} value={layer.id}>
-              {layer.label}
-            </option>
+            <button
+              key={layer.id}
+              className={`weather-tab ${selectedWeatherLayer === layer.id ? 'active' : ''}`}
+              onClick={() => setSelectedWeatherLayer(layer.id)}
+            >
+              <span className="weather-icon">{layer.icon}</span>
+              <span className="weather-label">{layer.label}</span>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
     </div>
   );
