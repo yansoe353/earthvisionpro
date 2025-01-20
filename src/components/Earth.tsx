@@ -26,13 +26,15 @@ type Hotspot = {
   iframeUrl: string;
 };
 
-type EnvironmentalElement = {
+type MagicalCreature = {
   id: string;
   name: string;
-  type: 'animal' | 'energy' | 'tip';
+  type: 'dragon' | 'unicorn' | 'phoenix' | 'griffin';
   image: string;
   description: string;
   coordinates: [number, number];
+  iframeUrl: string; // URL for the popup iframe
+  minigameUrl: string; // URL for the mini-game
 };
 
 const hotspots: Hotspot[] = [
@@ -59,33 +61,6 @@ const hotspots: Hotspot[] = [
   },
 ];
 
-const ENVIRONMENTAL_ELEMENTS: EnvironmentalElement[] = [
-  {
-    id: '1',
-    name: 'Polar Bear',
-    type: 'animal',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/6/66/Polar_Bear_-_Alaska.jpg',
-    description: 'Polar bears are endangered due to climate change and melting Arctic ice.',
-    coordinates: [0, 0], // Default coordinates
-  },
-  {
-    id: '2',
-    name: 'Solar Farm',
-    type: 'energy',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Solar_farm.jpg',
-    description: 'Solar farms generate clean energy and reduce reliance on fossil fuels.',
-    coordinates: [0, 0],
-  },
-  {
-    id: '3',
-    name: 'Reduce Plastic Use',
-    type: 'tip',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Plastic_bottles.jpg',
-    description: 'Use reusable bags and bottles to reduce plastic waste.',
-    coordinates: [0, 0],
-  },
-];
-
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
 }, 300);
@@ -95,7 +70,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
-  const [selectedElement, setSelectedElement] = useState<EnvironmentalElement | null>(null);
+  const [selectedCreature, setSelectedCreature] = useState<MagicalCreature | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
@@ -105,11 +80,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
-  const [environmentalElements, setEnvironmentalElements] = useState<EnvironmentalElement[]>([]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isLocationPermissionGranted, setIsLocationPermissionGranted] = useState(false);
-  const [nearbyElements, setNearbyElements] = useState<EnvironmentalElement[]>([]);
+  const [creatures, setCreatures] = useState<MagicalCreature[]>([]);
+  const [nearbyCreatures, setNearbyCreatures] = useState<MagicalCreature[]>([]);
 
   // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -266,35 +241,60 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, []);
 
-  // Spawn environmental elements
-  useEffect(() => {
-    const spawnElement = () => {
-      const randomElement = ENVIRONMENTAL_ELEMENTS[Math.floor(Math.random() * ENVIRONMENTAL_ELEMENTS.length)];
-      const randomCoordinates: [number, number] = [
-        Math.random() * 360 - 180, // Random longitude (-180 to 180)
-        Math.random() * 180 - 90,  // Random latitude (-90 to 90)
-      ];
-      const newElement = { ...randomElement, coordinates: randomCoordinates };
-      setEnvironmentalElements((prev) => [...prev, newElement]);
-    };
-
-    const spawnInterval = setInterval(spawnElement, 30000); // Spawn every 30 seconds
-    return () => clearInterval(spawnInterval);
-  }, []);
-
-  // Update nearby elements based on user location
+  // Spawn magical creatures
   useEffect(() => {
     if (userLocation) {
-      const nearby = environmentalElements.filter((element) => {
+      const spawnCreatures = () => {
+        const creatures: MagicalCreature[] = [];
+
+        // Spawn creatures within 2 miles of the user
+        for (let i = 0; i < 5; i++) {
+          const randomCoordinates = getRandomCoordinates(userLocation, 2); // 2 miles
+          creatures.push({
+            id: `creature-${i}`,
+            name: `Creature ${i + 1}`,
+            type: ['dragon', 'unicorn', 'phoenix', 'griffin'][i % 4],
+            image: `https://example.com/creature-${i}.jpg`,
+            description: `A magical ${['dragon', 'unicorn', 'phoenix', 'griffin'][i % 4]}`,
+            coordinates: randomCoordinates,
+            iframeUrl: 'https://captures-three.vercel.app/',
+            minigameUrl: 'https://example.com/minigame',
+          });
+        }
+
+        // Ensure one creature is ~10 km away
+        const farCoordinates = getRandomCoordinates(userLocation, 10); // 10 km
+        creatures.push({
+          id: 'creature-far',
+          name: 'Rare Creature',
+          type: 'phoenix',
+          image: 'https://example.com/rare-creature.jpg',
+          description: 'A rare phoenix!',
+          coordinates: farCoordinates,
+          iframeUrl: 'https://captures-three.vercel.app/',
+          minigameUrl: 'https://example.com/minigame',
+        });
+
+        setCreatures(creatures);
+      };
+
+      spawnCreatures();
+    }
+  }, [userLocation]);
+
+  // Update nearby creatures based on user location
+  useEffect(() => {
+    if (userLocation) {
+      const nearby = creatures.filter((creature) => {
         const distance = getDistance(
           { latitude: userLocation.lat, longitude: userLocation.lng },
-          { latitude: element.coordinates[1], longitude: element.coordinates[0] }
+          { latitude: creature.coordinates[1], longitude: creature.coordinates[0] }
         );
         return distance < 1000; // Within 1 km
       });
-      setNearbyElements(nearby);
+      setNearbyCreatures(nearby);
     }
-  }, [userLocation, environmentalElements]);
+  }, [userLocation, creatures]);
 
   // Render clusters
   const renderClusters = useMemo(() => {
@@ -374,6 +374,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return 'label' in marker && 'id' in marker;
   };
 
+  // Helper function to generate random coordinates
+  const getRandomCoordinates = (center: { lng: number; lat: number }, radiusInMiles: number): [number, number] => {
+    const radiusInDegrees = radiusInMiles / 69; // Approx conversion
+    const randomAngle = Math.random() * 2 * Math.PI;
+    const randomRadius = Math.random() * radiusInDegrees;
+
+    const lng = center.lng + randomRadius * Math.cos(randomAngle);
+    const lat = center.lat + randomRadius * Math.sin(randomAngle);
+
+    return [lng, lat];
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Center on User Button */}
@@ -408,16 +420,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         </div>
       )}
 
-      {/* Nearby Elements Panel */}
-      <div className="nearby-elements-panel">
-        <h3>Nearby Elements</h3>
-        {nearbyElements.length === 0 ? (
-          <p>No elements nearby.</p>
+      {/* Nearby Creatures Panel */}
+      <div className="nearby-creatures-panel">
+        <h3>Nearby Creatures</h3>
+        {nearbyCreatures.length === 0 ? (
+          <p>No creatures nearby.</p>
         ) : (
-          nearbyElements.map((element) => (
-            <div key={element.id} className="nearby-element">
-              <img src={element.image} alt={element.name} width={30} height={30} />
-              <span>{element.name}</span>
+          nearbyCreatures.map((creature) => (
+            <div key={creature.id} className="nearby-creature">
+              <img src={creature.image} alt={creature.name} width={30} height={30} />
+              <span>{creature.name}</span>
             </div>
           ))
         )}
@@ -533,35 +545,86 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         )}
 
-        {/* Environmental Elements */}
-        {environmentalElements.map((element) => (
+        {/* Magical Creatures */}
+        {creatures.map((creature) => (
           <Marker
-            key={element.id}
-            longitude={element.coordinates[0]}
-            latitude={element.coordinates[1]}
+            key={creature.id}
+            longitude={creature.coordinates[0]}
+            latitude={creature.coordinates[1]}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelectedElement(element);
+              setSelectedCreature(creature);
+              setIframeLoaded(false);
             }}
           >
-            <div className="environment-marker">
-              <img src={element.image} alt={element.name} width={30} height={30} />
+            <div className="creature-marker">
+              🐉
             </div>
           </Marker>
         ))}
 
-        {/* Popup for Selected Environmental Element */}
-        {selectedElement && (
+        {/* Popup for Selected Creature */}
+        {selectedCreature && (
           <Popup
-            longitude={selectedElement.coordinates[0]}
-            latitude={selectedElement.coordinates[1]}
-            onClose={() => setSelectedElement(null)}
+            longitude={selectedCreature.coordinates[0]}
+            latitude={selectedCreature.coordinates[1]}
+            onClose={() => setSelectedCreature(null)}
+            closeButton={false}
+            anchor="bottom"
+            maxWidth="400px"
+            className="creature-popup-container"
           >
-            <div className="environment-popup">
-              <h3>{selectedElement.name}</h3>
-              <img src={selectedElement.image} alt={selectedElement.name} width={50} height={50} />
-              <p>{selectedElement.description}</p>
-              <button onClick={() => setSelectedElement(null)}>Close</button>
+            <div className="creature-popup">
+              <h3>{selectedCreature.name}</h3>
+              <p>{selectedCreature.description}</p>
+              <div className="iframe-container">
+                {!iframeLoaded && (
+                  <div className="iframe-loading">
+                    <div className="spinner"></div>
+                    <p>Loading...</p>
+                  </div>
+                )}
+                <iframe
+                  src={selectedCreature.iframeUrl}
+                  width="100%"
+                  height="300px"
+                  style={{ border: 'none', borderRadius: '8px', display: iframeLoaded ? 'block' : 'none' }}
+                  title={selectedCreature.name}
+                  allowFullScreen
+                  onLoad={() => setIframeLoaded(true)}
+                />
+              </div>
+              <div className="creature-popup-buttons">
+                <button
+                  onClick={() => setSelectedCreature(null)}
+                  className="close-button"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    const iframe = document.querySelector('.iframe-container iframe');
+                    if (iframe && iframe.requestFullscreen) {
+                      iframe.requestFullscreen();
+                    }
+                  }}
+                  className="fullscreen-button"
+                >
+                  Fullscreen
+                </button>
+                <button
+                  onClick={() => {
+                    mapRef.current?.flyTo({
+                      center: selectedCreature.coordinates,
+                      zoom: 14,
+                      duration: 2000,
+                    });
+                  }}
+                  className="zoom-button"
+                >
+                  Zoom to Location
+                </button>
+              </div>
             </div>
           </Popup>
         )}
