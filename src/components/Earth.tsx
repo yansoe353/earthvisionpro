@@ -250,12 +250,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         // Spawn creatures within 2 miles of the user
         for (let i = 0; i < 5; i++) {
           const randomCoordinates = getRandomCoordinates(userLocation, 2); // 2 miles
+          const creatureTypes: ('dragon' | 'unicorn' | 'phoenix' | 'griffin')[] = ['dragon', 'unicorn', 'phoenix', 'griffin'];
+          const randomType = creatureTypes[i % 4]; // Ensure valid type
+
           creatures.push({
             id: `creature-${i}`,
             name: `Creature ${i + 1}`,
-            type: ['dragon', 'unicorn', 'phoenix', 'griffin'][i % 4],
+            type: randomType, // Valid type
             image: `https://example.com/creature-${i}.jpg`,
-            description: `A magical ${['dragon', 'unicorn', 'phoenix', 'griffin'][i % 4]}`,
+            description: `A magical ${randomType}`,
             coordinates: randomCoordinates,
             iframeUrl: 'https://captures-three.vercel.app/',
             minigameUrl: 'https://example.com/minigame',
@@ -267,7 +270,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         creatures.push({
           id: 'creature-far',
           name: 'Rare Creature',
-          type: 'phoenix',
+          type: 'phoenix', // Valid type
           image: 'https://example.com/rare-creature.jpg',
           description: 'A rare phoenix!',
           coordinates: farCoordinates,
