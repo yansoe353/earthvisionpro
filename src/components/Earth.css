@@ -64,6 +64,147 @@
   }
 }
 
+/* Nearby Creatures Panel */
+.nearby-creatures-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-width: 250px;
+}
+
+.nearby-creatures-panel h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.nearby-creature {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.nearby-creature img {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+.nearby-creature span {
+  font-size: 14px;
+}
+
+/* Creature Markers */
+.creature-marker {
+  background-color: #ffcc00;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Creature Popup */
+.creature-popup-container {
+  max-width: 400px;
+}
+
+.creature-popup {
+  padding: 15px;
+  text-align: center;
+}
+
+.creature-popup h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.creature-popup p {
+  margin: 0 0 15px;
+  font-size: 14px;
+}
+
+.creature-popup-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.creature-popup-buttons button {
+  flex: 1;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.creature-popup-buttons button.close-button {
+  background-color: #ff4d4d;
+}
+
+.creature-popup-buttons button.fullscreen-button {
+  background-color: #2196F3;
+}
+
+.creature-popup-buttons button.zoom-button {
+  background-color: #9C27B0;
+}
+
+/* Radar UI */
+.radar {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 100px;
+  height: 100px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.radar-blip {
+  width: 10px;
+  height: 10px;
+  background-color: #00ff00;
+  border-radius: 50%;
+  position: absolute;
+  transform-origin: center;
+}
+
+/* 3D Character on Map */
+.user-location-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #2196F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.user-location-marker img {
+  width: 30px;
+  height: 30px;
+}
+
+
+
 /* Loading Spinner */
 .loading-spinner {
   position: absolute;
