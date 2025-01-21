@@ -162,7 +162,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     if (bounds && zoom) {
       setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
     }
-  }, [supercluster, mapRef]);
+
+    // Recalculate nearby creatures when the map moves
+    if (userLocation) {
+      const nearby = creatures.filter((creature) =>
+        isUserNearCreature(userLocation, creature.coordinates)
+      );
+      setNearbyCreatures(nearby);
+    }
+  }, [supercluster, mapRef, userLocation, creatures]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -285,16 +293,21 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, [userLocation]);
 
+  // Check if user is near a creature
+  const isUserNearCreature = (userLocation: { lng: number; lat: number }, creatureCoordinates: [number, number]) => {
+    const distance = getDistance(
+      { latitude: userLocation.lat, longitude: userLocation.lng },
+      { latitude: creatureCoordinates[1], longitude: creatureCoordinates[0] }
+    );
+    return distance <= 1000; // 1000 meters = 1 km
+  };
+
   // Update nearby creatures based on user location
   useEffect(() => {
     if (userLocation) {
-      const nearby = creatures.filter((creature) => {
-        const distance = getDistance(
-          { latitude: userLocation.lat, longitude: userLocation.lng },
-          { latitude: creature.coordinates[1], longitude: creature.coordinates[0] }
-        );
-        return distance < 1000; // Within 1 km
-      });
+      const nearby = creatures.filter((creature) =>
+        isUserNearCreature(userLocation, creature.coordinates)
+      );
       setNearbyCreatures(nearby);
     }
   }, [userLocation, creatures]);
@@ -626,6 +639,19 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   className="zoom-button"
                 >
                   Zoom to Location
+                </button>
+                {/* Play Game Button */}
+                <button
+                  onClick={() => window.open(selectedCreature.minigameUrl, '_blank')}
+                  className="play-game-button"
+                  disabled={!nearbyCreatures.some((creature) => creature.id === selectedCreature.id)}
+                  title={
+                    nearbyCreatures.some((creature) => creature.id === selectedCreature.id)
+                      ? "Play the mini-game!"
+                      : "You must be within 1 km of the creature to play the game."
+                  }
+                >
+                  🎮 Play Game
                 </button>
               </div>
             </div>
