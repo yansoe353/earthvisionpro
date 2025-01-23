@@ -404,55 +404,54 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return [lng, lat];
   };
 
-  // Fullscreen toggle function
   const toggleFullscreen = useCallback(() => {
-    if (mapContainerRef.current) {
-      if (!isFullscreen) {
-        // Enter fullscreen
-        if (mapContainerRef.current.requestFullscreen) {
-          mapContainerRef.current.requestFullscreen();
-        } else if (mapContainerRef.current.mozRequestFullScreen) { // Firefox
-          mapContainerRef.current.mozRequestFullScreen();
-        } else if (mapContainerRef.current.webkitRequestFullscreen) { // Chrome, Safari, Opera
-          mapContainerRef.current.webkitRequestFullscreen();
-        } else if (mapContainerRef.current.msRequestFullscreen) { // IE/Edge
-          mapContainerRef.current.msRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } else {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) { // Firefox
-          document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { // IE/Edge
-          document.msExitFullscreen();
-        }
-        setIsFullscreen(false);
+  if (mapContainerRef.current) {
+    if (!isFullscreen) {
+      // Enter fullscreen
+      if (mapContainerRef.current.requestFullscreen) {
+        mapContainerRef.current.requestFullscreen();
+      } else if ((mapContainerRef.current as any).mozRequestFullScreen) { // Firefox
+        (mapContainerRef.current as any).mozRequestFullScreen();
+      } else if ((mapContainerRef.current as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
+        (mapContainerRef.current as any).webkitRequestFullscreen();
+      } else if ((mapContainerRef.current as any).msRequestFullscreen) { // IE/Edge
+        (mapContainerRef.current as any).msRequestFullscreen();
       }
+      setIsFullscreen(true);
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) { // Firefox
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).webkitExitFullscreen) { // Chrome, Safari, Opera
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) { // IE/Edge
+        (document as any).msExitFullscreen();
+      }
+      setIsFullscreen(false);
     }
-  }, [isFullscreen]);
+  }
+}, [isFullscreen]);
 
   // Listen for fullscreen change events
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+  const handleFullscreenChange = () => {
+    setIsFullscreen(!!document.fullscreenElement);
+  };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
-    document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+  document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
 
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-    };
-  }, []);
+  return () => {
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+  };
+}, []);
 
   return (
     <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
