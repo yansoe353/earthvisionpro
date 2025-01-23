@@ -67,6 +67,8 @@ const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () =
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null); // Ref for the map container
+  const [isFullscreen, setIsFullscreen] = useState(false); // State to track fullscreen mode
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
@@ -402,8 +404,72 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     return [lng, lat];
   };
 
+  // Fullscreen toggle function
+  const toggleFullscreen = useCallback(() => {
+    if (mapContainerRef.current) {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (mapContainerRef.current.requestFullscreen) {
+          mapContainerRef.current.requestFullscreen();
+        } else if (mapContainerRef.current.mozRequestFullScreen) { // Firefox
+          mapContainerRef.current.mozRequestFullScreen();
+        } else if (mapContainerRef.current.webkitRequestFullscreen) { // Chrome, Safari, Opera
+          mapContainerRef.current.webkitRequestFullscreen();
+        } else if (mapContainerRef.current.msRequestFullscreen) { // IE/Edge
+          mapContainerRef.current.msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          document.msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    }
+  }, [isFullscreen]);
+
+  // Listen for fullscreen change events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+    document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Fullscreen Button with Tooltip */}
+      <button
+        className="fullscreen-button"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+      >
+        <span className="tooltip">
+          {isFullscreen ? '❎' : '⬜'}
+          <span className="tooltiptext">
+            {isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          </span>
+        </span>
+      </button>
+
       {/* Center on User Button */}
       <button
         className="center-user-button"
