@@ -168,6 +168,108 @@ const generateNewsWithAI = async (location: string) => {
   }
 };
 
+// Generate Earth image using Fusion Brain API
+const generateImageWithFusionBrain = async (prompt: string) => {
+  const apiKey = import.meta.env.VITE_FUSION_BRAIN_API_KEY;
+  const secretKey = import.meta.env.VITE_FUSION_BRAIN_SECRET_KEY;
+
+  const headers = {
+    'X-Key': `Key ${apiKey}`,
+    'X-Secret': `Secret ${secretKey}`,
+  };
+
+  try {
+    // Step 1: Get the model ID
+    const modelResponse = await fetch('https://api-key.fusionbrain.ai/key/api/v1/models', {
+      headers,
+    });
+    const modelData = await modelResponse.json();
+    const modelId = modelData[0].id;
+
+    // Step 2: Generate the image
+    const generateResponse = await fetch('https://api-key.fusionbrain.ai/key/api/v1/text2image/run', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model_id: modelId,
+        params: {
+          type: 'GENERATE',
+          numImages: 1,
+          width: 1024,
+          height: 1024,
+          generateParams: {
+            query: prompt,
+          },
+        },
+      }),
+    });
+
+    const generateData = await generateResponse.json();
+    const requestId = generateData.uuid;
+
+    // Step 3: Check the status of the image generation
+    let imageUrl = null;
+    let attempts = 10;
+    while (attempts > 0) {
+      const statusResponse = await fetch(`https://api-key.fusionbrain.ai/key/api/v1/text2image/status/${requestId}`, {
+        headers,
+      });
+      const statusData = await statusResponse.json();
+
+      if (statusData.status === 'DONE') {
+        imageUrl = statusData.images[0];
+        break;
+      } else if (statusData.status === 'FAIL') {
+        throw new Error('Image generation failed.');
+      }
+
+      attempts -= 1;
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+    }
+
+    if (!imageUrl) {
+      throw new Error('Image generation timed out.');
+    }
+
+    return imageUrl;
+  } catch (error) {
+    console.error('Error generating image with Fusion Brain:', error);
+    return null;
+  }
+};
+
+// Generate image prompt using Groq API
+const generateImagePrompt = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a highly detailed and creative prompt for an AI-generated image of Earth, focusing on ${location}. 
+          The prompt should describe the landscape, atmosphere, weather, and any unique geographical or cultural features. 
+          Make it vivid and imaginative, suitable for generating a realistic and visually stunning image.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7, // Adjust for creativity
+      max_tokens: 1000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+    return null;
+  } catch (error) {
+    console.error('Error generating image prompt:', error);
+    return null;
+  }
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -191,6 +293,7 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -648,6 +751,35 @@ function App() {
     setTranslating(false);
   };
 
+  // Generate Earth image using Groq and Fusion Brain APIs
+  const generateEarthImage = async () => {
+    setLoading(true);
+
+    try {
+      // Step 1: Generate Image Prompt Using Groq API
+      const imagePrompt = await generateImagePrompt(currentLocation);
+
+      if (!imagePrompt) {
+        throw new Error('Failed to generate image prompt.');
+      }
+
+      // Step 2: Generate Image Using Fusion Brain API
+      const imageUrl = await generateImageWithFusionBrain(imagePrompt);
+
+      if (imageUrl) {
+        // Step 3: Display the Generated Image
+        setGeneratedImageUrl(imageUrl);
+      } else {
+        throw new Error('Failed to generate image.');
+      }
+    } catch (error) {
+      console.error('Error generating Earth image:', error);
+      alert('Failed to generate Earth image. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -714,6 +846,13 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
+          <button
+            onClick={generateEarthImage}
+            className="earth-image-button"
+            disabled={!currentLocation || loading || translating}
+          >
+            🖼️ Generate Earth Image
+          </button>
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -722,6 +861,12 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
+              </div>
+            )}
+            {generatedImageUrl && (
+              <div className="generated-image-container">
+                <h2>Generated Earth Image</h2>
+                <img src={generatedImageUrl} alt="Generated Earth Image" className="generated-image" />
               </div>
             )}
             <MarkdownContent
