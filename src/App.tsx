@@ -187,21 +187,25 @@ const generateImageWithFusionBrain = async (prompt: string) => {
     const modelId = modelData[0].id;
 
     // Step 2: Generate the image
+    const formData = new FormData();
+    formData.append('model_id', modelId);
+    formData.append(
+      'params',
+      JSON.stringify({
+        type: 'GENERATE',
+        numImages: 1,
+        width: 1024,
+        height: 1024,
+        generateParams: {
+          query: prompt,
+        },
+      })
+    );
+
     const generateResponse = await fetch('https://api-key.fusionbrain.ai/key/api/v1/text2image/run', {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model_id: modelId,
-        params: {
-          type: 'GENERATE',
-          numImages: 1,
-          width: 1024,
-          height: 1024,
-          generateParams: {
-            query: prompt,
-          },
-        },
-      }),
+      body: formData,
     });
 
     const generateData = await generateResponse.json();
