@@ -294,7 +294,6 @@ function App() {
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [locationResults, setLocationResults] = useState<Array<{ name: string; coordinates: { lat: number; lng: number } }>>([]);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -539,7 +538,7 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes...`,
+            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes. Return the response as a JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
@@ -573,9 +572,9 @@ function App() {
       });
 
       const defaultPromptMap = {
-        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects...`,
-        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance...`,
-        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks,...`,
+        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
+        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
+        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
       };
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
@@ -781,54 +780,6 @@ function App() {
     }
   };
 
-  // Context-Aware Search: Handle natural language queries
-  const handleContextAwareSearch = async (query: string) => {
-    setLoading(true);
-    try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `The user asked: "${query}". Identify the relevant locations and their coordinates. Respond in JSON format like this:
-            { "locations": [{ "name": "Antarctica", "coordinates": { "lat": -77.846, "lng": 166.676 } }, { "name": "Galapagos Islands", "coordinates": { "lat": -0.953, "lng": -90.966 } }] }`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        throw new Error('No response from Groq API.');
-      }
-
-      const { locations } = JSON.parse(response);
-      if (!locations || locations.length === 0) {
-        throw new Error('No locations found for the query.');
-      }
-
-      setLocationResults(locations);
-    } catch (error) {
-      console.error('Error handling context-aware search:', error);
-      setFacts('Failed to find locations. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle location selection from search results
-  const handleLocationSelect = async (location: { name: string; coordinates: { lat: number; lng: number } }) => {
-    const { lat, lng } = location.coordinates;
-    handleSearch(lng, lat);
-    setLocationResults([]); // Clear search results
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -840,19 +791,7 @@ function App() {
         />
       </div>
       <div className="info-panel">
-        <SearchBar onSearch={handleContextAwareSearch} />
-        {locationResults.length > 0 && (
-          <div className="location-results">
-            <h3>Search Results</h3>
-            <ul>
-              {locationResults.map((location, index) => (
-                <li key={index} onClick={() => handleLocationSelect(location)}>
-                  {location.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <SearchBar onSearch={handleSearch} />
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
