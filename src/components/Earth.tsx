@@ -483,7 +483,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         disabled={!userLocation}
       >
-        🎯 Center on Me
+        🎯
       </button>
 
       {/* Loading Spinner */}
@@ -501,20 +501,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         </div>
       )}
 
-      {/* Nearby Creatures Panel */}
-      <div className="nearby-creatures-panel">
-        <h3>Nearby Creatures</h3>
-        {nearbyCreatures.length === 0 ? (
-          <p>No creatures nearby.</p>
-        ) : (
-          nearbyCreatures.map((creature) => (
-            <div key={creature.id} className="nearby-creature">
-              <img src={creature.image} alt={creature.name} width={30} height={30} />
-              <span>{creature.name}</span>
-            </div>
-          ))
-        )}
-      </div>
+
 
       {/* Map Controls */}
       <MapControls
