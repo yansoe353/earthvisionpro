@@ -57,44 +57,58 @@
 /* Center on User Button - Icon Only, Dark Theme, Responsive */
 .center-user-button {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 20px; /* Position at the bottom */
+  right: 20px; /* Position at the right */
   z-index: 1;
   padding: 10px;
-  background: #333;
-  border: 1px solid #555;
+  background: #333; /* Dark background */
+  border: 1px solid #555; /* Dark border */
   border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Darker shadow */
+  color: #fff; /* Icon color */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 40px; /* Fixed width for icon */
+  height: 40px; /* Fixed height for icon */
   transition: background 0.3s ease, transform 0.2s ease;
 }
 
+.center-user-button:hover {
+  background: #444; /* Slightly lighter on hover */
+  transform: scale(1.05); /* Slight scale effect on hover */
+}
+
+.center-user-button:active {
+  transform: scale(0.95); /* Slight scale effect on click */
+}
+
+.center-user-button:disabled {
+  background: #555; /* Darker background when disabled */
+  cursor: not-allowed;
+  opacity: 0.7; /* Reduce opacity when disabled */
+}
+
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .center-user-button {
-    position: fixed;
-    top: auto;
-    left: auto;
-    bottom: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
-    padding: 10px;
+    top: 10px;
+    left: 10px;
+    width: 35px;
+    height: 35px;
+    padding: 8px;
   }
 }
 
 @media (max-width: 480px) {
   .center-user-button {
-    bottom: 15px;
-    right: 15px;
-    width: 40px;
-    height: 40px;
-    padding: 8px;
+    top: 5px;
+    left: 5px;
+    width: 30px;
+    height: 30px;
+    padding: 6px;
   }
 }
 
