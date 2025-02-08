@@ -7,9 +7,6 @@
   z-index: 1; /* Ensure the map container is above other elements */
 }
 
-
-
-
 /* Tooltip container */
 .tooltip {
   position: relative;
@@ -52,8 +49,6 @@
   opacity: 1;
 }
 
-
-
 /* Center on User Button - Icon Only, Dark Theme, Responsive */
 .center-user-button {
   position: absolute;
@@ -72,12 +67,13 @@
   justify-content: center;
   width: 40px; /* Fixed width for icon */
   height: 40px; /* Fixed height for icon */
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 .center-user-button:hover {
   background: #444; /* Slightly lighter on hover */
   transform: scale(1.05); /* Slight scale effect on hover */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
 
 .center-user-button:active {
@@ -90,11 +86,10 @@
   opacity: 0.7; /* Reduce opacity when disabled */
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .center-user-button {
-    top: auto; /* Remove top positioning */
     bottom: 20px; /* Position at the bottom */
-    left: auto; /* Remove left positioning */
     right: 20px; /* Position at the right */
     width: 35px;
     height: 35px;
@@ -104,33 +99,8 @@
 
 @media (max-width: 480px) {
   .center-user-button {
-    top: auto; /* Remove top positioning */
     bottom: 10px; /* Adjust bottom position for smaller screens */
-    left: auto; /* Remove left positioning */
     right: 10px; /* Adjust right position for smaller screens */
-    width: 30px;
-    height: 30px;
-    padding: 6px;
-  }
-}
-
-
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .center-user-button {
-    top: 10px;
-    left: 10px;
-    width: 35px;
-    height: 35px;
-    padding: 8px;
-  }
-}
-
-@media (max-width: 480px) {
-  .center-user-button {
-    top: 5px;
-    left: 5px;
     width: 30px;
     height: 30px;
     padding: 6px;
