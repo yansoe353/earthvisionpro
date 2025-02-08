@@ -90,6 +90,31 @@
   opacity: 0.7; /* Reduce opacity when disabled */
 }
 
+@media (max-width: 768px) {
+  .center-user-button {
+    top: auto; /* Remove top positioning */
+    bottom: 20px; /* Position at the bottom */
+    left: auto; /* Remove left positioning */
+    right: 20px; /* Position at the right */
+    width: 35px;
+    height: 35px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .center-user-button {
+    top: auto; /* Remove top positioning */
+    bottom: 10px; /* Adjust bottom position for smaller screens */
+    left: auto; /* Remove left positioning */
+    right: 10px; /* Adjust right position for smaller screens */
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+  }
+}
+
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
