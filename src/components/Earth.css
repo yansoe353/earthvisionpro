@@ -86,6 +86,126 @@
   opacity: 0.7; /* Reduce opacity when disabled */
 }
 
+/* User Location Permission Modal */
+.location-permission-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  z-index: 10000; /* Ensure it's on top of everything */
+  text-align: center;
+  max-width: 90%;
+  width: 400px;
+  backdrop-filter: blur(10px);
+}
+
+.location-permission-modal h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #00ffff;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+}
+
+.location-permission-modal p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.location-permission-modal .buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.location-permission-modal button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.location-permission-modal button.allow-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.location-permission-modal button.deny-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.location-permission-modal button:hover {
+  transform: scale(1.05);
+}
+
+.location-permission-modal button.allow-button:hover {
+  background-color: #45a049;
+}
+
+.location-permission-modal button.deny-button:hover {
+  background-color: #e53935;
+}
+
+/* Permission Denied Message */
+.permission-denied-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+  z-index: 10000;
+  font-size: 14px;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .location-permission-modal {
+    width: 90%;
+    padding: 15px;
+  }
+
+  .location-permission-modal h3 {
+    font-size: 16px;
+  }
+
+  .location-permission-modal p {
+    font-size: 12px;
+  }
+
+  .location-permission-modal button {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .location-permission-modal {
+    width: 100%;
+    border-radius: 0;
+  }
+
+  .permission-denied-message {
+    width: 90%;
+    font-size: 12px;
+  }
+}
+
+  
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .center-user-button {
