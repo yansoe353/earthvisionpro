@@ -32,7 +32,7 @@ const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
         },
         {
           headers: {
-            Authorization: `Bearer YOUR_DEEPSEEK_API_KEY`,
+            Authorization: `Bearer sk-0ab15026736a4c278c2220548e35c96f`,
             'Content-Type': 'application/json',
           },
         }
