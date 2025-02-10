@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Groq from 'groq'; // Import the Groq library
+import { Groq } from 'groq-sdk'; // Import the Groq SDK
 import './WorldChat.css';
 
 // Define the type for a message
