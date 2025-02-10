@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, forwardRef, useState, useMemo, useEffect, useImperativeHandle } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
@@ -15,6 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
+import WorldChat from './WorldChat';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -33,8 +34,8 @@ type MagicalCreature = {
   image: string;
   description: string;
   coordinates: [number, number];
-  iframeUrl: string; // URL for the popup iframe
-  minigameUrl: string; // URL for the mini-game
+  iframeUrl: string;
+  minigameUrl: string;
 };
 
 const hotspots: Hotspot[] = [
@@ -67,8 +68,8 @@ const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () =
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null); // Ref for the map container
-  const [isFullscreen, setIsFullscreen] = useState(false); // State to track fullscreen mode
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
@@ -405,53 +406,62 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   };
 
   const toggleFullscreen = useCallback(() => {
-  if (mapContainerRef.current) {
-    if (!isFullscreen) {
-      // Enter fullscreen
-      if (mapContainerRef.current.requestFullscreen) {
-        mapContainerRef.current.requestFullscreen();
-      } else if ((mapContainerRef.current as any).mozRequestFullScreen) { // Firefox
-        (mapContainerRef.current as any).mozRequestFullScreen();
-      } else if ((mapContainerRef.current as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
-        (mapContainerRef.current as any).webkitRequestFullscreen();
-      } else if ((mapContainerRef.current as any).msRequestFullscreen) { // IE/Edge
-        (mapContainerRef.current as any).msRequestFullscreen();
+    if (mapContainerRef.current) {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (mapContainerRef.current.requestFullscreen) {
+          mapContainerRef.current.requestFullscreen();
+        } else if ((mapContainerRef.current as any).mozRequestFullScreen) { // Firefox
+          (mapContainerRef.current as any).mozRequestFullScreen();
+        } else if ((mapContainerRef.current as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
+          (mapContainerRef.current as any).webkitRequestFullscreen();
+        } else if ((mapContainerRef.current as any).msRequestFullscreen) { // IE/Edge
+          (mapContainerRef.current as any).msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) { // Firefox
+          (document as any).mozCancelFullScreen();
+        } else if ((document as any).webkitExitFullscreen) { // Chrome, Safari, Opera
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) { // IE/Edge
+          (document as any).msExitFullscreen();
+        }
+        setIsFullscreen(false);
       }
-      setIsFullscreen(true);
-    } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if ((document as any).mozCancelFullScreen) { // Firefox
-        (document as any).mozCancelFullScreen();
-      } else if ((document as any).webkitExitFullscreen) { // Chrome, Safari, Opera
-        (document as any).webkitExitFullscreen();
-      } else if ((document as any).msExitFullscreen) { // IE/Edge
-        (document as any).msExitFullscreen();
-      }
-      setIsFullscreen(false);
     }
-  }
-}, [isFullscreen]);
+  }, [isFullscreen]);
 
   // Listen for fullscreen change events
   useEffect(() => {
-  const handleFullscreenChange = () => {
-    setIsFullscreen(!!document.fullscreenElement);
-  };
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
-  document.addEventListener('fullscreenchange', handleFullscreenChange);
-  document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
-  document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
-  document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+    document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
 
-  return () => {
-    document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-  };
-}, []);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // World Chat State
+  const [isWorldChatOpen, setIsWorldChatOpen] = useState(false);
+  const [isSmilingFace, setIsSmilingFace] = useState(false);
+
+  const toggleWorldChat = useCallback(() => {
+    setIsWorldChatOpen((prev) => !prev);
+    setIsSmilingFace((prev) => !prev);
+  }, []);
 
   return (
     <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -500,8 +510,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           <p>Location access is required to use this feature. Please enable it in your browser settings.</p>
         </div>
       )}
-
-
 
       {/* Map Controls */}
       <MapControls
@@ -1046,6 +1054,26 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               }}
             />
           </Source>
+        )}
+
+        {/* World Chat Button */}
+        <button
+          className="world-chat-button"
+          onClick={toggleWorldChat}
+        >
+          World Chat
+        </button>
+
+        {/* Smiling Face Animation */}
+        {isSmilingFace && (
+          <div className="smiling-face">
+            😊
+          </div>
+        )}
+
+        {/* World Chat Component */}
+        {isWorldChatOpen && (
+          <WorldChat onClose={toggleWorldChat} />
         )}
       </Map>
     </div>
