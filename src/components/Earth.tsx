@@ -464,7 +464,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   }, []);
 
   return (
-    <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }} className={isDarkTheme ? 'dark-theme' : ''}>
       {/* Fullscreen Button with Tooltip */}
       <button
         className="fullscreen-button"
@@ -1073,7 +1073,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {/* World Chat Component */}
         {isWorldChatOpen && (
-          <WorldChat onClose={toggleWorldChat} />
+          <WorldChat onClose={toggleWorldChat} isDarkTheme={isDarkTheme} />
         )}
       </Map>
     </div>
