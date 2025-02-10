@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './Earth.css';
@@ -464,7 +464,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   }, []);
 
   return (
-    <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }} className={isDarkTheme ? 'dark-theme' : ''}>
+    <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Fullscreen Button with Tooltip */}
       <button
         className="fullscreen-button"
@@ -1073,7 +1073,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
         {/* World Chat Component */}
         {isWorldChatOpen && (
-          <WorldChat onClose={toggleWorldChat} isDarkTheme={isDarkTheme} />
+          <WorldChat onClose={toggleWorldChat} />
         )}
       </Map>
     </div>
