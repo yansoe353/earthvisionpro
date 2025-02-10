@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import Groq from 'groq'; // Import the Groq library
 import './WorldChat.css';
 
 // Define the type for a message
@@ -17,6 +17,35 @@ const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
 
+  const generateNewsWithAI = async (location: string) => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY, // Replace with your Groq API key
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview', // Use the appropriate model
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content.trim();
+      }
+      return 'No news available for this location.';
+    } catch (error) {
+      console.error('Error generating news:', error);
+      return 'Failed to generate news. Please try again.';
+    }
+  };
+
   const sendMessage = async () => {
     if (input.trim() === '') return;
 
@@ -24,25 +53,9 @@ const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
 
-    try {
-      const response = await axios.post(
-        'https://api.deepseek.ai/chat',
-        {
-          message: input,
-        },
-        {
-          headers: {
-            Authorization: `Bearer sk-0ab15026736a4c278c2220548e35c96f`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const aiMessage: Message = { sender: 'ai', text: response.data.reply };
-      setMessages((prevMessages) => [...prevMessages, userMessage, aiMessage]);
-    } catch (error) {
-      console.error('Error sending message to Deepseek API:', error);
-    }
+    const aiResponse = await generateNewsWithAI(input);
+    const aiMessage: Message = { sender: 'ai', text: aiResponse };
+    setMessages((prevMessages) => [...prevMessages, aiMessage]);
   };
 
   return (
