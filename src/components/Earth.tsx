@@ -15,7 +15,6 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
-import WorldChat from './WorldChat';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -452,15 +451,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
     };
-  }, []);
-
-  // World Chat State
-  const [isWorldChatOpen, setIsWorldChatOpen] = useState(false);
-  const [isSmilingFace, setIsSmilingFace] = useState(false);
-
-  const toggleWorldChat = useCallback(() => {
-    setIsWorldChatOpen((prev) => !prev);
-    setIsSmilingFace((prev) => !prev);
   }, []);
 
   return (
@@ -1054,26 +1044,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               }}
             />
           </Source>
-        )}
-
-        {/* World Chat Button */}
-        <button
-          className="world-chat-button"
-          onClick={toggleWorldChat}
-        >
-          World Chat
-        </button>
-
-        {/* Smiling Face Animation */}
-        {isSmilingFace && (
-          <div className="smiling-face">
-            😊
-          </div>
-        )}
-
-        {/* World Chat Component */}
-        {isWorldChatOpen && (
-          <WorldChat onClose={toggleWorldChat} />
         )}
       </Map>
     </div>
