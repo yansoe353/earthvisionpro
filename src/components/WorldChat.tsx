@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Groq } from 'groq-sdk'; // Import the Groq SDK
 import './WorldChat.css';
 
@@ -11,9 +11,10 @@ type Message = {
 // Define the props for the WorldChat component
 type WorldChatProps = {
   onClose: () => void;
+  isDarkTheme: boolean;
 };
 
-const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
+const WorldChat: React.FC<WorldChatProps> = ({ onClose, isDarkTheme }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
 
@@ -58,11 +59,19 @@ const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
     setMessages((prevMessages) => [...prevMessages, aiMessage]);
   };
 
+  useEffect(() => {
+    // Scroll to the bottom of the chat box when a new message is added
+    const chatBox = document.querySelector('.chat-box');
+    if (chatBox) {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  }, [messages]);
+
   return (
-    <div className="world-chat-container">
+    <div className={`world-chat-container ${isDarkTheme ? 'dark-theme' : ''}`}>
       <div className="chat-box">
         {messages.map((message, index) => (
-          <div key={index} className={`message ${message.sender}`}>
+          <div key={index} className={`message ${message.sender} ${isDarkTheme ? 'dark-theme' : ''}`}>
             {message.text}
           </div>
         ))}
@@ -73,8 +82,9 @@ const WorldChat: React.FC<WorldChatProps> = ({ onClose }) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message..."
+          className={isDarkTheme ? 'dark-theme' : ''}
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage} className={isDarkTheme ? 'dark-theme' : ''}>Send</button>
       </div>
       <button className="close-button" onClick={onClose}>
         Close
