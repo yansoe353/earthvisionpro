@@ -94,6 +94,8 @@ const fetchYouTubeVideos = async (location: string) => {
         return data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium.url,
         }));
       } else {
         console.warn('No YouTube videos found for the location:', location);
@@ -180,7 +182,7 @@ function App() {
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
@@ -749,6 +751,7 @@ function App() {
                 <div className="video-grid">
                   {youtubeVideos.map((video) => (
                     <div key={video.id} className="video-item">
+                      <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
                       <iframe
                         width="100%"
                         height="200"
@@ -759,6 +762,7 @@ function App() {
                         allowFullScreen
                       ></iframe>
                       <p>{video.title}</p>
+                      <p>{video.description}</p>
                     </div>
                   ))}
                 </div>
