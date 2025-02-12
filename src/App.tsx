@@ -168,112 +168,6 @@ const generateNewsWithAI = async (location: string) => {
   }
 };
 
-// Generate Earth image using Fusion Brain API
-const generateImageWithFusionBrain = async (prompt: string) => {
-  const apiKey = import.meta.env.VITE_FUSION_BRAIN_API_KEY;
-  const secretKey = import.meta.env.VITE_FUSION_BRAIN_SECRET_KEY;
-
-  if (!apiKey || !secretKey) {
-    throw new Error('API key or secret key is missing.');
-  }
-
-  const headers = {
-    'X-Key': `Key ${apiKey}`,
-    'X-Secret': `Secret ${secretKey}`,
-  };
-
-  try {
-    // Step 1: Get the model ID
-    const modelResponse = await axios.get('https://api-key.fusionbrain.ai/key/api/v1/models', { headers });
-    if (!modelResponse.data || !modelResponse.data[0]?.id) {
-      throw new Error('No valid model found.');
-    }
-    const modelId = modelResponse.data[0].id;
-
-    // Step 2: Generate the image
-    const generateResponse = await axios.post(
-      'https://api-key.fusionbrain.ai/key/api/v1/text2image/run',
-      {
-        model_id: modelId,
-        params: {
-          type: 'GENERATE',
-          numImages: 1,
-          width: 1024,
-          height: 1024,
-          generateParams: {
-            query: prompt,
-          },
-        },
-      },
-      { headers }
-    );
-
-    if (!generateResponse.data?.uuid) {
-      throw new Error('Failed to start image generation.');
-    }
-    const requestId = generateResponse.data.uuid;
-
-    // Step 3: Poll for image generation status
-    let imageUrl = null;
-    let attempts = 10;
-    let delay = 5000; // Initial delay of 5 seconds
-
-    while (attempts > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before polling
-
-      const statusResponse = await axios.get(
-        `https://api-key.fusionbrain.ai/key/api/v1/text2image/status/${requestId}`,
-        { headers }
-      );
-
-      if (statusResponse.data.status === 'DONE') {
-        imageUrl = statusResponse.data.images[0];
-        break;
-      } else if (statusResponse.data.status === 'FAIL') {
-        throw new Error('Image generation failed.');
-      }
-
-      attempts -= 1;
-      delay *= 1.5; // Increase delay exponentially
-    }
-
-    if (!imageUrl) {
-      throw new Error('Image generation timed out.');
-    }
-
-    return imageUrl;
-  } catch (error) {
-    console.error('Error generating image with Fusion Brain:', error);
-    throw error; // Re-throw the error for the caller to handle
-  }
-};
-
-// Generate image prompt using a simpler approach (fallback if Groq API fails)
-const generateImagePrompt = (location: string) => {
-  // Fallback prompt generation if Groq API is unavailable
-  return `A highly detailed and realistic image of Earth, focusing on ${location}.
-  The landscape includes mountains, rivers, and forests, with a clear blue sky and fluffy white clouds.
-  The atmosphere is vibrant and alive, showcasing the beauty of nature.`;
-};
-
-// Example usage
-const generateEarthImage = async (location: string) => {
-  try {
-    const prompt = generateImagePrompt(location);
-    console.log('Generated Prompt:', prompt);
-
-    const imageUrl = await generateImageWithFusionBrain(prompt);
-    console.log('Generated Image URL:', imageUrl);
-    return imageUrl;
-  } catch (error) {
-    console.error('Error generating Earth image:', error);
-    return null;
-  }
-};
-
-// Test the function
-generateEarthImage('the Grand Canyon');
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -295,7 +189,6 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -685,35 +578,6 @@ function App() {
     setTranslating(false);
   };
 
-  // Generate Earth image using Groq and Fusion Brain APIs
-  const generateEarthImage = async () => {
-    setLoading(true);
-
-    try {
-      // Step 1: Generate Image Prompt Using Groq API
-      const imagePrompt = await generateImagePrompt(currentLocation);
-
-      if (!imagePrompt) {
-        throw new Error('Failed to generate image prompt.');
-      }
-
-      // Step 2: Generate Image Using Fusion Brain API
-      const imageUrl = await generateImageWithFusionBrain(imagePrompt);
-
-      if (imageUrl) {
-        // Step 3: Display the Generated Image
-        setGeneratedImageUrl(imageUrl);
-      } else {
-        throw new Error('Failed to generate image.');
-      }
-    } catch (error) {
-      console.error('Error generating Earth image:', error);
-      alert('Failed to generate Earth image. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -772,13 +636,6 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
-          <button
-            onClick={generateEarthImage}
-            className="earth-image-button"
-            disabled={!currentLocation || loading || translating}
-          >
-            🖼️ Generate Earth Image
-          </button>
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -787,12 +644,6 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
-              </div>
-            )}
-            {generatedImageUrl && (
-              <div className="generated-image-container">
-                <h2>Generated Earth Image</h2>
-                <img src={generatedImageUrl} alt="Generated Earth Image" className="generated-image" />
               </div>
             )}
             <MarkdownContent
