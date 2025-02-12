@@ -251,8 +251,8 @@ const generateImageWithFusionBrain = async (prompt: string) => {
 // Generate image prompt using a simpler approach (fallback if Groq API fails)
 const generateImagePrompt = (location: string) => {
   // Fallback prompt generation if Groq API is unavailable
-  return `A highly detailed and realistic image of Earth, focusing on ${location}. 
-  The landscape includes mountains, rivers, and forests, with a clear blue sky and fluffy white clouds. 
+  return `A highly detailed and realistic image of Earth, focusing on ${location}.
+  The landscape includes mountains, rivers, and forests, with a clear blue sky and fluffy white clouds.
   The atmosphere is vibrant and alive, showcasing the beauty of nature.`;
 };
 
@@ -274,7 +274,6 @@ const generateEarthImage = async (location: string) => {
 // Test the function
 generateEarthImage('the Grand Canyon');
 
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -286,8 +285,6 @@ function App() {
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
-  const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string>('');
-  const [isListening, setIsListening] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string }>>([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
@@ -632,74 +629,6 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Voice command logic
-  const enableVoiceCommands = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Your browser does not support voice commands. Please use Chrome or Edge.');
-      return;
-    }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.start();
-    setIsListening(true);
-
-    recognition.onresult = (event: any) => {
-      const command = event.results[0][0].transcript.toLowerCase();
-      handleVoiceCommand(command);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Voice recognition error:', event.error);
-      setVoiceCommandFeedback('Error recognizing voice command. Please try again.');
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-  };
-
-  const handleVoiceCommand = (command: string) => {
-    if (command.includes('zoom in')) {
-      earthRef.current?.zoomIn();
-      setVoiceCommandFeedback('Zooming in.');
-    } else if (command.includes('zoom out')) {
-      earthRef.current?.zoomOut();
-      setVoiceCommandFeedback('Zooming out.');
-    } else if (command.includes('rotate left')) {
-      earthRef.current?.rotateLeft();
-      setVoiceCommandFeedback('Rotating left.');
-    } else if (command.includes('rotate right')) {
-      earthRef.current?.rotateRight();
-      setVoiceCommandFeedback('Rotating right.');
-    } else if (command.includes('search for')) {
-      const location = command.split('search for ')[1];
-      handleSearchByName(location);
-      setVoiceCommandFeedback(`Searching for ${location}.`);
-    } else if (command.includes('tell me about')) {
-      const location = command.split('tell me about ')[1];
-      handleSearchByName(location);
-      setVoiceCommandFeedback(`Fetching information about ${location}.`);
-    } else {
-      setVoiceCommandFeedback('Command not recognized.');
-    }
-  };
-
-  // Function to handle search by location name (used for voice commands)
-  const handleSearchByName = async (location: string) => {
-    const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
-    );
-    const data = await response.json();
-    if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].center;
-      handleSearch(lng, lat);
-    }
-  };
-
   // Handle language change for all insights and content
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
@@ -816,14 +745,6 @@ function App() {
             </button>
             {translating && <p>Translating...</p>}
           </div>
-          <button onClick={enableVoiceCommands} className="voice-button">
-            {isListening ? 'Listening...' : '🎤 Use Voice Commands'}
-          </button>
-          {voiceCommandFeedback && (
-            <div className="voice-feedback">
-              <p>{voiceCommandFeedback}</p>
-            </div>
-          )}
           <button
             onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
             className="virtual-tour-button"
