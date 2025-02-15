@@ -38,7 +38,8 @@
     "lodash": "^4.17.21",
     "@types/lodash": "^4.14.202",
     "react-chrono": "^2.0.0",
-    "@lumaai/luma-web": "^0.2.1"
+    "@lumaai/luma-web": "^0.2.1",
+    "@google/generative-ai": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
