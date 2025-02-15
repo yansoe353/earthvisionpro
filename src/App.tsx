@@ -16,7 +16,13 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
-  const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
+  const languageCodeMap: { [key: string]: string } = {
+    en: 'English',
+    my: 'Burmese', // Myanmar language code
+    th: 'Thai',
+  };
+
+  const prompt = `Translate the following text to ${languageCodeMap[targetLanguage]}: "${text}"`;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
