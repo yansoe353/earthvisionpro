@@ -11,7 +11,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini
 import './index.css';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyDpqCPxCeULNy2HnD5g5YkWhOCqkMs8llM');
+const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
@@ -22,8 +22,8 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', r
     try {
       const result = await model.generateContent(prompt);
       return result.response.text();
-    } catch (error) {
-      if (error.response && error.response.status === 429) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('429')) {
         console.warn(`Rate limit exceeded. Retrying in ${2 ** attempt} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
       } else {
@@ -54,7 +54,7 @@ const fetchImage = async (query: string): Promise<string | null> => {
       console.warn('No images found for the query:', query);
       return null;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching image:', error);
     return null;
   }
@@ -108,7 +108,7 @@ const fetchYouTubeVideos = async (location: string) => {
         console.warn('No YouTube videos found for the location:', location);
         return [];
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
       continue; // Try the next key
     }
@@ -141,7 +141,7 @@ const generateYouTubeSearchPrompt = async (location: string) => {
     if (completion.choices && completion.choices[0]?.message?.content) {
       return completion.choices[0].message.content.trim();
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error generating YouTube search prompt:', error);
   }
   return null;
@@ -171,7 +171,7 @@ const generateNewsWithAI = async (location: string) => {
       return completion.choices[0].message.content.trim();
     }
     return 'No news available for this location.';
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error generating news:', error);
     return 'Failed to generate news. Please try again.';
   }
@@ -291,7 +291,7 @@ function App() {
           setHistoricalEvents([]);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching historical insights:', error);
       setHistoricalInsights('Failed to fetch historical insights. Please try again.');
       setHistoricalEvents([]);
@@ -329,7 +329,7 @@ function App() {
         return data.features[0].place_name;
       }
       return 'Unknown Location';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching location name:', error);
       return 'Unknown Location';
     }
@@ -370,7 +370,7 @@ function App() {
         return completion.choices[0].message.content;
       }
       return 'No analysis available.';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error analyzing with Groq:', error);
       return 'Error analyzing the image. Please try again.';
     }
@@ -422,7 +422,7 @@ function App() {
 
       await generateDynamicThemes(locationName);
       await fetchYouTubeVideos(locationName);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
     } finally {
@@ -454,7 +454,7 @@ function App() {
         const themes = JSON.parse(completion.choices[0].message.content);
         setDynamicThemes(themes);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating dynamic themes:', error);
       setDynamicThemes([]);
     }
@@ -506,7 +506,7 @@ function App() {
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error during analysis:', error);
       setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
