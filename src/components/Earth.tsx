@@ -15,6 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
+import { Business, businessDirectory } from './businessData';
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -73,6 +74,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
   const [selectedCreature, setSelectedCreature] = useState<MagicalCreature | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
@@ -81,6 +83,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [businessClusters, setBusinessClusters] = useState<Cluster[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
@@ -134,6 +137,14 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     });
   }, []);
 
+  // Initialize supercluster for business directory
+  const businessSupercluster = useMemo(() => {
+    return new Supercluster({
+      radius: 40,
+      maxZoom: 16,
+    });
+  }, []);
+
   // Load earthquake data into supercluster
   useEffect(() => {
     if (earthquakes.length > 0) {
@@ -156,6 +167,28 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, [earthquakes, supercluster, mapRef]);
 
+  // Load business directory data into supercluster
+  useEffect(() => {
+    if (businessDirectory.length > 0) {
+      const points = businessDirectory.map((business) => ({
+        type: "Feature" as const,
+        properties: { id: business.id, cluster: false },
+        geometry: {
+          type: "Point" as const,
+          coordinates: business.coordinates,
+        },
+      }));
+      businessSupercluster.load(points);
+
+      const bounds = mapRef.current?.getBounds();
+      const zoom = mapRef.current?.getZoom();
+
+      if (bounds && zoom) {
+        setBusinessClusters(businessSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      }
+    }
+  }, [businessDirectory, businessSupercluster, mapRef]);
+
   // Handle map move and zoom events
   const handleMapMove = useCallback(() => {
     const bounds = mapRef.current?.getBounds();
@@ -163,6 +196,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
     if (bounds && zoom) {
       setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      setBusinessClusters(businessSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
     }
 
     // Recalculate nearby creatures when the map moves
@@ -172,7 +206,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       );
       setNearbyCreatures(nearby);
     }
-  }, [supercluster, mapRef, userLocation, creatures]);
+  }, [supercluster, businessSupercluster, mapRef, userLocation, creatures]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -386,6 +420,63 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       }
     });
   }, [clusters, supercluster, mapRef]);
+
+  // Render business directory clusters
+  const renderBusinessClusters = useMemo(() => {
+    return businessClusters.map((cluster) => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+
+      const handleBusinessClusterClick = () => {
+        if (cluster.properties.cluster) {
+          const bbox = businessSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
+          mapRef.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: bbox,
+            duration: 1000,
+          });
+        } else {
+          const business = businessDirectory.find((b) => b.id === cluster.properties.id);
+          if (business) {
+            setSelectedBusiness(business);
+          }
+        }
+      };
+
+      if (cluster.properties.cluster) {
+        return (
+          <Marker
+            key={`business-cluster-${cluster.properties.cluster_id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={handleBusinessClusterClick}
+          >
+            <div className="cluster-marker">
+              {cluster.properties.point_count}
+            </div>
+          </Marker>
+        );
+      } else {
+        return (
+          <Marker
+            key={`business-${cluster.properties.id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              const business = businessDirectory.find((b) => b.id === cluster.properties.id);
+              if (business) {
+                setSelectedBusiness(business);
+              }
+            }}
+          >
+            <div className="business-marker">
+              🏢
+            </div>
+          </Marker>
+        );
+      }
+    });
+  }, [businessClusters, businessSupercluster, mapRef, businessDirectory]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
@@ -711,6 +802,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         {/* Earthquake Markers (Clustered) */}
         {renderClusters}
 
+        {/* Business Directory Markers (Clustered) */}
+        {renderBusinessClusters}
+
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
           <Marker
@@ -823,6 +917,47 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   onClick={() => {
                     mapRef.current?.flyTo({
                       center: selectedHotspot.coordinates,
+                      zoom: 14,
+                      duration: 2000,
+                    });
+                  }}
+                  className="zoom-button"
+                >
+                  Zoom to Location
+                </button>
+              </div>
+            </div>
+          </Popup>
+        )}
+
+        {/* Popup for Selected Business */}
+        {selectedBusiness && (
+          <Popup
+            longitude={selectedBusiness.coordinates[0]}
+            latitude={selectedBusiness.coordinates[1]}
+            onClose={() => setSelectedBusiness(null)}
+            closeButton={false}
+            anchor="bottom"
+            maxWidth="400px"
+            className="business-popup-container"
+          >
+            <div className="business-popup">
+              <h3>{selectedBusiness.name}</h3>
+              <img src={selectedBusiness.previewImage} alt={selectedBusiness.name} width="100%" height="200px" style={{ borderRadius: '8px' }} />
+              <p>{selectedBusiness.description}</p>
+              <p><strong>Contact:</strong> {selectedBusiness.contactPhone}</p>
+              <p><strong>Website:</strong> <a href={selectedBusiness.webLink} target="_blank" rel="noopener noreferrer">{selectedBusiness.webLink}</a></p>
+              <div className="business-popup-buttons">
+                <button
+                  onClick={() => setSelectedBusiness(null)}
+                  className="close-button"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    mapRef.current?.flyTo({
+                      center: selectedBusiness.coordinates,
                       zoom: 14,
                       duration: 2000,
                     });
