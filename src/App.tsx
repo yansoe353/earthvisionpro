@@ -15,16 +15,24 @@ const genAI = new GoogleGenerativeAI('AIzaSyDpqCPxCeULNy2HnD5g5YkWhOCqkMs8llM');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
-const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
   const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
 
-  try {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text; // Fallback to original text if translation fails
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      if (error.response && error.response.status === 429) {
+        console.warn(`Rate limit exceeded. Retrying in ${2 ** attempt} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
+      } else {
+        console.error('Translation error:', error);
+        throw error;
+      }
+    }
   }
+  throw new Error('Max retries exceeded. Please try again later.');
 };
 
 // Fetch image using Pexels API
