@@ -15,30 +15,16 @@ const genAI = new GoogleGenerativeAI('AIzaSyALnz-HwNj7mlQ99XUBWDGsO06fOy1G-uI');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Translation function using the Gemini API
-const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
-  const languageCodeMap: { [key: string]: string } = {
-    en: 'English',
-    my: 'Burmese', // Myanmar language code
-    th: 'Thai',
-  };
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+  const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
 
-  const prompt = `Translate the following text to ${languageCodeMap[targetLanguage]}: "${text}"`;
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      const result = await model.generateContent(prompt);
-      return result.response.text();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message.includes('429')) {
-        console.warn(`Rate limit exceeded. Retrying in ${2 ** attempt} seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
-      } else {
-        console.error('Translation error:', error);
-        throw error;
-      }
-    }
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // Fallback to original text if translation fails
   }
-  throw new Error('Max retries exceeded. Please try again later.');
 };
 
 // Fetch image using Pexels API
@@ -60,7 +46,7 @@ const fetchImage = async (query: string): Promise<string | null> => {
       console.warn('No images found for the query:', query);
       return null;
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching image:', error);
     return null;
   }
@@ -114,7 +100,7 @@ const fetchYouTubeVideos = async (location: string) => {
         console.warn('No YouTube videos found for the location:', location);
         return [];
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
       continue; // Try the next key
     }
@@ -147,7 +133,7 @@ const generateYouTubeSearchPrompt = async (location: string) => {
     if (completion.choices && completion.choices[0]?.message?.content) {
       return completion.choices[0].message.content.trim();
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating YouTube search prompt:', error);
   }
   return null;
@@ -177,7 +163,7 @@ const generateNewsWithAI = async (location: string) => {
       return completion.choices[0].message.content.trim();
     }
     return 'No news available for this location.';
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating news:', error);
     return 'Failed to generate news. Please try again.';
   }
@@ -297,7 +283,7 @@ function App() {
           setHistoricalEvents([]);
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching historical insights:', error);
       setHistoricalInsights('Failed to fetch historical insights. Please try again.');
       setHistoricalEvents([]);
@@ -335,7 +321,7 @@ function App() {
         return data.features[0].place_name;
       }
       return 'Unknown Location';
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching location name:', error);
       return 'Unknown Location';
     }
@@ -376,65 +362,66 @@ function App() {
         return completion.choices[0].message.content;
       }
       return 'No analysis available.';
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error analyzing with Groq:', error);
       return 'Error analyzing the image. Please try again.';
     }
   };
 
-  // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
+// Capture the current view of the globe
+const captureView = async () => {
+  if (!earthContainerRef.current || !earthRef.current) return;
 
-    // Reset historical insights and events
-    setHistoricalInsights('');
-    setHistoricalEvents([]);
+  // Reset historical insights and events
+  setHistoricalInsights('');
+  setHistoricalEvents([]);
 
-    setShowWeatherWidget(false);
-    setLoading(true);
-    setDynamicThemes([]);
+  setShowWeatherWidget(false);
+  setLoading(true);
+  setDynamicThemes([]);
 
-    try {
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      await new Promise((resolve) => {
-        map.once('idle', resolve);
-      });
-
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      setCapturedImage(dataUrl);
-
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      const locationName = await fetchLocationName(lng, lat);
-      setCurrentLocation(locationName);
-
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
-      setFacts(analysis);
-
-      // Translate the analysis if the current language is not English
-      if (language !== 'en') {
-        const translatedAnalysis = await translateText(analysis, language);
-        setTranslatedFacts(translatedAnalysis);
-      } else {
-        setTranslatedFacts(analysis);
-      }
-
-      await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
-    } catch (error: unknown) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
+  try {
+    const map = earthRef.current.getMap();
+    if (!map) {
+      throw new Error('Map instance not found.');
     }
-  };
+
+    await new Promise((resolve) => {
+      map.once('idle', resolve);
+    });
+
+    const canvas = map.getCanvas();
+    const dataUrl = canvas.toDataURL('image/png');
+    setCapturedImage(dataUrl);
+
+    const center = map.getCenter();
+    const lng = center.lng;
+    const lat = center.lat;
+
+    const locationName = await fetchLocationName(lng, lat);
+    setCurrentLocation(locationName);
+
+    const analysis = await analyzeWithGroq(dataUrl, locationName);
+    setFacts(analysis);
+
+    // Translate the analysis if the current language is not English
+    if (language !== 'en') {
+      const translatedAnalysis = await translateText(analysis, language);
+      setTranslatedFacts(translatedAnalysis);
+    } else {
+      setTranslatedFacts(analysis);
+    }
+
+    await generateDynamicThemes(locationName);
+    await fetchYouTubeVideos(locationName);
+  } catch (error) {
+    console.error('Error capturing view:', error);
+    setFacts('Error getting facts about this region. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
@@ -460,7 +447,7 @@ function App() {
         const themes = JSON.parse(completion.choices[0].message.content);
         setDynamicThemes(themes);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error generating dynamic themes:', error);
       setDynamicThemes([]);
     }
@@ -512,7 +499,7 @@ function App() {
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error during analysis:', error);
       setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
