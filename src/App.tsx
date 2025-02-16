@@ -657,7 +657,7 @@ function App() {
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
-          <div className="facts" ref={factsContainerRef}>
+          <div className="facts analysis-data" ref={factsContainerRef}>
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
