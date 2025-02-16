@@ -11,7 +11,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini
 import './index.css';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyALnz-HwNj7mlQ99XUBWDGsO06fOy1G-uI');
+const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Language mapping to understand the nuances of the translation
