@@ -120,7 +120,7 @@ function App() {
           return result.response.text();
         }
       } else {
-        // Use Groq API for other languages
+        // Use Groq API for English
         const groq = new Groq({
           apiKey: 'YOUR_GROQ_API_KEY',
           dangerouslyAllowBrowser: true,
