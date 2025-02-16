@@ -10,7 +10,7 @@ import { Chrono } from 'react-chrono';
 import './index.css';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyALnz-HwNj7mlQ99XUBWDGsO06fOy1G-uI');
+const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
@@ -27,8 +27,8 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', r
     try {
       const result = await model.generateContent(prompt);
       return result.response.text();
-    } catch (error) {
-      if (error.message.includes('429')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('429')) {
         console.warn(`Rate limit exceeded. Retrying in ${2 ** attempt} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
       } else {
@@ -84,6 +84,7 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState<boolean>(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
+  const [analysisLoading, setAnalysisLoading] = useState<boolean>(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -152,7 +153,7 @@ function App() {
         }
       }
       return 'No analysis available.';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error analyzing image:', error);
       return 'Error analyzing the image. Please try again.';
     }
@@ -203,7 +204,7 @@ function App() {
           setTranslatedFacts(analysis);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
     } finally {
@@ -298,7 +299,7 @@ function App() {
           setHistoricalEvents([]);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching historical insights:', error);
       setHistoricalInsights('Failed to fetch historical insights. Please try again.');
       setHistoricalEvents([]);
@@ -456,6 +457,77 @@ function App() {
       console.error('Error generating news:', error);
       return 'Failed to generate news. Please try again.';
     }
+  };
+
+  // Analyze with a specific perspective
+  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
+    if (!currentLocation || !facts) return;
+    setAnalysisLoading(true);
+
+    const currentLang = language;
+    setLanguage('en');
+    setTranslatedFacts('');
+
+    try {
+      const groq = new Groq({
+        apiKey: 'YOUR_GROQ_API_KEY',
+        dangerouslyAllowBrowser: true,
+      });
+
+      const defaultPromptMap = {
+        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
+        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
+        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
+      };
+
+      const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const newAnalysis = completion.choices[0].message.content;
+        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+
+        if (currentLang !== 'en') {
+          const translatedText = await translateText(newAnalysis, currentLang);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+        } else {
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Error during analysis:', error);
+      setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
+    } finally {
+      setLanguage(currentLang);
+      setAnalysisLoading(false);
+    }
+  };
+
+  // Save analysis to a file
+  const saveAnalysis = () => {
+    const content = `=== Analysis Report ===\n\n` +
+      `Location: ${currentLocation}\n\n` +
+      `=== English Analysis ===\n${facts}\n\n` +
+      `=== Translated Analysis (${language}) ===\n${translatedFacts}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analysis_report_${new Date().toISOString()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
