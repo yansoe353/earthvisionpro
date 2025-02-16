@@ -11,16 +11,32 @@ import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini
 import './index.css';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
+const genAI = new GoogleGenerativeAI('AIzaSyALnz-HwNj7mlQ99XUBWDGsO06fOy1G-uI');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+// Language mapping to understand the nuances of the translation
+const languageMapping = {
+  en: 'English',
+  my: 'Myanmar (Burmese)',
+  th: 'Thai',
+};
 
 // Translation function using the Gemini API
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
+  const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
     const result = await model.generateContent(prompt);
-    return result.response.text();
+    const responseText = result.response.text();
+
+    // Handle the Gemini API response
+    if (responseText.includes('Here are a few options')) {
+      // Extract the first translation option
+      const options = responseText.split('Here are a few options')[1].trim().split('\n');
+      return options[0].trim();
+    }
+
+    return responseText;
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Fallback to original text if translation fails
