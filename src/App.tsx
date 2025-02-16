@@ -7,6 +7,7 @@ import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
 import NewsPanel from './components/NewsPanel';
 import { Chrono } from 'react-chrono';
+import { Groq } from 'groq-sdk'; // Ensure Groq is imported correctly
 import './index.css';
 
 // Initialize the Gemini API client
@@ -620,7 +621,7 @@ function App() {
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel locations
+                    Analysis of Travel Destinations
                   </button>
                 </div>
                 <button
