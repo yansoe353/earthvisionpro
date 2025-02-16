@@ -1,13 +1,13 @@
 import { useState, useRef } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import axios from 'axios';
 import Earth from './components/Earth';
+import { Groq } from 'groq-sdk';
+import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
-import NewsPanel from './components/NewsPanel';
 import { Chrono } from 'react-chrono';
-import { Groq } from 'groq-sdk'; // Ensure Groq is imported correctly
+import axios from 'axios'; // For making API requests
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API library
 import './index.css';
 
 // Initialize the Gemini API client
@@ -18,7 +18,7 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
   const languageCodeMap: { [key: string]: string } = {
     en: 'English',
-    my: 'Burmese',
+    my: 'Burmese', // Myanmar language code
     th: 'Thai',
   };
 
@@ -29,7 +29,7 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', r
       const result = await model.generateContent(prompt);
       return result.response.text();
     } catch (error: unknown) {
-      if ((error as Error).message.includes('429')) {
+      if (error instanceof Error && error.message.includes('429')) {
         console.warn(`Rate limit exceeded. Retrying in ${2 ** attempt} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000));
       } else {
@@ -46,49 +46,170 @@ const fetchImage = async (query: string): Promise<string | null> => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: {
-        Authorization: 'YOUR_PEXELS_API_KEY',
+        Authorization: import.meta.env.VITE_PIXEL_API_KEY, // Replace with your Pexels API key
       },
       params: {
-        query,
-        per_page: 1,
+        query: query, // Use the query (e.g., location name or event title)
+        per_page: 1, // Fetch only one image
       },
     });
 
     if (response.data.photos && response.data.photos.length > 0) {
-      return response.data.photos[0].src.large;
+      return response.data.photos[0].src.large; // Return the URL of the large-sized image
     } else {
       console.warn('No images found for the query:', query);
       return null;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching image:', error);
     return null;
+  }
+};
+
+// List of YouTube API keys
+const YOUTUBE_API_KEYS = [
+  import.meta.env.VITE_YOUTUBE_API_KEY_1,
+  import.meta.env.VITE_YOUTUBE_API_KEY_2,
+  import.meta.env.VITE_YOUTUBE_API_KEY_3,
+];
+
+// Fetch YouTube videos using the generated prompt
+const fetchYouTubeVideos = async (location: string) => {
+  const searchPrompt = await generateYouTubeSearchPrompt(location);
+  if (!searchPrompt) {
+    console.error('Failed to generate YouTube search prompt.');
+    return [];
+  }
+
+  // Try each API key until one succeeds
+  for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
+    const apiKey = YOUTUBE_API_KEYS[i];
+    if (!apiKey) {
+      console.error(`YouTube API key ${i + 1} is missing.`);
+      continue;
+    }
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          searchPrompt
+        )}&type=video&maxResults=5&key=${apiKey}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
+        continue; // Try the next key
+      }
+
+      const data = await response.json();
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item: any) => ({
+          id: item.id.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium.url,
+        }));
+      } else {
+        console.warn('No YouTube videos found for the location:', location);
+        return [];
+      }
+    } catch (error: unknown) {
+      console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
+      continue; // Try the next key
+    }
+  }
+
+  console.error('All YouTube API keys failed.');
+  return [];
+};
+
+// Generate YouTube search prompt using Groq API
+const generateYouTubeSearchPrompt = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 5000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+  } catch (error: unknown) {
+    console.error('Error generating YouTube search prompt:', error);
+  }
+  return null;
+};
+
+// Generate news content using Groq API
+const generateNewsWithAI = async (location: string) => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      return completion.choices[0].message.content.trim();
+    }
+    return 'No news available for this location.';
+  } catch (error: unknown) {
+    console.error('Error generating news:', error);
+    return 'Failed to generate news. Please try again.';
   }
 };
 
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
+  const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
-  const [translating, setTranslating] = useState<boolean>(false);
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string; title: string; description: string; thumbnail: string }>>([]);
-  const [isVirtualTourActive, setIsVirtualTourActive] = useState<boolean>(false);
+  const [translating, setTranslating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string }>>([]);
+  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
-  const [newsArticles, setNewsArticles] = useState<Array<{ title: string; description: string; url: string }>>([]);
-  const [isNewsPanelActive, setIsNewsPanelActive] = useState<boolean>(false);
-  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
-  const [showWeatherWidget, setShowWeatherWidget] = useState<boolean>(false);
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
-  const [analysisLoading, setAnalysisLoading] = useState<boolean>(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
+  const factsContainerRef = useRef<HTMLDivElement>(null);
+  const lastAnalysisRef = useRef<HTMLDivElement>(null);
+  const buttonPanelRef = useRef<HTMLDivElement>(null);
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = (newContent: string) => {
@@ -102,130 +223,6 @@ function App() {
     }
   };
 
-  // Analyze image and location using the appropriate API based on the selected language
-  const analyzeImage = async (imageUrl: string, locationName: string, analysisLanguage: 'en' | 'my' | 'th') => {
-    const languageCodeMap: { [key: string]: string } = {
-      en: 'English',
-      my: 'Burmese',
-      th: 'Thai',
-    };
-
-    const prompt = `Examine the image and provide a detailed analysis of the region in ${languageCodeMap[analysisLanguage]}. The location is ${locationName}. Include geographical, cultural, and environmental insights.`;
-
-    try {
-      if (analysisLanguage === 'my' || analysisLanguage === 'th') {
-        // Use Gemini API for Myanmar and Thai
-        const result = await model.generateContent(prompt);
-        if (result.response.text()) {
-          return result.response.text();
-        }
-      } else {
-        // Use Groq API for English
-        const groq = new Groq({
-          apiKey: 'YOUR_GROQ_API_KEY',
-          dangerouslyAllowBrowser: true,
-        });
-
-        const completion = await groq.chat.completions.create({
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: prompt,
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: imageUrl,
-                  },
-                },
-              ],
-            },
-          ],
-          model: 'llama-3.2-90b-vision-preview',
-          temperature: 0.95,
-          max_tokens: 8000,
-        });
-
-        if (completion.choices && completion.choices[0]?.message?.content) {
-          return completion.choices[0].message.content;
-        }
-      }
-      return 'No analysis available.';
-    } catch (error: unknown) {
-      console.error('Error analyzing image:', error);
-      return 'Error analyzing the image. Please try again.';
-    }
-  };
-
-  // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
-
-    setLoading(true);
-    setCapturedImage(null);
-    setFacts('');
-    setTranslatedFacts('');
-
-    try {
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      await new Promise((resolve) => {
-        map.once('idle', resolve);
-      });
-
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      setCapturedImage(dataUrl);
-
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=YOUR_MAPBOX_TOKEN`
-      );
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        const locationName = data.features[0].place_name;
-        setCurrentLocation(locationName);
-
-        const analysis = await analyzeImage(dataUrl, locationName, language);
-        setFacts(analysis);
-
-        if (language !== 'en') {
-          const translatedAnalysis = await translateText(analysis, language);
-          setTranslatedFacts(translatedAnalysis);
-        } else {
-          setTranslatedFacts(analysis);
-        }
-      }
-    } catch (error: unknown) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle language change for all insights and content
-  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
-    setTranslating(true);
-    setLanguage(newLanguage);
-
-    if (facts) {
-      const translatedFactsText = await translateText(facts, newLanguage);
-      setTranslatedFacts(translatedFactsText);
-    }
-
-    setTranslating(false);
-  };
-
   // Fetch historical insights and events using Groq API
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
@@ -233,7 +230,7 @@ function App() {
     setLoading(true);
     try {
       const groq = new Groq({
-        apiKey: 'YOUR_GROQ_API_KEY',
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
 
@@ -314,7 +311,7 @@ function App() {
     earthRef.current?.handleSearch(lng, lat);
 
     const response = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=YOUR_MAPBOX_TOKEN`
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
     const data = await response.json();
     if (data.features && data.features.length > 0) {
@@ -327,8 +324,8 @@ function App() {
   };
 
   // Fetch location name from Mapbox Geocoding API
-  const fetchLocationName = async (lng: number, lat: number): Promise<string> => {
-    const accessToken = 'YOUR_MAPBOX_TOKEN';
+  const fetchLocationName = async (lng: number, lat: number) => {
+    const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
 
     try {
@@ -338,74 +335,112 @@ function App() {
         return data.features[0].place_name;
       }
       return 'Unknown Location';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching location name:', error);
       return 'Unknown Location';
     }
   };
 
-  // Fetch YouTube videos using the generated prompt
-  const fetchYouTubeVideos = async (location: string): Promise<Array<{ id: string; title: string; description: string; thumbnail: string }>> => {
-    const searchPrompt = await generateYouTubeSearchPrompt(location);
-    if (!searchPrompt) {
-      console.error('Failed to generate YouTube search prompt.');
-      return [];
-    }
+  // Analyze image and location with Groq API
+  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
 
-    // Try each API key until one succeeds
-    const YOUTUBE_API_KEYS = [
-      'YOUR_YOUTUBE_API_KEY_1',
-      'YOUR_YOUTUBE_API_KEY_2',
-      'YOUR_YOUTUBE_API_KEY_3',
-    ];
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+            ],
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 8000,
+      });
 
-    for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
-      const apiKey = YOUTUBE_API_KEYS[i];
-      if (!apiKey) {
-        console.error(`YouTube API key ${i + 1} is missing.`);
-        continue;
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        return completion.choices[0].message.content;
       }
-
-      try {
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-            searchPrompt
-          )}&type=video&maxResults=5&key=${apiKey}`
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
-          continue; // Try the next key
-        }
-
-        const data = await response.json();
-        if (data.items && data.items.length > 0) {
-          return data.items.map((item: any) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            thumbnail: item.snippet.thumbnails.medium.url,
-          }));
-        } else {
-          console.warn('No YouTube videos found for the location:', location);
-          return [];
-        }
-      } catch (error) {
-        console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
-        continue; // Try the next key
-      }
+      return 'No analysis available.';
+    } catch (error: unknown) {
+      console.error('Error analyzing with Groq:', error);
+      return 'Error analyzing the image. Please try again.';
     }
-
-    console.error('All YouTube API keys failed.');
-    return [];
   };
 
-  // Generate YouTube search prompt using Groq API
-  const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
+  // Capture the current view of the globe
+  const captureView = async () => {
+    if (!earthContainerRef.current || !earthRef.current) return;
+
+    // Reset historical insights and events
+    setHistoricalInsights('');
+    setHistoricalEvents([]);
+
+    setShowWeatherWidget(false);
+    setLoading(true);
+    setDynamicThemes([]);
+
+    try {
+      const map = earthRef.current.getMap();
+      if (!map) {
+        throw new Error('Map instance not found.');
+      }
+
+      await new Promise((resolve) => {
+        map.once('idle', resolve);
+      });
+
+      const canvas = map.getCanvas();
+      const dataUrl = canvas.toDataURL('image/png');
+      setCapturedImage(dataUrl);
+
+      const center = map.getCenter();
+      const lng = center.lng;
+      const lat = center.lat;
+
+      const locationName = await fetchLocationName(lng, lat);
+      setCurrentLocation(locationName);
+
+      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      setFacts(analysis);
+
+      // Translate the analysis if the current language is not English
+      if (language !== 'en') {
+        const translatedAnalysis = await translateText(analysis, language);
+        setTranslatedFacts(translatedAnalysis);
+      } else {
+        setTranslatedFacts(analysis);
+      }
+
+      await generateDynamicThemes(locationName);
+      await fetchYouTubeVideos(locationName);
+    } catch (error: unknown) {
+      console.error('Error capturing view:', error);
+      setFacts('Error getting facts about this region. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate dynamic themes for analysis
+  const generateDynamicThemes = async (location: string) => {
     try {
       const groq = new Groq({
-        apiKey: 'YOUR_GROQ_API_KEY',
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
 
@@ -413,50 +448,21 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes. Return the response as a JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
+        temperature: 0.95,
         max_tokens: 5000,
       });
 
       if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
+        const themes = JSON.parse(completion.choices[0].message.content);
+        setDynamicThemes(themes);
       }
-    } catch (error) {
-      console.error('Error generating YouTube search prompt:', error);
-    }
-    return null;
-  };
-
-  // Generate news content using Groq API
-  const generateNewsWithAI = async (location: string): Promise<string> => {
-    try {
-      const groq = new Groq({
-        apiKey: 'YOUR_GROQ_API_KEY',
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content.trim();
-      }
-      return 'No news available for this location.';
-    } catch (error) {
-      console.error('Error generating news:', error);
-      return 'Failed to generate news. Please try again.';
+    } catch (error: unknown) {
+      console.error('Error generating dynamic themes:', error);
+      setDynamicThemes([]);
     }
   };
 
@@ -471,7 +477,7 @@ function App() {
 
     try {
       const groq = new Groq({
-        apiKey: 'YOUR_GROQ_API_KEY',
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
 
@@ -531,17 +537,78 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  // Handle language change for all insights and content
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+    setTranslating(true);
+    setLanguage(newLanguage);
+
+    // Translate all content
+    const translateAllContent = async () => {
+      if (facts) {
+        const translatedFactsText = await translateText(facts, newLanguage);
+        setTranslatedFacts(translatedFactsText);
+      }
+
+      if (historicalInsights) {
+        const translatedHistoricalInsights = await translateText(historicalInsights, newLanguage);
+        setHistoricalInsights(translatedHistoricalInsights);
+      }
+
+      if (historicalEvents.length > 0) {
+        const translatedEvents = await Promise.all(
+          historicalEvents.map(async (event) => ({
+            ...event,
+            cardTitle: await translateText(event.cardTitle, newLanguage),
+            cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
+            cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
+          }))
+        );
+        setHistoricalEvents(translatedEvents);
+      }
+
+      if (newsArticles.length > 0) {
+        const translatedNewsArticles = await Promise.all(
+          newsArticles.map(async (article) => ({
+            ...article,
+            title: await translateText(article.title, newLanguage),
+            description: await translateText(article.description, newLanguage),
+          }))
+        );
+        setNewsArticles(translatedNewsArticles);
+      }
+
+      if (dynamicThemes.length > 0) {
+        const translatedThemes = await Promise.all(
+          dynamicThemes.map(async (theme) => ({
+            ...theme,
+            name: await translateText(theme.name, newLanguage),
+            prompt: await translateText(theme.prompt, newLanguage),
+          }))
+        );
+        setDynamicThemes(translatedThemes);
+      }
+    };
+
+    await translateAllContent();
+    setTranslating(false);
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
-        <Earth ref={earthRef} onCaptureView={captureView} showWeatherWidget={showWeatherWidget} setShowWeatherWidget={setShowWeatherWidget} />
+        <Earth
+          ref={earthRef}
+          onCaptureView={captureView}
+          showWeatherWidget={showWeatherWidget}
+          setShowWeatherWidget={setShowWeatherWidget}
+        />
       </div>
       <div className="info-panel">
         <SearchBar onSearch={handleSearch} />
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
-        <div className={`button-panel ${isMenuOpen ? 'active' : ''}`}>
+        <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
           <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
             &times;
           </button>
@@ -588,7 +655,7 @@ function App() {
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
-          <div className="facts">
+          <div className="facts" ref={factsContainerRef}>
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" />
@@ -599,6 +666,7 @@ function App() {
               language={language}
               onRewrite={handleRewrittenContent}
             />
+            {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
             {facts && !loading && (
               <div>
                 <div className="analysis-buttons">
@@ -621,9 +689,32 @@ function App() {
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel Destinations
+                    Analysis of Travel locations
                   </button>
                 </div>
+                {dynamicThemes.length > 0 && (
+                  <div className="analysis-buttons dynamic-buttons">
+                    {currentLocation && (
+                      <button
+                        className="analysis-button refresh-button"
+                        onClick={() => generateDynamicThemes(currentLocation)}
+                        disabled={translating}
+                      >
+                        Refresh Themes
+                      </button>
+                    )}
+                    {dynamicThemes.map((theme, index) => (
+                      <button
+                        key={theme.name}
+                        className={`analysis-button dynamic-${index}`}
+                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        disabled={analysisLoading || translating}
+                      >
+                        {theme.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <button
                   onClick={saveAnalysis}
                   className="save-analysis-button"
