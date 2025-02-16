@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import Earth from './components/Earth';
-import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
@@ -16,13 +15,7 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
 const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
-  const languageCodeMap: { [key: string]: string } = {
-    en: 'English',
-    my: 'Burmese', // Myanmar language code
-    th: 'Thai',
-  };
-
-  const prompt = `Translate the following text to ${languageCodeMap[targetLanguage]}: "${text}"`;
+  const prompt = `Translate the following text to ${targetLanguage}: "${text}"`;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -124,59 +117,24 @@ const fetchYouTubeVideos = async (location: string) => {
   return [];
 };
 
-// Generate YouTube search prompt using Groq API
+// Generate YouTube search prompt using Gemini API
 const generateYouTubeSearchPrompt = async (location: string) => {
   try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 5000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
+    const prompt = `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`;
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
   } catch (error: unknown) {
     console.error('Error generating YouTube search prompt:', error);
+    return null;
   }
-  return null;
 };
 
-// Generate news content using Groq API
+// Generate news content using Gemini API
 const generateNewsWithAI = async (location: string) => {
   try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
-    return 'No news available for this location.';
+    const prompt = `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`;
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
   } catch (error: unknown) {
     console.error('Error generating news:', error);
     return 'Failed to generate news. Please try again.';
@@ -223,79 +181,62 @@ function App() {
     }
   };
 
-  // Fetch historical insights and events using Groq API
+  // Fetch historical insights and events using Gemini API
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
 
     setLoading(true);
     try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also, provide a list of historical events in JSON format like this:
-            [
-              {
-                "title": "Event Year",
-                "cardTitle": "Event Title",
-                "cardSubtitle": "Event Subtitle",
-                "cardDetailedText": "Detailed description of the event."
-              }
-            ]
-            Keep the response concise and engaging.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const response = completion.choices[0].message.content;
-
-        // Extract historical insights
-        const insights = response.split('JSON format like this:')[0].trim();
-        setHistoricalInsights(insights);
-
-        // Extract historical events from JSON
-        const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
-        if (eventsJson) {
-          const events = JSON.parse(eventsJson);
-
-          // Fetch images for each event using Pexels API
-          const eventsWithImages = await Promise.all(
-            events.map(async (event: any) => {
-              const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
-              return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
-            })
-          );
-
-          setHistoricalEvents(eventsWithImages);
-
-          // Translate content if the current language is not English
-          if (language !== 'en') {
-            const translatedInsights = await translateText(insights, language);
-            setHistoricalInsights(translatedInsights);
-
-            const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event: any) => ({
-                ...event,
-                cardTitle: await translateText(event.cardTitle, language),
-                cardSubtitle: await translateText(event.cardSubtitle, language),
-                cardDetailedText: await translateText(event.cardDetailedText, language),
-              }))
-            );
-            setHistoricalEvents(translatedEvents);
-          }
-        } else {
-          console.error('No historical events found in the response.');
-          setHistoricalEvents([]);
+      const prompt = `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also, provide a list of historical events in JSON format like this:
+      [
+        {
+          "title": "Event Year",
+          "cardTitle": "Event Title",
+          "cardSubtitle": "Event Subtitle",
+          "cardDetailedText": "Detailed description of the event."
         }
+      ]
+      Keep the response concise and engaging.`;
+      const result = await model.generateContent(prompt);
+      const response = result.response.text();
+
+      // Extract historical insights
+      const insights = response.split('JSON format like this:')[0].trim();
+      setHistoricalInsights(insights);
+
+      // Extract historical events from JSON
+      const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
+      if (eventsJson) {
+        const events = JSON.parse(eventsJson);
+
+        // Fetch images for each event using Pexels API
+        const eventsWithImages = await Promise.all(
+          events.map(async (event: any) => {
+            const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
+            return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
+          })
+        );
+
+        setHistoricalEvents(eventsWithImages);
+
+        // Translate content if the current language is not English
+        if (language !== 'en') {
+          const translatedInsights = await translateText(insights, language);
+          setHistoricalInsights(translatedInsights);
+
+          const translatedEvents = await Promise.all(
+            eventsWithImages.map(async (event: any) => ({
+              ...event,
+              cardTitle: await translateText(event.cardTitle, language),
+              cardSubtitle: await translateText(event.cardSubtitle, language),
+              cardDetailedText: await translateText(event.cardDetailedText, language),
+            }))
+          );
+          setHistoricalEvents(translatedEvents);
+        }
+      } else {
+        console.error('No historical events found in the response.');
+        setHistoricalEvents([]);
       }
     } catch (error: unknown) {
       console.error('Error fetching historical insights:', error);
@@ -341,43 +282,14 @@ function App() {
     }
   };
 
-  // Analyze image and location with Groq API
-  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
+  // Analyze image and location with Gemini API
+  const analyzeWithGemini = async (imageUrl: string, locationName: string) => {
     try {
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl,
-                },
-              },
-            ],
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 8000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content;
-      }
-      return 'No analysis available.';
+      const prompt = `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`;
+      const result = await model.generateContent(prompt);
+      return result.response.text();
     } catch (error: unknown) {
-      console.error('Error analyzing with Groq:', error);
+      console.error('Error analyzing with Gemini:', error);
       return 'Error analyzing the image. Please try again.';
     }
   };
@@ -415,7 +327,7 @@ function App() {
       const locationName = await fetchLocationName(lng, lat);
       setCurrentLocation(locationName);
 
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      const analysis = await analyzeWithGemini(dataUrl, locationName);
       setFacts(analysis);
 
       // Translate the analysis if the current language is not English
@@ -439,27 +351,10 @@ function App() {
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
     try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes. Return the response as a JSON array of objects with "name" and "prompt" properties.`,
-          },
-        ],
-        model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 5000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const themes = JSON.parse(completion.choices[0].message.content);
-        setDynamicThemes(themes);
-      }
+      const prompt = `Based on the location "${location}", suggest 3 unique and specific analysis themes. Return the response as a JSON array of objects with "name" and "prompt" properties.`;
+      const result = await model.generateContent(prompt);
+      const themes = JSON.parse(result.response.text());
+      setDynamicThemes(themes);
     } catch (error: unknown) {
       console.error('Error generating dynamic themes:', error);
       setDynamicThemes([]);
@@ -476,11 +371,6 @@ function App() {
     setTranslatedFacts('');
 
     try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
       const defaultPromptMap = {
         'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
         'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
@@ -488,29 +378,15 @@ function App() {
       };
 
       const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
+      const result = await model.generateContent(prompt);
+      const newAnalysis = result.response.text();
+      setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.7,
-        max_tokens: 5000,
-      });
-
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const newAnalysis = completion.choices[0].message.content;
-        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
-
-        if (currentLang !== 'en') {
-          const translatedText = await translateText(newAnalysis, currentLang);
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
-        } else {
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
-        }
+      if (currentLang !== 'en') {
+        const translatedText = await translateText(newAnalysis, currentLang);
+        setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+      } else {
+        setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
       }
     } catch (error: unknown) {
       console.error('Error during analysis:', error);
