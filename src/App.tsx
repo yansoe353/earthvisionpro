@@ -1,6 +1,12 @@
 import { useState, useRef } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
+import Earth from './components/Earth';
+import SearchBar from './components/SearchBar';
+import MarkdownContent from './components/MarkdownContent';
+import VirtualTour from './components/VirtualTour';
+import NewsPanel from './components/NewsPanel';
+import { Chrono } from 'react-chrono';
 import './index.css';
 
 // Initialize the Gemini API client
@@ -8,8 +14,8 @@ const genAI = new GoogleGenerativeAI('AIzaSyALnz-HwNj7mlQ99XUBWDGsO06fOy1G-uI');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Translation function using the Gemini API
-const translateText = async (text, targetLanguage, retries = 3) => {
-  const languageCodeMap = {
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th', retries = 3) => {
+  const languageCodeMap: { [key: string]: string } = {
     en: 'English',
     my: 'Burmese',
     th: 'Thai',
@@ -35,7 +41,7 @@ const translateText = async (text, targetLanguage, retries = 3) => {
 };
 
 // Fetch image using Pexels API
-const fetchImage = async (query) => {
+const fetchImage = async (query: string): Promise<string | null> => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: {
@@ -61,29 +67,29 @@ const fetchImage = async (query) => {
 
 // App Component
 function App() {
-  const [facts, setFacts] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [currentLocation, setCurrentLocation] = useState('');
-  const [language, setLanguage] = useState('en');
-  const [translatedFacts, setTranslatedFacts] = useState('');
-  const [translating, setTranslating] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState([]);
-  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
-  const [virtualTourLocation, setVirtualTourLocation] = useState(null);
-  const [newsArticles, setNewsArticles] = useState([]);
-  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
-  const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [showWeatherWidget, setShowWeatherWidget] = useState(false);
-  const [historicalInsights, setHistoricalInsights] = useState('');
-  const [historicalEvents, setHistoricalEvents] = useState([]);
+  const [facts, setFacts] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<string>('');
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
+  const [translatedFacts, setTranslatedFacts] = useState<string>('');
+  const [translating, setTranslating] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string; title: string; description: string; thumbnail: string }>>([]);
+  const [isVirtualTourActive, setIsVirtualTourActive] = useState<boolean>(false);
+  const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string; description: string; url: string }>>([]);
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState<boolean>(false);
+  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
+  const [showWeatherWidget, setShowWeatherWidget] = useState<boolean>(false);
+  const [historicalInsights, setHistoricalInsights] = useState<string>('');
+  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
 
-  const earthContainerRef = useRef(null);
-  const earthRef = useRef(null);
+  const earthContainerRef = useRef<HTMLDivElement>(null);
+  const earthRef = useRef<any>(null);
 
   // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = (newContent) => {
+  const handleRewrittenContent = (newContent: string) => {
     setFacts(newContent);
     if (language !== 'en') {
       translateText(newContent, language).then((translatedText) => {
@@ -95,8 +101,8 @@ function App() {
   };
 
   // Analyze image and location using the appropriate API based on the selected language
-  const analyzeImage = async (imageUrl, locationName, analysisLanguage) => {
-    const languageCodeMap = {
+  const analyzeImage = async (imageUrl: string, locationName: string, analysisLanguage: 'en' | 'my' | 'th') => {
+    const languageCodeMap: { [key: string]: string } = {
       en: 'English',
       my: 'Burmese',
       th: 'Thai',
@@ -206,7 +212,7 @@ function App() {
   };
 
   // Handle language change for all insights and content
-  const handleLanguageChange = async (newLanguage) => {
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
 
@@ -264,7 +270,7 @@ function App() {
 
           // Fetch images for each event using Pexels API
           const eventsWithImages = await Promise.all(
-            events.map(async (event) => {
+            events.map(async (event: any) => {
               const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
               return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
             })
@@ -278,7 +284,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event) => ({
+              eventsWithImages.map(async (event: any) => ({
                 ...event,
                 cardTitle: await translateText(event.cardTitle, language),
                 cardSubtitle: await translateText(event.cardSubtitle, language),
@@ -302,7 +308,7 @@ function App() {
   };
 
   // Handle search for a location
-  const handleSearch = async (lng, lat) => {
+  const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
 
     const response = await fetch(
@@ -319,7 +325,7 @@ function App() {
   };
 
   // Fetch location name from Mapbox Geocoding API
-  const fetchLocationName = async (lng, lat) => {
+  const fetchLocationName = async (lng: number, lat: number): Promise<string> => {
     const accessToken = 'YOUR_MAPBOX_TOKEN';
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
 
@@ -337,7 +343,7 @@ function App() {
   };
 
   // Fetch YouTube videos using the generated prompt
-  const fetchYouTubeVideos = async (location) => {
+  const fetchYouTubeVideos = async (location: string): Promise<Array<{ id: string; title: string; description: string; thumbnail: string }>> => {
     const searchPrompt = await generateYouTubeSearchPrompt(location);
     if (!searchPrompt) {
       console.error('Failed to generate YouTube search prompt.');
@@ -373,7 +379,7 @@ function App() {
 
         const data = await response.json();
         if (data.items && data.items.length > 0) {
-          return data.items.map((item) => ({
+          return data.items.map((item: any) => ({
             id: item.id.videoId,
             title: item.snippet.title,
             description: item.snippet.description,
@@ -394,7 +400,7 @@ function App() {
   };
 
   // Generate YouTube search prompt using Groq API
-  const generateYouTubeSearchPrompt = async (location) => {
+  const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
     try {
       const groq = new Groq({
         apiKey: 'YOUR_GROQ_API_KEY',
@@ -423,7 +429,7 @@ function App() {
   };
 
   // Generate news content using Groq API
-  const generateNewsWithAI = async (location) => {
+  const generateNewsWithAI = async (location: string): Promise<string> => {
     try {
       const groq = new Groq({
         apiKey: 'YOUR_GROQ_API_KEY',
