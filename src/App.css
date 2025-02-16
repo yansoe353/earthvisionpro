@@ -61,6 +61,37 @@
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+/* Ensure analysis data is always visible */
+.analysis-data {
+  display: block;
+}
+
+/* Mobile responsive layout */
+@media (max-width: 768px) {
+  #root {
+    padding: 0.5rem;
+  }
+
+  .app {
+    flex-direction: column;
+    height: auto;
+    gap: 1rem;
+  }
+
+  .earth-container {
+    width: 100%;
+    height: 400px;
+  }
+
+  .info-panel {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 1rem;
+  }
+}
+
+
+
 
 .login-form h2 {
   margin-bottom: 20px;
