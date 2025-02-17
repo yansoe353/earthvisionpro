@@ -22,7 +22,7 @@ const languageMapping = {
 };
 
 // Translation function using the Gemini API
-const translateText = async (text, targetLanguage) => {
+const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
@@ -42,7 +42,7 @@ const translateText = async (text, targetLanguage) => {
 };
 
 // Fetch image using Pexels API
-const fetchImage = async (query) => {
+const fetchImage = async (query: string): Promise<string | null> => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: {
@@ -74,7 +74,7 @@ const YOUTUBE_API_KEYS = [
 ];
 
 // Fetch YouTube videos using the generated prompt
-const fetchYouTubeVideos = async (location) => {
+const fetchYouTubeVideos = async (location: string) => {
   const searchPrompt = await generateYouTubeSearchPrompt(location);
   if (!searchPrompt) {
     console.error('Failed to generate YouTube search prompt.');
@@ -103,7 +103,7 @@ const fetchYouTubeVideos = async (location) => {
 
       const data = await response.json();
       if (data.items && data.items.length > 0) {
-        return data.items.map((item) => ({
+        return data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
           description: item.snippet.description,
@@ -124,7 +124,7 @@ const fetchYouTubeVideos = async (location) => {
 };
 
 // Generate YouTube search prompt using Groq API
-const generateYouTubeSearchPrompt = async (location) => {
+const generateYouTubeSearchPrompt = async (location: string) => {
   try {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -153,7 +153,7 @@ const generateYouTubeSearchPrompt = async (location) => {
 };
 
 // Generate news content using Groq API
-const generateNewsWithAI = async (location) => {
+const generateNewsWithAI = async (location: string) => {
   try {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -184,34 +184,34 @@ const generateNewsWithAI = async (location) => {
 
 // App Component
 function App() {
-  const [facts, setFacts] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [currentLocation, setCurrentLocation] = useState('');
-  const [dynamicThemes, setDynamicThemes] = useState([]);
-  const [language, setLanguage] = useState('en');
-  const [translatedFacts, setTranslatedFacts] = useState('');
-  const [translating, setTranslating] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState([]);
-  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
-  const [virtualTourLocation, setVirtualTourLocation] = useState(null);
-  const [newsArticles, setNewsArticles] = useState([]);
-  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
-  const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [showWeatherWidget, setShowWeatherWidget] = useState(false);
-  const [historicalInsights, setHistoricalInsights] = useState('');
-  const [historicalEvents, setHistoricalEvents] = useState([]);
+  const [facts, setFacts] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [analysisLoading, setAnalysisLoading] = useState<boolean>(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<string>('');
+  const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
+  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
+  const [translatedFacts, setTranslatedFacts] = useState<string>('');
+  const [translating, setTranslating] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string }>>([]);
+  const [isVirtualTourActive, setIsVirtualTourActive] = useState<boolean>(false);
+  const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState<boolean>(false);
+  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
+  const [showWeatherWidget, setShowWeatherWidget] = useState<boolean>(false);
+  const [historicalInsights, setHistoricalInsights] = useState<string>('');
+  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
 
-  const earthContainerRef = useRef(null);
-  const earthRef = useRef(null);
-  const factsContainerRef = useRef(null);
-  const lastAnalysisRef = useRef(null);
-  const buttonPanelRef = useRef(null);
+  const earthContainerRef = useRef<HTMLDivElement>(null);
+  const earthRef = useRef<any>(null);
+  const factsContainerRef = useRef<HTMLDivElement>(null);
+  const lastAnalysisRef = useRef<HTMLDivElement>(null);
+  const buttonPanelRef = useRef<HTMLDivElement>(null);
 
   // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = (newContent) => {
+  const handleRewrittenContent = (newContent: string) => {
     setFacts(newContent);
     if (language !== 'en') {
       translateText(newContent, language).then((translatedText) => {
@@ -268,7 +268,7 @@ function App() {
 
           // Fetch images for each event using Pexels API
           const eventsWithImages = await Promise.all(
-            events.map(async (event) => {
+            events.map(async (event: any) => {
               const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
               return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
             })
@@ -306,7 +306,7 @@ function App() {
   };
 
   // Handle search for a location
-  const handleSearch = async (lng, lat) => {
+  const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
 
     const response = await fetch(
@@ -323,7 +323,7 @@ function App() {
   };
 
   // Fetch location name from Mapbox Geocoding API
-  const fetchLocationName = async (lng, lat) => {
+  const fetchLocationName = async (lng: number, lat: number) => {
     const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
 
@@ -341,7 +341,7 @@ function App() {
   };
 
   // Analyze image and location with Groq API
-  const analyzeWithGroq = async (imageUrl, locationName) => {
+  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
       dangerouslyAllowBrowser: true,
@@ -436,7 +436,7 @@ function App() {
   };
 
   // Generate dynamic themes for analysis
-  const generateDynamicThemes = async (location) => {
+  const generateDynamicThemes = async (location: string) => {
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -466,7 +466,7 @@ function App() {
   };
 
   // Analyze with a specific perspective
-  const analyzeWithPerspective = async (perspective, customPrompt) => {
+  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
@@ -537,7 +537,7 @@ function App() {
   };
 
   // Handle language change for all insights and content
-  const handleLanguageChange = async (newLanguage) => {
+  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
 
