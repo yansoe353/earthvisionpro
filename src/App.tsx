@@ -466,7 +466,7 @@ function App() {
   };
 
   // Analyze with a specific perspective
-  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
+  const analyzeWithPerspective = async (perspective: 'Environmental Factors' | 'Economic Areas' | 'Travel Destinations', customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
@@ -480,7 +480,7 @@ function App() {
         dangerouslyAllowBrowser: true,
       });
 
-      const defaultPromptMap = {
+      const defaultPromptMap: { [key: string]: string } = {
         'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
         'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
         'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
@@ -713,7 +713,7 @@ function App() {
                       <button
                         key={theme.name}
                         className={`analysis-button dynamic-${index}`}
-                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
+                        onClick={() => analyzeWithPerspective(theme.name as 'Environmental Factors' | 'Economic Areas' | 'Travel Destinations', theme.prompt)}
                         disabled={analysisLoading || translating}
                       >
                         {theme.name}
