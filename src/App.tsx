@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -6,8 +6,8 @@ import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
 import { Chrono } from 'react-chrono';
-import axios from 'axios';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import axios from 'axios'; // For making API requests
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API library
 import './index.css';
 
 // Initialize the Gemini API client
@@ -29,7 +29,9 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
+    // Handle the Gemini API response
     if (responseText.includes('Here are a few options')) {
+      // Extract the first translation option
       const options = responseText.split('Here are a few options')[1].trim().split('\n');
       return options[0].trim();
     }
@@ -37,7 +39,7 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     return responseText;
   } catch (error) {
     console.error('Translation error:', error);
-    return text;
+    return text; // Fallback to original text if translation fails
   }
 };
 
@@ -46,16 +48,16 @@ const fetchImage = async (query: string): Promise<string | null> => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: {
-        Authorization: import.meta.env.VITE_PIXEL_API_KEY,
+        Authorization: import.meta.env.VITE_PIXEL_API_KEY, // Replace with your Pexels API key
       },
       params: {
-        query,
-        per_page: 1,
+        query: query, // Use the query (e.g., location name or event title)
+        per_page: 1, // Fetch only one image
       },
     });
 
     if (response.data.photos && response.data.photos.length > 0) {
-      return response.data.photos[0].src.large;
+      return response.data.photos[0].src.large; // Return the URL of the large-sized image
     } else {
       console.warn('No images found for the query:', query);
       return null;
@@ -81,6 +83,7 @@ const fetchYouTubeVideos = async (location: string) => {
     return [];
   }
 
+  // Try each API key until one succeeds
   for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
     const apiKey = YOUTUBE_API_KEYS[i];
     if (!apiKey) {
@@ -98,7 +101,7 @@ const fetchYouTubeVideos = async (location: string) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
-        continue;
+        continue; // Try the next key
       }
 
       const data = await response.json();
@@ -115,7 +118,7 @@ const fetchYouTubeVideos = async (location: string) => {
       }
     } catch (error) {
       console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
-      continue;
+      continue; // Try the next key
     }
   }
 
@@ -185,22 +188,22 @@ const generateNewsWithAI = async (location: string) => {
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [analysisLoading, setAnalysisLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
   const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
-  const [translating, setTranslating] = useState<boolean>(false);
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [translating, setTranslating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string }>>([]);
-  const [isVirtualTourActive, setIsVirtualTourActive] = useState<boolean>(false);
+  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
   const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
-  const [isNewsPanelActive, setIsNewsPanelActive] = useState<boolean>(false);
-  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
-  const [showWeatherWidget, setShowWeatherWidget] = useState<boolean>(false);
+  const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+  const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
 
@@ -282,7 +285,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event) => ({
+              eventsWithImages.map(async (event: any) => ({
                 ...event,
                 cardTitle: await translateText(event.cardTitle, language),
                 cardSubtitle: await translateText(event.cardSubtitle, language),
@@ -466,7 +469,7 @@ function App() {
   };
 
   // Analyze with a specific perspective
-  const analyzeWithPerspective = async (perspective: 'Environmental Factors' | 'Economic Areas' | 'Travel Destinations', customPrompt?: string) => {
+  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
@@ -480,13 +483,13 @@ function App() {
         dangerouslyAllowBrowser: true,
       });
 
-      const defaultPromptMap: { [key: string]: string } = {
+      const defaultPromptMap = {
         'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
         'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
         'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
       };
 
-      const prompt = customPrompt || defaultPromptMap[perspective];
+      const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
 
       const completion = await groq.chat.completions.create({
         messages: [
@@ -592,13 +595,6 @@ function App() {
     setTranslating(false);
   };
 
-  // Debugging: Log virtual tour button click
-  const handleVirtualTour = () => {
-    console.log('Virtual tour button clicked');
-    setIsVirtualTourActive(!isVirtualTourActive);
-    console.log('isVirtualTourActive:', isVirtualTourActive);
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -631,7 +627,7 @@ function App() {
             {translating && <p>Translating...</p>}
           </div>
           <button
-            onClick={handleVirtualTour}
+            onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
             className="virtual-tour-button"
             disabled={!currentLocation}
           >
@@ -713,7 +709,7 @@ function App() {
                       <button
                         key={theme.name}
                         className={`analysis-button dynamic-${index}`}
-                        onClick={() => analyzeWithPerspective(theme.name as 'Environmental Factors' | 'Economic Areas' | 'Travel Destinations', theme.prompt)}
+                        onClick={() => analyzeWithPerspective(theme.name, theme.prompt)}
                         disabled={analysisLoading || translating}
                       >
                         {theme.name}
