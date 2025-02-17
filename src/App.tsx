@@ -21,8 +21,29 @@ const languageMapping = {
   th: 'Thai',
 };
 
-// Translation function using the Gemini API
-const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+// Translation cache
+const translationCache = new Map();
+
+// Rate limit delay
+const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
+let lastRequestTime = 0;
+
+// Translation function using the Gemini API with rate limiting and caching
+const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+
+  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
+  }
+
+  lastRequestTime = Date.now();
+
+  const cacheKey = `${text}-${targetLanguage}`;
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey);
+  }
+
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
@@ -33,9 +54,12 @@ const translateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') =
     if (responseText.includes('Here are a few options')) {
       // Extract the first translation option
       const options = responseText.split('Here are a few options')[1].trim().split('\n');
-      return options[0].trim();
+      const translatedText = options[0].trim();
+      translationCache.set(cacheKey, translatedText);
+      return translatedText;
     }
 
+    translationCache.set(cacheKey, responseText);
     return responseText;
   } catch (error) {
     console.error('Translation error:', error);
@@ -214,12 +238,11 @@ function App() {
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
   // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = (newContent: string) => {
+  const handleRewrittenContent = async (newContent: string) => {
     setFacts(newContent);
     if (language !== 'en') {
-      translateText(newContent, language).then((translatedText) => {
-        setTranslatedFacts(translatedText);
-      });
+      const translatedText = await rateLimitedTranslateText(newContent, language);
+      setTranslatedFacts(translatedText);
     } else {
       setTranslatedFacts(newContent);
     }
@@ -281,15 +304,15 @@ function App() {
 
           // Translate content if the current language is not English
           if (language !== 'en') {
-            const translatedInsights = await translateText(insights, language);
+            const translatedInsights = await rateLimitedTranslateText(insights, language);
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
               eventsWithImages.map(async (event: any) => ({
                 ...event,
-                cardTitle: await translateText(event.cardTitle, language),
-                cardSubtitle: await translateText(event.cardSubtitle, language),
-                cardDetailedText: await translateText(event.cardDetailedText, language),
+                cardTitle: await rateLimitedTranslateText(event.cardTitle, language),
+                cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, language),
+                cardDetailedText: await rateLimitedTranslateText(event.cardDetailedText, language),
               }))
             );
             setHistoricalEvents(translatedEvents);
@@ -422,7 +445,7 @@ function App() {
 
       // Translate the analysis if the current language is not English
       if (language !== 'en') {
-        const translatedAnalysis = await translateText(analysis, language);
+        const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
         setTranslatedFacts(translatedAnalysis);
       } else {
         setTranslatedFacts(analysis);
@@ -508,7 +531,7 @@ function App() {
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
-          const translatedText = await translateText(newAnalysis, currentLang);
+          const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
         } else {
           setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
@@ -547,12 +570,12 @@ function App() {
     // Translate all content
     const translateAllContent = async () => {
       if (facts) {
-        const translatedFactsText = await translateText(facts, newLanguage);
+        const translatedFactsText = await rateLimitedTranslateText(facts, newLanguage);
         setTranslatedFacts(translatedFactsText);
       }
 
       if (historicalInsights) {
-        const translatedHistoricalInsights = await translateText(historicalInsights, newLanguage);
+        const translatedHistoricalInsights = await rateLimitedTranslateText(historicalInsights, newLanguage);
         setHistoricalInsights(translatedHistoricalInsights);
       }
 
@@ -560,9 +583,9 @@ function App() {
         const translatedEvents = await Promise.all(
           historicalEvents.map(async (event) => ({
             ...event,
-            cardTitle: await translateText(event.cardTitle, newLanguage),
-            cardSubtitle: await translateText(event.cardSubtitle, newLanguage),
-            cardDetailedText: await translateText(event.cardDetailedText, newLanguage),
+            cardTitle: await rateLimitedTranslateText(event.cardTitle, newLanguage),
+            cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, newLanguage),
+            cardDetailedText: await rateLimitedTranslateText(event.cardDetailedText, newLanguage),
           }))
         );
         setHistoricalEvents(translatedEvents);
@@ -572,8 +595,8 @@ function App() {
         const translatedNewsArticles = await Promise.all(
           newsArticles.map(async (article) => ({
             ...article,
-            title: await translateText(article.title, newLanguage),
-            description: await translateText(article.description, newLanguage),
+            title: await rateLimitedTranslateText(article.title, newLanguage),
+            description: await rateLimitedTranslateText(article.description, newLanguage),
           }))
         );
         setNewsArticles(translatedNewsArticles);
@@ -583,8 +606,8 @@ function App() {
         const translatedThemes = await Promise.all(
           dynamicThemes.map(async (theme) => ({
             ...theme,
-            name: await translateText(theme.name, newLanguage),
-            prompt: await translateText(theme.prompt, newLanguage),
+            name: await rateLimitedTranslateText(theme.name, newLanguage),
+            prompt: await rateLimitedTranslateText(theme.prompt, newLanguage),
           }))
         );
         setDynamicThemes(translatedThemes);
@@ -791,14 +814,14 @@ function App() {
           location={virtualTourLocation}
           onClose={() => setIsVirtualTourActive(false)}
           language={language}
-          onTranslate={translateText}
+          onTranslate={rateLimitedTranslateText}
         />
       )}
       {isNewsPanelActive && newsArticles.length > 0 && (
         <NewsPanel
           newsArticles={newsArticles}
           language={language}
-          onTranslate={translateText}
+          onTranslate={rateLimitedTranslateText}
           onClose={() => setIsNewsPanelActive(false)}
         />
       )}
