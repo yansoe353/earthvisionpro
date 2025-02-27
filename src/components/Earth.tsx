@@ -452,7 +452,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={latitude}
             onClick={handleClusterClick}
           >
-            <div className="cluster-marker">
+            <div className="hotspot-cluster-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
               {cluster.properties.point_count}
             </div>
           </Marker>
@@ -475,7 +475,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               setSelectedHotspot(hotspot);
             }}
           >
-            <div className="hotspot-marker">
+            <div className="hotspot-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
               🔥
             </div>
           </Marker>
