@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -6,8 +6,9 @@ import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import VirtualTour from './components/VirtualTour';
 import { Chrono } from 'react-chrono';
-import axios from 'axios'; // For making API requests
-import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API library
+import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { debounce } from 'lodash';
 import './index.css';
 
 // Initialize the Gemini API client
@@ -29,12 +30,12 @@ const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
 let lastRequestTime = 0;
 
 // Translation function using the Gemini API with rate limiting and caching
-const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+const rateLimitedTranslateText = async (text, targetLanguage) => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
 
   if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
+    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
   }
 
   lastRequestTime = Date.now();
@@ -68,20 +69,20 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
 };
 
 // Fetch image using Pexels API
-const fetchImage = async (query: string): Promise<string | null> => {
+const fetchImage = async (query) => {
   try {
     const response = await axios.get('https://api.pexels.com/v1/search', {
       headers: {
-        Authorization: import.meta.env.VITE_PIXEL_API_KEY, // Replace with your Pexels API key
+        Authorization: import.meta.env.VITE_PIXEL_API_KEY,
       },
       params: {
-        query: query, // Use the query (e.g., location name or event title)
-        per_page: 1, // Fetch only one image
+        query,
+        per_page: 1,
       },
     });
 
     if (response.data.photos && response.data.photos.length > 0) {
-      return response.data.photos[0].src.large; // Return the URL of the large-sized image
+      return response.data.photos[0].src.large;
     } else {
       console.warn('No images found for the query:', query);
       return null;
@@ -100,14 +101,13 @@ const YOUTUBE_API_KEYS = [
 ];
 
 // Fetch YouTube videos using the generated prompt
-const fetchYouTubeVideos = async (location: string) => {
+const fetchYouTubeVideos = async (location) => {
   const searchPrompt = await generateYouTubeSearchPrompt(location);
   if (!searchPrompt) {
     console.error('Failed to generate YouTube search prompt.');
     return [];
   }
 
-  // Try each API key until one succeeds
   for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
     const apiKey = YOUTUBE_API_KEYS[i];
     if (!apiKey) {
@@ -125,12 +125,12 @@ const fetchYouTubeVideos = async (location: string) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
-        continue; // Try the next key
+        continue;
       }
 
       const data = await response.json();
       if (data.items && data.items.length > 0) {
-        return data.items.map((item: any) => ({
+        return data.items.map((item) => ({
           id: item.id.videoId,
           title: item.snippet.title,
           description: item.snippet.description,
@@ -142,7 +142,7 @@ const fetchYouTubeVideos = async (location: string) => {
       }
     } catch (error) {
       console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
-      continue; // Try the next key
+      continue;
     }
   }
 
@@ -151,7 +151,7 @@ const fetchYouTubeVideos = async (location: string) => {
 };
 
 // Generate YouTube search prompt using Groq API
-const generateYouTubeSearchPrompt = async (location: string) => {
+const generateYouTubeSearchPrompt = async (location) => {
   try {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -180,7 +180,7 @@ const generateYouTubeSearchPrompt = async (location: string) => {
 };
 
 // Generate news content using Groq API
-const generateNewsWithAI = async (location: string) => {
+const generateNewsWithAI = async (location) => {
   try {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -211,34 +211,39 @@ const generateNewsWithAI = async (location: string) => {
 
 // App Component
 function App() {
-  const [facts, setFacts] = useState<string>('');
+  const [facts, setFacts] = useState('');
   const [loading, setLoading] = useState(false);
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<string>('');
-  const [dynamicThemes, setDynamicThemes] = useState<Array<{ name: string, prompt: string }>>([]);
-  const [language, setLanguage] = useState<'en' | 'my' | 'th'>('en');
-  const [translatedFacts, setTranslatedFacts] = useState<string>('');
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [currentLocation, setCurrentLocation] = useState('');
+  const [dynamicThemes, setDynamicThemes] = useState([]);
+  const [language, setLanguage] = useState('en');
+  const [translatedFacts, setTranslatedFacts] = useState('');
   const [translating, setTranslating] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<Array<{ id: string, title: string, description: string, thumbnail: string }>>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState([]);
   const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
-  const [virtualTourLocation, setVirtualTourLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
-  const [newsArticles, setNewsArticles] = useState<Array<{ title: string, description: string, url: string }>>([]);
+  const [virtualTourLocation, setVirtualTourLocation] = useState(null);
+  const [newsArticles, setNewsArticles] = useState([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
-  const [historicalInsights, setHistoricalInsights] = useState<string>('');
-  const [historicalEvents, setHistoricalEvents] = useState<Array<{ title: string; cardTitle: string; cardSubtitle: string; cardDetailedText: string; image?: string }>>([]);
+  const [historicalInsights, setHistoricalInsights] = useState('');
+  const [historicalEvents, setHistoricalEvents] = useState([]);
 
-  const earthContainerRef = useRef<HTMLDivElement>(null);
-  const earthRef = useRef<any>(null);
-  const factsContainerRef = useRef<HTMLDivElement>(null);
-  const lastAnalysisRef = useRef<HTMLDivElement>(null);
-  const buttonPanelRef = useRef<HTMLDivElement>(null);
+  const earthContainerRef = useRef(null);
+  const earthRef = useRef(null);
+  const factsContainerRef = useRef(null);
+  const lastAnalysisRef = useRef(null);
+  const buttonPanelRef = useRef(null);
+
+  // Debounce the handleSearch function
+  const debouncedHandleSearch = useCallback(debounce((lng, lat) => {
+    handleSearch(lng, lat);
+  }, 300), []);
 
   // Handle rewritten content from MarkdownContent
-  const handleRewrittenContent = async (newContent: string) => {
+  const handleRewrittenContent = async (newContent) => {
     setFacts(newContent);
     if (language !== 'en') {
       const translatedText = await rateLimitedTranslateText(newContent, language);
@@ -294,7 +299,7 @@ function App() {
 
           // Fetch images for each event using Pexels API
           const eventsWithImages = await Promise.all(
-            events.map(async (event: any) => {
+            events.map(async (event) => {
               const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
               return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
             })
@@ -308,7 +313,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event: any) => ({
+              eventsWithImages.map(async (event) => ({
                 ...event,
                 cardTitle: await rateLimitedTranslateText(event.cardTitle, language),
                 cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, language),
@@ -332,7 +337,7 @@ function App() {
   };
 
   // Handle search for a location
-  const handleSearch = async (lng: number, lat: number) => {
+  const handleSearch = async (lng, lat) => {
     earthRef.current?.handleSearch(lng, lat);
 
     const response = await fetch(
@@ -349,7 +354,7 @@ function App() {
   };
 
   // Fetch location name from Mapbox Geocoding API
-  const fetchLocationName = async (lng: number, lat: number) => {
+  const fetchLocationName = async (lng, lat) => {
     const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
 
@@ -367,7 +372,7 @@ function App() {
   };
 
   // Analyze image and location with Groq API
-  const analyzeWithGroq = async (imageUrl: string, locationName: string) => {
+  const analyzeWithGroq = async (imageUrl, locationName) => {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
       dangerouslyAllowBrowser: true,
@@ -462,7 +467,7 @@ function App() {
   };
 
   // Generate dynamic themes for analysis
-  const generateDynamicThemes = async (location: string) => {
+  const generateDynamicThemes = async (location) => {
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -492,7 +497,7 @@ function App() {
   };
 
   // Analyze with a specific perspective
-  const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
+  const analyzeWithPerspective = async (perspective, customPrompt) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
@@ -512,7 +517,7 @@ function App() {
         'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
       };
 
-      const prompt = customPrompt || defaultPromptMap[perspective as keyof typeof defaultPromptMap];
+      const prompt = customPrompt || defaultPromptMap[perspective];
 
       const completion = await groq.chat.completions.create({
         messages: [
@@ -563,7 +568,7 @@ function App() {
   };
 
   // Handle language change for all insights and content
-  const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
+  const handleLanguageChange = async (newLanguage) => {
     setTranslating(true);
     setLanguage(newLanguage);
 
@@ -618,18 +623,23 @@ function App() {
     setTranslating(false);
   };
 
+  // Memoize dynamic themes
+  const memoizedDynamicThemes = useMemo(() => dynamicThemes, [dynamicThemes]);
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
-        <Earth
-          ref={earthRef}
-          onCaptureView={captureView}
-          showWeatherWidget={showWeatherWidget}
-          setShowWeatherWidget={setShowWeatherWidget}
-        />
+        <Suspense fallback={<div>Loading Earth...</div>}>
+          <Earth
+            ref={earthRef}
+            onCaptureView={captureView}
+            showWeatherWidget={showWeatherWidget}
+            setShowWeatherWidget={setShowWeatherWidget}
+          />
+        </Suspense>
       </div>
       <div className="info-panel">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={debouncedHandleSearch} />
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
@@ -683,7 +693,7 @@ function App() {
           <div className="facts analysis-data" ref={factsContainerRef}>
             {capturedImage && (
               <div className="captured-image-container">
-                <img src={capturedImage} alt="Captured view" className="captured-image" />
+                <img src={capturedImage} alt="Captured view" className="captured-image" loading="lazy" />
               </div>
             )}
             <MarkdownContent
@@ -717,7 +727,7 @@ function App() {
                     Analysis of Travel locations
                   </button>
                 </div>
-                {dynamicThemes.length > 0 && (
+                {memoizedDynamicThemes.length > 0 && (
                   <div className="analysis-buttons dynamic-buttons">
                     {currentLocation && (
                       <button
@@ -728,7 +738,7 @@ function App() {
                         Refresh Themes
                       </button>
                     )}
-                    {dynamicThemes.map((theme, index) => (
+                    {memoizedDynamicThemes.map((theme, index) => (
                       <button
                         key={theme.name}
                         className={`analysis-button dynamic-${index}`}
@@ -810,20 +820,24 @@ function App() {
         )}
       </div>
       {isVirtualTourActive && virtualTourLocation && (
-        <VirtualTour
-          location={virtualTourLocation}
-          onClose={() => setIsVirtualTourActive(false)}
-          language={language}
-          onTranslate={rateLimitedTranslateText}
-        />
+        <Suspense fallback={<div>Loading Virtual Tour...</div>}>
+          <VirtualTour
+            location={virtualTourLocation}
+            onClose={() => setIsVirtualTourActive(false)}
+            language={language}
+            onTranslate={rateLimitedTranslateText}
+          />
+        </Suspense>
       )}
       {isNewsPanelActive && newsArticles.length > 0 && (
-        <NewsPanel
-          newsArticles={newsArticles}
-          language={language}
-          onTranslate={rateLimitedTranslateText}
-          onClose={() => setIsNewsPanelActive(false)}
-        />
+        <Suspense fallback={<div>Loading News Panel...</div>}>
+          <NewsPanel
+            newsArticles={newsArticles}
+            language={language}
+            onTranslate={rateLimitedTranslateText}
+            onClose={() => setIsNewsPanelActive(false)}
+          />
+        </Suspense>
       )}
     </div>
   );
