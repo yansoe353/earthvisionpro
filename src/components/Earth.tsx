@@ -81,6 +81,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES[0].value);
   const [terrainExaggeration, setTerrainExaggeration] = useState<number>(1.5);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [hotspotClusters, setHotspotClusters] = useState<Cluster[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<Feature | null>(null);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
@@ -126,8 +127,16 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker, updateMarkerNote } = useUserMarkers();
 
-  // Initialize supercluster
+  // Initialize supercluster for earthquakes
   const supercluster = useMemo(() => {
+    return new Supercluster({
+      radius: 40,
+      maxZoom: 16,
+    });
+  }, []);
+
+  // Initialize supercluster for hotspots
+  const hotspotSupercluster = useMemo(() => {
     return new Supercluster({
       radius: 40,
       maxZoom: 16,
@@ -156,6 +165,28 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, [earthquakes, supercluster, mapRef]);
 
+  // Load hotspot data into supercluster
+  useEffect(() => {
+    if (hotspots.length > 0) {
+      const points = hotspots.map((hotspot) => ({
+        type: "Feature" as const,
+        properties: { id: hotspot.id },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [hotspot.coordinates[0], hotspot.coordinates[1]],
+        },
+      }));
+      hotspotSupercluster.load(points);
+
+      const bounds = mapRef.current?.getBounds();
+      const zoom = mapRef.current?.getZoom();
+
+      if (bounds && zoom) {
+        setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      }
+    }
+  }, [hotspots, hotspotSupercluster, mapRef]);
+
   // Handle map move and zoom events
   const handleMapMove = useCallback(() => {
     const bounds = mapRef.current?.getBounds();
@@ -163,6 +194,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
     if (bounds && zoom) {
       setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
     }
 
     // Recalculate nearby creatures when the map moves
@@ -172,7 +204,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       );
       setNearbyCreatures(nearby);
     }
-  }, [supercluster, mapRef, userLocation, creatures]);
+  }, [supercluster, hotspotSupercluster, mapRef, userLocation, creatures]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -386,6 +418,71 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       }
     });
   }, [clusters, supercluster, mapRef]);
+
+  // Render hotspot clusters
+  const renderHotspotClusters = useMemo(() => {
+    return hotspotClusters.map((cluster) => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+
+      const handleClusterClick = () => {
+        if (cluster.properties.cluster) {
+          const bbox = hotspotSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
+          mapRef.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: bbox,
+            duration: 1000,
+          });
+        } else {
+          const hotspot: Hotspot = {
+            id: cluster.properties.id || 'default-id',
+            name: `Hotspot - ${cluster.properties.id}`,
+            description: 'A popular hotspot',
+            coordinates: [longitude, latitude],
+            iframeUrl: 'https://captures-three.vercel.app/',
+          };
+          setSelectedHotspot(hotspot);
+        }
+      };
+
+      if (cluster.properties.cluster) {
+        return (
+          <Marker
+            key={`hotspot-cluster-${cluster.properties.cluster_id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={handleClusterClick}
+          >
+            <div className="cluster-marker">
+              {cluster.properties.point_count}
+            </div>
+          </Marker>
+        );
+      } else {
+        return (
+          <Marker
+            key={`hotspot-${cluster.properties.id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              const hotspot: Hotspot = {
+                id: cluster.properties.id || 'default-id',
+                name: `Hotspot - ${cluster.properties.id}`,
+                description: 'A popular hotspot',
+                coordinates: [longitude, latitude],
+                iframeUrl: 'https://captures-three.vercel.app/',
+              };
+              setSelectedHotspot(hotspot);
+            }}
+          >
+            <div className="hotspot-marker">
+              🔥
+            </div>
+          </Marker>
+        );
+      }
+    });
+  }, [hotspotClusters, hotspotSupercluster, mapRef]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
@@ -711,6 +808,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         {/* Earthquake Markers (Clustered) */}
         {renderClusters}
 
+        {/* Hotspot Markers (Clustered) */}
+        {renderHotspotClusters}
+
         {/* User-Generated Markers */}
         {userMarkers.map((marker) => (
           <Marker
@@ -724,24 +824,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           >
             <div className="user-marker">
               <span>{marker.label}</span>
-            </div>
-          </Marker>
-        ))}
-
-        {/* Hotspots */}
-        {hotspots.map((hotspot) => (
-          <Marker
-            key={hotspot.id}
-            longitude={hotspot.coordinates[0]}
-            latitude={hotspot.coordinates[1]}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setSelectedHotspot(hotspot);
-              setIframeLoaded(false);
-            }}
-          >
-            <div className="hotspot-marker">
-              🔥
             </div>
           </Marker>
         ))}
