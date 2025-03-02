@@ -11,7 +11,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { debounce } from 'lodash';
 import './index.css';
 
-// Initialize the Gemini API client
+// Initialize the Gemini API clients
 const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
