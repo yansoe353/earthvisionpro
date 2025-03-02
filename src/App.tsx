@@ -445,58 +445,69 @@ function App() {
   };
 
   // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) return;
+// Capture the current view of the globe
+const captureView = async () => {
+  if (!earthContainerRef.current || !earthRef.current) {
+    console.error('Earth container or reference is not available.');
+    return;
+  }
 
-    // Reset historical insights and events
-    setHistoricalInsights('');
-    setHistoricalEvents([]);
+  // Reset historical insights and events
+  setHistoricalInsights('');
+  setHistoricalEvents([]);
 
-    setShowWeatherWidget(false);
-    setLoading(true);
-    setDynamicThemes([]);
+  setShowWeatherWidget(false);
+  setLoading(true);
+  setDynamicThemes([]);
 
-    try {
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      await new Promise((resolve) => {
-        map.once('idle', resolve);
-      });
-
-      const canvas = map.getCanvas();
-      const dataUrl = canvas.toDataURL('image/png');
-      setCapturedImage(dataUrl);
-
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      const locationName = await fetchLocationName(lng, lat);
-      setCurrentLocation(locationName);
-
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
-      setFacts(analysis);
-
-      // Translate the analysis if the current language is not English
-      if (language !== 'en') {
-        const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
-        setTranslatedFacts(translatedAnalysis);
-      } else {
-        setTranslatedFacts(analysis);
-      }
-
-      await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
-    } catch (error) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      setLoading(false);
+  try {
+    const map = earthRef.current.getMap();
+    if (!map) {
+      throw new Error('Map instance not found.');
     }
-  };
+
+    await new Promise((resolve) => {
+      map.once('idle', resolve);
+    });
+
+    const canvas = map.getCanvas();
+    if (!canvas) {
+      throw new Error('Canvas not found.');
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    setCapturedImage(dataUrl);
+
+    const center = map.getCenter();
+    const lng = center.lng;
+    const lat = center.lat;
+
+    console.log('Captured view center:', lng, lat);
+
+    const locationName = await fetchLocationName(lng, lat);
+    setCurrentLocation(locationName);
+
+    const analysis = await analyzeWithGroq(dataUrl, locationName);
+    setFacts(analysis);
+
+    // Translate the analysis if the current language is not English
+    if (language !== 'en') {
+      const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
+      setTranslatedFacts(translatedAnalysis);
+    } else {
+      setTranslatedFacts(analysis);
+    }
+
+    await generateDynamicThemes(locationName);
+    await fetchYouTubeVideos(locationName);
+  } catch (error) {
+    console.error('Error capturing view:', error);
+    setFacts('Error getting facts about this region. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
