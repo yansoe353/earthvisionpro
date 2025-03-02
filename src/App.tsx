@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -11,7 +11,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { debounce } from 'lodash';
 import './index.css';
 
-// Initialize the Gemini API clients
+// Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
@@ -445,69 +445,74 @@ function App() {
   };
 
   // Capture the current view of the globe
-// Capture the current view of the globe
-const captureView = async () => {
-  if (!earthContainerRef.current || !earthRef.current) {
-    console.error('Earth container or reference is not available.');
-    return;
-  }
-
-  // Reset historical insights and events
-  setHistoricalInsights('');
-  setHistoricalEvents([]);
-
-  setShowWeatherWidget(false);
-  setLoading(true);
-  setDynamicThemes([]);
-
-  try {
-    const map = earthRef.current.getMap();
-    if (!map) {
-      throw new Error('Map instance not found.');
+  const captureView = async () => {
+    if (!earthContainerRef.current || !earthRef.current) {
+      console.error('Earth container or reference is not available.');
+      return;
     }
 
-    await new Promise((resolve) => {
-      map.once('idle', resolve);
-    });
+    console.log('Capturing view...');
 
-    const canvas = map.getCanvas();
-    if (!canvas) {
-      throw new Error('Canvas not found.');
+    // Reset historical insights and events
+    setHistoricalInsights('');
+    setHistoricalEvents([]);
+
+    setShowWeatherWidget(false);
+    setLoading(true);
+    setDynamicThemes([]);
+
+    try {
+      const map = earthRef.current.getMap();
+      if (!map) {
+        throw new Error('Map instance not found.');
+      }
+
+      console.log('Map instance found.');
+
+      await new Promise((resolve) => {
+        map.once('idle', resolve);
+      });
+
+      const canvas = map.getCanvas();
+      if (!canvas) {
+        throw new Error('Canvas not found.');
+      }
+
+      console.log('Canvas found.');
+
+      // Reduce the resolution of the captured image for better performance on mobile
+      const dataUrl = canvas.toDataURL('image/png', 0.5); // Reduce quality
+      setCapturedImage(dataUrl);
+
+      const center = map.getCenter();
+      const lng = center.lng;
+      const lat = center.lat;
+
+      console.log('Captured view center:', lng, lat);
+
+      const locationName = await fetchLocationName(lng, lat);
+      setCurrentLocation(locationName);
+
+      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      setFacts(analysis);
+
+      // Translate the analysis if the current language is not English
+      if (language !== 'en') {
+        const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
+        setTranslatedFacts(translatedAnalysis);
+      } else {
+        setTranslatedFacts(analysis);
+      }
+
+      await generateDynamicThemes(locationName);
+      await fetchYouTubeVideos(locationName);
+    } catch (error) {
+      console.error('Error capturing view:', error);
+      setFacts('Error getting facts about this region. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    const dataUrl = canvas.toDataURL('image/png');
-    setCapturedImage(dataUrl);
-
-    const center = map.getCenter();
-    const lng = center.lng;
-    const lat = center.lat;
-
-    console.log('Captured view center:', lng, lat);
-
-    const locationName = await fetchLocationName(lng, lat);
-    setCurrentLocation(locationName);
-
-    const analysis = await analyzeWithGroq(dataUrl, locationName);
-    setFacts(analysis);
-
-    // Translate the analysis if the current language is not English
-    if (language !== 'en') {
-      const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
-      setTranslatedFacts(translatedAnalysis);
-    } else {
-      setTranslatedFacts(analysis);
-    }
-
-    await generateDynamicThemes(locationName);
-    await fetchYouTubeVideos(locationName);
-  } catch (error) {
-    console.error('Error capturing view:', error);
-    setFacts('Error getting facts about this region. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Generate dynamic themes for analysis
   const generateDynamicThemes = async (location: string) => {
@@ -668,6 +673,29 @@ const captureView = async () => {
 
   // Memoize dynamic themes
   const memoizedDynamicThemes = useMemo(() => dynamicThemes, [dynamicThemes]);
+
+  // Add touch event listeners if needed
+  useEffect(() => {
+    const handleTouchMove = (event: TouchEvent) => {
+      // Handle touch move event
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      // Handle touch end event
+    };
+
+    if (earthContainerRef.current) {
+      earthContainerRef.current.addEventListener('touchmove', handleTouchMove);
+      earthContainerRef.current.addEventListener('touchend', handleTouchEnd);
+    }
+
+    return () => {
+      if (earthContainerRef.current) {
+        earthContainerRef.current.removeEventListener('touchmove', handleTouchMove);
+        earthContainerRef.current.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, []);
 
   return (
     <div className="app">
