@@ -461,6 +461,12 @@ function App() {
     setLoading(true);
     setDynamicThemes([]);
 
+    const timeout = setTimeout(() => {
+      console.error('Analyzing view is taking too long. Please check your internet connection or try again later.');
+      setFacts('Error: Analyzing view is taking too long. Please check your internet connection or try again later.');
+      setLoading(false);
+    }, 30000); // 30 seconds timeout
+
     try {
       const map = earthRef.current.getMap();
       if (!map) {
@@ -510,6 +516,7 @@ function App() {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   };
