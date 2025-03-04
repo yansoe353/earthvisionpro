@@ -15,9 +15,55 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
-import AIImageGenerator from './AIImageGenerator';
 
-// ... (other imports and constants)
+type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
+
+type Hotspot = {
+  id: string;
+  name: string;
+  description: string;
+  coordinates: [number, number];
+  iframeUrl: string;
+};
+
+type MagicalCreature = {
+  id: string;
+  name: string;
+  type: 'dragon' | 'unicorn' | 'phoenix' | 'griffin';
+  image: string;
+  description: string;
+  coordinates: [number, number];
+  iframeUrl: string;
+  minigameUrl: string;
+};
+
+const hotspots: Hotspot[] = [
+  {
+    id: '1',
+    name: 'Central Park',
+    description: 'A large public park in New York City.',
+    coordinates: [-73.9654, 40.7829],
+    iframeUrl: 'https://captures-three.vercel.app/',
+  },
+  {
+    id: '2',
+    name: 'Eiffel Tower',
+    description: 'A famous landmark in Paris, France.',
+    coordinates: [2.2945, 48.8584],
+    iframeUrl: 'https://captures-three.vercel.app/',
+  },
+  {
+    id: '3',
+    name: 'Arosa Hörnli - Switzerland',
+    description: 'A famous Arosa Hörnli in Switzerland.',
+    coordinates: [9.714189134324783, 46.52136798216034],
+    iframeUrl: 'https://captures-three.vercel.app/swis.html',
+  },
+];
+
+const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
+  callback();
+}, 300);
 
 const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidget, setShowWeatherWidget }, ref) => {
   const mapRef = useRef<MapRef>(null);
@@ -52,6 +98,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [show3DBuildings, setShow3DBuildings] = useState(false);
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
+  const [showTransit, setShowTransit] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
 
   // Weather layer state
@@ -1080,9 +1127,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             />
           </Source>
         )}
-
-        {/* AI Image Generator */}
-        <AIImageGenerator mapRef={mapRef} />
       </Map>
     </div>
   );
