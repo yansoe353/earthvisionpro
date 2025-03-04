@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { Marker, Popup } from 'react-map-gl';
+import React, { useState, useRef, useCallback } from 'react';
+import { Marker, Popup, MapLayerMouseEvent } from 'react-map-gl';
 import axios from 'axios';
 
-const AIImageGenerator = ({ mapRef }) => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [generatedImage, setGeneratedImage] = useState(null);
-  const [style, setStyle] = useState('realistic');
+interface AIImageGeneratorProps {
+  mapRef: React.RefObject<any>;
+}
+
+interface Location {
+  lng: number;
+  lat: number;
+}
+
+const AIImageGenerator: React.FC<AIImageGeneratorProps> = ({ mapRef }) => {
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [style, setStyle] = useState<'realistic' | 'impressionist' | 'futuristic'>('realistic');
   const [loading, setLoading] = useState(false);
 
-  const handleMapClick = (event) => {
+  const handleMapClick = (event: MapLayerMouseEvent) => {
     const { lngLat } = event;
     setSelectedLocation({ lng: lngLat.lng, lat: lngLat.lat });
   };
@@ -37,8 +46,8 @@ const AIImageGenerator = ({ mapRef }) => {
     }
   };
 
-  const handleStyleChange = (event) => {
-    setStyle(event.target.value);
+  const handleStyleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setStyle(event.target.value as 'realistic' | 'impressionist' | 'futuristic');
   };
 
   return (
@@ -65,8 +74,8 @@ const AIImageGenerator = ({ mapRef }) => {
       )}
       {generatedImage && (
         <Popup
-          longitude={selectedLocation.lng}
-          latitude={selectedLocation.lat}
+          longitude={selectedLocation?.lng}
+          latitude={selectedLocation?.lat}
           onClose={() => setGeneratedImage(null)}
         >
           <div>
