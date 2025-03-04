@@ -101,7 +101,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showTransit, setShowTransit] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
 
-  // Weather layer state
+  // Weather layer stateS
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
   const [showWeatherTabs, setShowWeatherTabs] = useState(false);
 
