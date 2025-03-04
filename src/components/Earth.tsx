@@ -721,7 +721,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }}
   >
     <div className="creature-marker">
-      <img src="https://i.ibb.co/j9HDFHJw/portal.png" alt="Custom Icon" style={{ width: '24px', height: '24px' }} />
+      <img src="https://i.ibb.co/dw8FdD4j/ppt.webp" alt="Custom Icon" style={{ width: '24px', height: '24px' }} />
     </div>
   </Marker>
 ))}
