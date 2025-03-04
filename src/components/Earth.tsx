@@ -709,22 +709,22 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         )}
 
         {/* Magical Creatures */}
-        {creatures.map((creature) => (
-          <Marker
-            key={creature.id}
-            longitude={creature.coordinates[0]}
-            latitude={creature.coordinates[1]}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setSelectedCreature(creature);
-              setIframeLoaded(false);
-            }}
-          >
-            <div className="creature-marker">
-              🐉
-            </div>
-          </Marker>
-        ))}
+{creatures.map((creature) => (
+  <Marker
+    key={creature.id}
+    longitude={creature.coordinates[0]}
+    latitude={creature.coordinates[1]}
+    onClick={(e) => {
+      e.originalEvent.stopPropagation();
+      setSelectedCreature(creature);
+      setIframeLoaded(false);
+    }}
+  >
+    <div className="creature-marker">
+      <img src="https://sakawma.online/img/portal.png" alt="Custom Icon" style={{ width: '24px', height: '24px' }} />
+    </div>
+  </Marker>
+))}
 
         {/* Popup for Selected Creature */}
         {selectedCreature && (
