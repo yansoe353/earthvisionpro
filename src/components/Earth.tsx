@@ -699,14 +699,15 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
-        {/* User Location Marker */}
-        {userLocation && (
-          <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
-            <div className="user-location-marker">
-              <img src="/user-icon.png" alt="Your Location" width={30} height={30} />
-            </div>
-          </Marker>
-        )}
+      {/* User Location Marker */}
+{userLocation && (
+  <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
+    <div className="user-location-marker">
+      📍 {/* Location Pin Emoji */}
+    </div>
+  </Marker>
+)}
+
 
     {/* Magical Creatures */}
 {creatures.map((creature) => (
