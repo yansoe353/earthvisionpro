@@ -708,7 +708,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         )}
 
-        {/* Magical Creatures */}
+    {/* Magical Creatures */}
 {creatures.map((creature) => (
   <Marker
     key={creature.id}
@@ -721,10 +721,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }}
   >
     <div className="creature-marker">
-      <img src="https://i.ibb.co/tpjsgYY3/ered-1-removebg-preview.png " alt="Custom Icon" style={{ width: '24px', height: '24px' }} />
+      🌀 {/* Portal Emoji */}
     </div>
   </Marker>
 ))}
+
 
         {/* Popup for Selected Creature */}
         {selectedCreature && (
