@@ -15,7 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
-import { hotspotData } from '../data/hotspotData'; // Import the hotspot data
+import { hotspotData } from './hotspotData'; // Import the hotspot data
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
