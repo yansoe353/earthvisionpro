@@ -144,6 +144,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Load hotspot data into supercluster
   useEffect(() => {
+    console.log('Hotspot Data:', hotspotData);
     if (hotspotData.length > 0) {
       const points = hotspotData.map((hotspot) => ({
         type: "Feature" as const,
@@ -676,32 +677,32 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         }}
         attributionControl={false}
       >
-      {/* User Location Marker */}
-{userLocation && (
-  <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
-    <div className="user-location-marker">
-      📍 {/* Location Pin Emoji */}
-    </div>
-  </Marker>
-)}
+        {/* User Location Marker */}
+        {userLocation && (
+          <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
+            <div className="user-location-marker">
+              📍 {/* Location Pin Emoji */}
+            </div>
+          </Marker>
+        )}
 
         {/* Magical Creatures */}
-{creatures.map((creature) => (
-  <Marker
-    key={creature.id}
-    longitude={creature.coordinates[0]}
-    latitude={creature.coordinates[1]}
-    onClick={(e) => {
-      e.originalEvent.stopPropagation();
-      setSelectedCreature(creature);
-      setIframeLoaded(false);
-    }}
-  >
-    <div className="creature-marker">
-      🌀 {/* Portal Emoji */}
-    </div>
-  </Marker>
-))}
+        {creatures.map((creature) => (
+          <Marker
+            key={creature.id}
+            longitude={creature.coordinates[0]}
+            latitude={creature.coordinates[1]}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedCreature(creature);
+              setIframeLoaded(false);
+            }}
+          >
+            <div className="creature-marker">
+              🌀 {/* Portal Emoji */}
+            </div>
+          </Marker>
+        ))}
 
         {/* Popup for Selected Creature */}
         {selectedCreature && (
