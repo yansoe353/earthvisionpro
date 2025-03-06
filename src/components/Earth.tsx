@@ -15,6 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
+import { hotspotData } from '../data/hotspotData'; // Import the hotspot data
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -36,30 +37,6 @@ type MagicalCreature = {
   iframeUrl: string;
   minigameUrl: string;
 };
-
-const hotspots: Hotspot[] = [
-  {
-    id: '1',
-    name: 'Central Park',
-    description: 'A large public park in New York City.',
-    coordinates: [-73.9654, 40.7829],
-    iframeUrl: 'https://captures-three.vercel.app/',
-  },
-  {
-    id: '2',
-    name: 'Eiffel Tower',
-    description: 'A famous landmark in Paris, France.',
-    coordinates: [2.2945, 48.8584],
-    iframeUrl: 'https://captures-three.vercel.app/',
-  },
-  {
-    id: '3',
-    name: 'Arosa Hörnli - Switzerland',
-    description: 'A famous Arosa Hörnli in Switzerland.',
-    coordinates: [9.714189134324783, 46.52136798216034],
-    iframeUrl: 'https://captures-three.vercel.app/swis.html',
-  },
-];
 
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
   callback();
@@ -167,8 +144,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Load hotspot data into supercluster
   useEffect(() => {
-    if (hotspots.length > 0) {
-      const points = hotspots.map((hotspot) => ({
+    if (hotspotData.length > 0) {
+      const points = hotspotData.map((hotspot) => ({
         type: "Feature" as const,
         properties: { id: hotspot.id },
         geometry: {
@@ -185,7 +162,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
       }
     }
-  }, [hotspots, hotspotSupercluster, mapRef]);
+  }, [hotspotData, hotspotSupercluster, mapRef]);
 
   // Handle map move and zoom events
   const handleMapMove = useCallback(() => {
@@ -708,8 +685,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   </Marker>
 )}
 
-
-    {/* Magical Creatures */}
+        {/* Magical Creatures */}
 {creatures.map((creature) => (
   <Marker
     key={creature.id}
@@ -726,7 +702,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     </div>
   </Marker>
 ))}
-
 
         {/* Popup for Selected Creature */}
         {selectedCreature && (
