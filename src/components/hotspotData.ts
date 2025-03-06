@@ -1,13 +1,5 @@
 // hotspotData.ts
-export type Hotspot = {
-  id: string;
-  name: string;
-  description: string;
-  coordinates: [number, number];
-  iframeUrl: string;
-};
-
-export const hotspots: Hotspot[] = [
+export const hotspotData = [
   {
     id: '1',
     name: 'Central Park',
