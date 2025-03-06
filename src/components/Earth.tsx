@@ -15,7 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { getDistance } from 'geolib';
-import { hotspotData } from './hotspotData'; // Import the hotspot data
+import { defaultHotspotData } from './hotspotData'; // Import the default hotspot data
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
 
@@ -65,6 +65,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [isLocationPermissionGranted, setIsLocationPermissionGranted] = useState(false);
   const [creatures, setCreatures] = useState<MagicalCreature[]>([]);
   const [nearbyCreatures, setNearbyCreatures] = useState<MagicalCreature[]>([]);
+  const [customHotspots, setCustomHotspots] = useState<Hotspot[]>([]);
 
   // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -144,9 +145,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Load hotspot data into supercluster
   useEffect(() => {
-    console.log('Hotspot Data:', hotspotData);
-    if (hotspotData.length > 0) {
-      const points = hotspotData.map((hotspot) => ({
+    const allHotspots = [...defaultHotspotData, ...customHotspots];
+    if (allHotspots.length > 0) {
+      const points = allHotspots.map((hotspot) => ({
         type: "Feature" as const,
         properties: { id: hotspot.id },
         geometry: {
@@ -163,7 +164,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
       }
     }
-  }, [hotspotData, hotspotSupercluster, mapRef]);
+  }, [defaultHotspotData, customHotspots, hotspotSupercluster, mapRef]);
 
   // Handle map move and zoom events
   const handleMapMove = useCallback(() => {
@@ -528,6 +529,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     };
   }, []);
 
+  // Function to add a custom hotspot
+  const addCustomHotspot = (name: string, description: string, coordinates: [number, number], iframeUrl: string) => {
+    const newHotspot: Hotspot = {
+      id: `custom-hotspot-${customHotspots.length + 1}`,
+      name,
+      description,
+      coordinates,
+      iframeUrl,
+    };
+    setCustomHotspots([...customHotspots, newHotspot]);
+  };
+
   return (
     <div ref={mapContainerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Fullscreen Button with Tooltip */}
@@ -620,6 +633,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           mapStyles={MAPBOX_STYLES}
           terrainExaggeration={terrainExaggeration}
           setTerrainExaggeration={setTerrainExaggeration}
+          addCustomHotspot={addCustomHotspot} // Pass the function to add custom hotspots
         />
       )}
 
