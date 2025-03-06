@@ -86,7 +86,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
   const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`;
 
-  // Weather layers with icons
+  // Weather layers with iconss
   const WEATHER_LAYERS = [
     { id: 'clouds_new', label: 'Clouds', icon: '☁️' },
     { id: 'precipitation_new', label: 'Rain', icon: '🌧️' },
