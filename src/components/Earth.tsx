@@ -280,7 +280,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             type: randomType, // Valid type
             image: `https://example.com/creature-${i}.jpg`,
             description: `A magical ${randomType}`,
-            coordinates: randomCoordinates,
+            coordinates: randomCoordinates as [number, number],
             iframeUrl: 'https://captures-three.vercel.app/',
             minigameUrl: 'https://example.com/minigame',
           });
@@ -294,7 +294,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           type: 'phoenix', // Valid type
           image: 'https://example.com/rare-creature.jpg',
           description: 'A rare phoenix!',
-          coordinates: farCoordinates,
+          coordinates: farCoordinates as [number, number],
           iframeUrl: 'https://captures-three.vercel.app/',
           minigameUrl: 'https://example.com/minigame',
         });
@@ -1102,7 +1102,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             id="openweathermap-layer"
             type="raster"
             tiles={[OPENWEATHERMAP_TILES.replace('{layer}', selectedWeatherLayer)]}
-            tileSize={252}
+            tileSize={256}
           >
             <Layer
               id="openweathermap-layer-render"
