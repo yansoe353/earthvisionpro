@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Earthquake, UserMarker, MapboxStyle } from '../types';
-import { FaTimes, FaGlobeAmericas, FaMoon, FaCamera, FaMapMarkerAlt, FaTrash } from 'react-icons/fa';
+import { FaTimes, FaGlobeAmericas, FaMoon, FaCamera, FaMapMarkerAlt, FaTrash, FaPlus } from 'react-icons/fa';
 
 interface FeaturePanelProps {
   isDarkTheme: boolean;
@@ -18,6 +18,7 @@ interface FeaturePanelProps {
   mapStyles: MapboxStyle[]; // List of available map styles
   terrainExaggeration: number; // Current terrain exaggeration value
   setTerrainExaggeration: (value: number) => void; // Function to update terrain exaggeration
+  addCustomHotspot: (name: string, description: string, coordinates: [number, number], iframeUrl: string) => void; // Function to add custom hotspot
 }
 
 const FeatureToggle = ({ icon, label, checked, onChange, ariaLabel }: {
@@ -75,95 +76,144 @@ const FeaturePanel = ({
   mapStyles,
   terrainExaggeration,
   setTerrainExaggeration,
-}: FeaturePanelProps) => (
-  <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
-    {/* Close Button */}
-    <button className="close-button" onClick={onClose} aria-label="Close panel">
-      <FaTimes />
-    </button>
+  addCustomHotspot,
+}: FeaturePanelProps) => {
+  const [hotspotName, setHotspotName] = useState('');
+  const [hotspotDescription, setHotspotDescription] = useState('');
+  const [hotspotIframeUrl, setHotspotIframeUrl] = useState('');
 
-    {/* Panel Title */}
-    <h2 className="panel-title">Map Features</h2>
+  const handleAddCustomHotspot = () => {
+    if (clickedLocation && hotspotName && hotspotDescription && hotspotIframeUrl) {
+      addCustomHotspot(hotspotName, hotspotDescription, [clickedLocation.lng, clickedLocation.lat], hotspotIframeUrl);
+      setHotspotName('');
+      setHotspotDescription('');
+      setHotspotIframeUrl('');
+    }
+  };
 
-    {/* Map Style Dropdown */}
-    <div className="feature-toggle">
-      <label>
-        Map Style:
-        <select
-          value={mapStyle}
-          onChange={(e) => setMapStyle(e.target.value)}
-          aria-label="Select map style"
-        >
-          {mapStyles.map((style) => (
-            <option key={style.value} value={style.value}>
-              {style.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    </div>
+  return (
+    <div className={`feature-panel ${isDarkTheme ? 'dark' : ''}`}>
+      {/* Close Button */}
+      <button className="close-button" onClick={onClose} aria-label="Close panel">
+        <FaTimes />
+      </button>
 
-    {/* Disaster Alerts Toggle */}
-    <FeatureToggle
-      icon={<FaGlobeAmericas />}
-      label={showDisasterAlerts ? 'Disable Disaster Alerts' : 'Enable Disaster Alerts'}
-      checked={showDisasterAlerts}
-      onChange={toggleDisasterAlerts}
-      ariaLabel="Toggle disaster alerts"
-    />
+      {/* Panel Title */}
+      <h2 className="panel-title">Map Features</h2>
 
-    {/* Dark Theme Toggle */}
-    <FeatureToggle
-      icon={<FaMoon />}
-      label={isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-      checked={isDarkTheme}
-      onChange={toggleDarkTheme}
-      ariaLabel="Toggle dark theme"
-    />
+      {/* Map Style Dropdown */}
+      <div className="feature-toggle">
+        <label>
+          Map Style:
+          <select
+            value={mapStyle}
+            onChange={(e) => setMapStyle(e.target.value)}
+            aria-label="Select map style"
+          >
+            {mapStyles.map((style) => (
+              <option key={style.value} value={style.value}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-    {/* Capture Feature Toggle */}
-    <FeatureToggle
-      icon={<FaCamera />}
-      label={isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
-      checked={isCaptureEnabled}
-      onChange={toggleCaptureFeature}
-      ariaLabel="Toggle capture feature"
-    />
+      {/* Disaster Alerts Toggle */}
+      <FeatureToggle
+        icon={<FaGlobeAmericas />}
+        label={showDisasterAlerts ? 'Disable Disaster Alerts' : 'Enable Disaster Alerts'}
+        checked={showDisasterAlerts}
+        onChange={toggleDisasterAlerts}
+        ariaLabel="Toggle disaster alerts"
+      />
 
-    {/* Add Marker Button */}
-    <ActionButton
-      icon={<FaMapMarkerAlt />}
-      label="Add Marker"
-      onClick={() => clickedLocation && addUserMarker(clickedLocation.lng, clickedLocation.lat)}
-      disabled={!clickedLocation}
-      ariaLabel="Add marker"
-    />
+      {/* Dark Theme Toggle */}
+      <FeatureToggle
+        icon={<FaMoon />}
+        label={isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+        checked={isDarkTheme}
+        onChange={toggleDarkTheme}
+        ariaLabel="Toggle dark theme"
+      />
 
-    {/* Remove All Markers Button */}
-    <ActionButton
-      icon={<FaTrash />}
-      label="Remove All Markers"
-      onClick={removeAllMarkers}
-      ariaLabel="Remove all markers"
-    />
+      {/* Capture Feature Toggle */}
+      <FeatureToggle
+        icon={<FaCamera />}
+        label={isCaptureEnabled ? 'Disable Capture' : 'Enable Capture'}
+        checked={isCaptureEnabled}
+        onChange={toggleCaptureFeature}
+        ariaLabel="Toggle capture feature"
+      />
 
-    {/* Terrain Exaggeration Slider */}
-    <div className="terrain-control">
-      <label>
-        Terrain Exaggeration:
+      {/* Add Marker Button */}
+      <ActionButton
+        icon={<FaMapMarkerAlt />}
+        label="Add Marker"
+        onClick={() => clickedLocation && addUserMarker(clickedLocation.lng, clickedLocation.lat)}
+        disabled={!clickedLocation}
+        ariaLabel="Add marker"
+      />
+
+      {/* Remove All Markers Button */}
+      <ActionButton
+        icon={<FaTrash />}
+        label="Remove All Markers"
+        onClick={removeAllMarkers}
+        ariaLabel="Remove all markers"
+      />
+
+      {/* Add Custom Hotspot Section */}
+      <div className="custom-hotspot">
+        <h3>Add Custom Hotspot</h3>
         <input
-          type="range"
-          min="1"
-          max="5"
-          step="0.1"
-          value={terrainExaggeration}
-          onChange={(e) => setTerrainExaggeration(parseFloat(e.target.value))}
-          aria-label="Adjust terrain exaggeration"
+          type="text"
+          placeholder="Hotspot Name"
+          value={hotspotName}
+          onChange={(e) => setHotspotName(e.target.value)}
+          aria-label="Hotspot Name"
         />
-        <span>{terrainExaggeration}</span>
-      </label>
+        <input
+          type="text"
+          placeholder="Hotspot Description"
+          value={hotspotDescription}
+          onChange={(e) => setHotspotDescription(e.target.value)}
+          aria-label="Hotspot Description"
+        />
+        <input
+          type="text"
+          placeholder="Hotspot Iframe URL"
+          value={hotspotIframeUrl}
+          onChange={(e) => setHotspotIframeUrl(e.target.value)}
+          aria-label="Hotspot Iframe URL"
+        />
+        <ActionButton
+          icon={<FaPlus />}
+          label="Add Hotspot"
+          onClick={handleAddCustomHotspot}
+          disabled={!clickedLocation || !hotspotName || !hotspotDescription || !hotspotIframeUrl}
+          ariaLabel="Add custom hotspot"
+        />
+      </div>
+
+      {/* Terrain Exaggeration Slider */}
+      <div className="terrain-control">
+        <label>
+          Terrain Exaggeration:
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="0.1"
+            value={terrainExaggeration}
+            onChange={(e) => setTerrainExaggeration(parseFloat(e.target.value))}
+            aria-label="Adjust terrain exaggeration"
+          />
+          <span>{terrainExaggeration}</span>
+        </label>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default FeaturePanel;
