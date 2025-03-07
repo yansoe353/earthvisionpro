@@ -1,39 +1,18 @@
-// hotspotData.ts
-export const hotspotData = [
+export const defaultHotspotData = [
+  // your hotspot data here
   {
     id: 'hotspot-1',
-    name: 'Central Park',
-    description: 'A popular urban park in Manhattan, New York City.',
-    coordinates: [-73.968285, 40.785091],
-    iframeUrl: 'https://example.com/central-park',
+    name: 'Hotspot 1',
+    description: 'Description of Hotspot 1',
+    coordinates: [100.0, 13.0],
+    iframeUrl: 'https://example.com/hotspot1',
   },
   {
     id: 'hotspot-2',
-    name: 'Eiffel Tower',
-    description: 'An iconic symbol of France and one of the most-visited paid monuments in the world.',
-    coordinates: [2.294481, 48.858370],
-    iframeUrl: 'https://example.com/eiffel-tower',
-  },
-  {
-    id: 'hotspot-3',
-    name: 'Great Wall of China',
-    description: 'A series of fortifications made of stone, brick, tamped earth, wood, and other materials.',
-    coordinates: [116.57037, 40.43191],
-    iframeUrl: 'https://example.com/great-wall-of-china',
-  },
-  {
-    id: 'hotspot-4',
-    name: 'Machu Picchu',
-    description: 'A 15th-century Inca citadel situated high in the Andes Mountains in Peru.',
-    coordinates: [-72.545556, -13.163056],
-    iframeUrl: 'https://example.com/machu-picchu',
-  },
-  {
-    id: 'hotspot-5',
-    name: 'Sydney Opera House',
-    description: 'A multi-venue performing arts centre in Sydney, Australia.',
-    coordinates: [151.215297, -33.856777],
-    iframeUrl: 'https://example.com/sydney-opera-house',
+    name: 'Hotspot 2',
+    description: 'Description of Hotspot 2',
+    coordinates: [101.0, 14.0],
+    iframeUrl: 'https://example.com/hotspot2',
   },
   // Add more hotspots as needed
 ];
