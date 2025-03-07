@@ -412,14 +412,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             duration: 1000,
           });
         } else {
-          const hotspot: Hotspot = {
-            id: cluster.properties.id || 'default-id',
-            name: `Hotspot - ${cluster.properties.id}`,
-            description: 'A popular hotspot',
-            coordinates: [longitude, latitude],
-            iframeUrl: 'https://captures-three.vercel.app/',
-          };
-          setSelectedHotspot(hotspot);
+          const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
+                          defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
+          if (hotspot) {
+            setSelectedHotspot(hotspot);
+          }
         }
       };
 
@@ -437,31 +434,29 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         );
       } else {
-        return (
-          <Marker
-            key={`hotspot-${cluster.properties.id}`}
-            longitude={longitude}
-            latitude={latitude}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              const hotspot: Hotspot = {
-                id: cluster.properties.id || 'default-id',
-                name: `Hotspot - ${cluster.properties.id}`,
-                description: 'A popular hotspot',
-                coordinates: [longitude, latitude],
-                iframeUrl: 'https://captures-three.vercel.app/',
-              };
-              setSelectedHotspot(hotspot);
-            }}
-          >
-            <div className="hotspot-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-              🔥
-            </div>
-          </Marker>
-        );
+        const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
+                        defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
+        if (hotspot) {
+          return (
+            <Marker
+              key={`hotspot-${cluster.properties.id}`}
+              longitude={longitude}
+              latitude={latitude}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                setSelectedHotspot(hotspot);
+              }}
+            >
+              <div className="hotspot-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+                🔥
+              </div>
+            </Marker>
+          );
+        }
+        return null;
       }
     });
-  }, [hotspotClusters, hotspotSupercluster, mapRef]);
+  }, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
@@ -1107,7 +1102,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             id="openweathermap-layer"
             type="raster"
             tiles={[OPENWEATHERMAP_TILES.replace('{layer}', selectedWeatherLayer)]}
-            tileSize={256}
+            tileSize={252}
           >
             <Layer
               id="openweathermap-layer-render"
