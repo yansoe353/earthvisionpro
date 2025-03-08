@@ -399,64 +399,67 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   }, [clusters, supercluster, mapRef]);
 
   // Render hotspot clusters
-  const renderHotspotClusters = useMemo(() => {
-    return hotspotClusters.map((cluster) => {
-      const [longitude, latitude] = cluster.geometry.coordinates;
+ // Render hotspot clusters
+const renderHotspotClusters = useMemo(() => {
+  return hotspotClusters.map((cluster) => {
+    const [longitude, latitude] = cluster.geometry.coordinates;
 
-      const handleClusterClick = () => {
-        if (cluster.properties.cluster) {
-          const bbox = hotspotSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
-          mapRef.current?.flyTo({
-            center: [longitude, latitude],
-            zoom: bbox,
-            duration: 1000,
-          });
-        } else {
-          const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
-                          defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
-          if (hotspot) {
-            setSelectedHotspot(hotspot);
-          }
-        }
-      };
-
+    const handleClusterClick = () => {
       if (cluster.properties.cluster) {
-        return (
-          <Marker
-            key={`hotspot-cluster-${cluster.properties.cluster_id}`}
-            longitude={longitude}
-            latitude={latitude}
-            onClick={handleClusterClick}
-          >
-            <div className="hotspot-cluster-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-              {cluster.properties.point_count}
-            </div>
-          </Marker>
-        );
+        const bbox = hotspotSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
+        mapRef.current?.flyTo({
+          center: [longitude, latitude],
+          zoom: bbox,
+          duration: 1000,
+        });
       } else {
         const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
                         defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
         if (hotspot) {
-          return (
-            <Marker
-              key={`hotspot-${cluster.properties.id}`}
-              longitude={longitude}
-              latitude={latitude}
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                setSelectedHotspot(hotspot);
-              }}
-            >
-              <div className="hotspot-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-                🔥
-              </div>
-            </Marker>
-          );
+          setSelectedHotspot(hotspot);
         }
-        return null;
       }
-    });
-  }, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
+    };
+
+    if (cluster.properties.cluster) {
+      return (
+        <Marker
+          key={`hotspot-cluster-${cluster.properties.cluster_id}`}
+          longitude={longitude}
+          latitude={latitude}
+          onClick={handleClusterClick}
+        >
+          <div className="hotspot-cluster-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+            {cluster.properties.point_count}
+          </div>
+        </Marker>
+      );
+    } else {
+      const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
+                      defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
+      if (hotspot) {
+        return (
+          <Marker
+            key={`hotspot-${cluster.properties.id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedHotspot(hotspot);
+            }}
+          >
+            <div className="hotspot-marker" style={{ backgroundColor: hotspot.id.startsWith('custom-hotspot') ? 'purple' : 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+              🔥
+            </div>
+          </Marker>
+        );
+      }
+      return null;
+    }
+  });
+}, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
+
+
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
