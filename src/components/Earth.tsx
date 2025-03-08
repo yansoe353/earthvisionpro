@@ -79,7 +79,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showTransit, setShowTransit] = useState(false);
   const [showWeather, setShowWeather] = useState(false);
 
-  // Weather layer stateS
+  // Weather layer states
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
   const [showWeatherTabs, setShowWeatherTabs] = useState(false);
 
@@ -87,7 +87,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const OPENWEATHERMAP_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY;
   const OPENWEATHERMAP_TILES = `https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid=${OPENWEATHERMAP_API_KEY}`;
 
-  // Weather layers with iconss
+  // Weather layers with icons
   const WEATHER_LAYERS = [
     { id: 'clouds_new', label: 'Clouds', icon: '☁️' },
     { id: 'precipitation_new', label: 'Rain', icon: '🌧️' },
