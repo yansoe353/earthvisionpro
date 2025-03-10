@@ -172,7 +172,7 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
           content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
         },
       ],
-      model: 'llama-3.2-90b-vision-preview',
+      model: 'deepseek-r1-distill-llama-70b',
       temperature: 0.7,
       max_tokens: 5000,
     });
@@ -201,7 +201,7 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
           content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
         },
       ],
-      model: 'llama-3.2-90b-vision-preview',
+      model: 'deepseek-r1-distill-llama-70b',
       temperature: 0.7,
       max_tokens: 1000,
     });
@@ -429,7 +429,7 @@ function App() {
             ],
           },
         ],
-        model: 'llama-3.2-90b-vision-preview',
+        model: 'llama-3.2-11b-vision-preview',
         temperature: 0.95,
         max_tokens: 8000,
       });
