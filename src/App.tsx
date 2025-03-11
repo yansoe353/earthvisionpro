@@ -455,7 +455,7 @@ function App() {
       console.error('Analyzing view is taking too long. Please check your internet connection or try again later.');
       setFacts('Error: Analyzing view is taking too long. Please check your internet connection or try again later.');
       setLoading(false);
-    }, 30000); // 30 seconds timeout
+    }, 60000); // 30 seconds timeout
 
     try {
       const map = earthRef.current.getMap();
