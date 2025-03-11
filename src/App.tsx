@@ -4,7 +4,6 @@ import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
 import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
-import VirtualTour from './components/VirtualTour';
 import { Chrono } from 'react-chrono';
 import axios from 'axios';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -235,12 +234,6 @@ interface NewsArticle {
   url: string;
 }
 
-interface VirtualTourLocation {
-  lat: number;
-  lng: number;
-  name: string;
-}
-
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -254,8 +247,6 @@ function App() {
   const [translating, setTranslating] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
-  const [isVirtualTourActive, setIsVirtualTourActive] = useState(false);
-  const [virtualTourLocation, setVirtualTourLocation] = useState<VirtualTourLocation | null>(null);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
@@ -379,7 +370,6 @@ function App() {
     if (data.features && data.features.length > 0) {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
-      setVirtualTourLocation({ lat, lng, name: locationName });
       const videos = await fetchYouTubeVideos(locationName);
       setYoutubeVideos(videos);
     }
@@ -738,13 +728,6 @@ function App() {
             {translating && <p>Translating...</p>}
           </div>
           <button
-            onClick={() => setIsVirtualTourActive(!isVirtualTourActive)}
-            className="virtual-tour-button"
-            disabled={!currentLocation}
-          >
-            {isVirtualTourActive ? 'Close Virtual Tour' : '🌍 Start Virtual Tour'}
-          </button>
-          <button
             onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
               setIsNewsLoading(true);
@@ -897,16 +880,6 @@ function App() {
           </div>
         )}
       </div>
-      {isVirtualTourActive && virtualTourLocation && (
-        <Suspense fallback={<div>Loading Virtual Tour...</div>}>
-          <VirtualTour
-            location={virtualTourLocation}
-            onClose={() => setIsVirtualTourActive(false)}
-            language={language}
-            onTranslate={rateLimitedTranslateText}
-          />
-        </Suspense>
-      )}
       {isNewsPanelActive && newsArticles.length > 0 && (
         <Suspense fallback={<div>Loading News Panel...</div>}>
           <NewsPanel
