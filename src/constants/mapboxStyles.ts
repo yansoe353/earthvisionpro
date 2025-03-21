@@ -7,7 +7,7 @@ export interface MapboxStyle {
 export const MAPBOX_STYLES: MapboxStyle[] = [
   {
     label: "Default",
-    value: ""mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7",
+    value: "mapbox://styles/htetnay/cm52c39vv00bz01sa0qzx4ro7",
   },
   {
     label: "Street",
