@@ -62,10 +62,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
   const [showTransit, setShowTransit] = useState(false);
-  const [showWeather, setShowWeather] = useState(false);
+  const [showWeather, setShowWeather] = useState(true); // Set to true to enable weather layer by default
 
   // Weather layer states
-  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>(null);
+  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>('clouds_new'); // Set a default weather layer
   const [showWeatherTabs, setShowWeatherTabs] = useState(false);
 
   // OpenWeatherMap tile URL
