@@ -14,7 +14,6 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
-import { getDistance } from 'geolib';
 import { defaultHotspotData } from './hotspotData'; // Import the default hotspot data
 
 type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
@@ -25,17 +24,6 @@ type Hotspot = {
   description: string;
   coordinates: [number, number];
   iframeUrl: string;
-};
-
-type MagicalCreature = {
-  id: string;
-  name: string;
-  type: 'dragon' | 'unicorn' | 'phoenix' | 'griffin';
-  image: string;
-  description: string;
-  coordinates: [number, number];
-  iframeUrl: string;
-  minigameUrl: string;
 };
 
 const debouncedClick = debounce(async (event: MapLayerMouseEvent, callback: () => void) => {
@@ -49,7 +37,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
-  const [selectedCreature, setSelectedCreature] = useState<MagicalCreature | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
@@ -63,8 +50,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isLocationPermissionGranted, setIsLocationPermissionGranted] = useState(false);
-  const [creatures, setCreatures] = useState<MagicalCreature[]>([]);
-  const [nearbyCreatures, setNearbyCreatures] = useState<MagicalCreature[]>([]);
   const [customHotspots, setCustomHotspots] = useState<Hotspot[]>([]);
 
   // Layer visibility states
@@ -175,15 +160,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
       setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
     }
-
-    // Recalculate nearby creatures when the map moves
-    if (userLocation) {
-      const nearby = creatures.filter((creature) =>
-        isUserNearCreature(userLocation, creature.coordinates)
-      );
-      setNearbyCreatures(nearby);
-    }
-  }, [supercluster, hotspotSupercluster, mapRef, userLocation, creatures]);
+  }, [supercluster, hotspotSupercluster, mapRef]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -262,69 +239,6 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     }
   }, []);
 
-  // Spawn magical creatures
-  useEffect(() => {
-    if (userLocation) {
-      const spawnCreatures = () => {
-        const creatures: MagicalCreature[] = [];
-
-        // Spawn creatures within 2 miles of the user
-        for (let i = 0; i < 5; i++) {
-          const randomCoordinates = getRandomCoordinates(userLocation, 2); // 2 miles
-          const creatureTypes: ('dragon' | 'unicorn' | 'phoenix' | 'griffin')[] = ['dragon', 'unicorn', 'phoenix', 'griffin'];
-          const randomType = creatureTypes[i % 4]; // Ensure valid type
-
-          creatures.push({
-            id: `creature-${i}`,
-            name: `Creature ${i + 1}`,
-            type: randomType, // Valid type
-            image: `https://example.com/creature-${i}.jpg`,
-            description: `A magical ${randomType}`,
-            coordinates: randomCoordinates as [number, number],
-            iframeUrl: 'https://captures-three.vercel.app/',
-            minigameUrl: 'https://example.com/minigame',
-          });
-        }
-
-        // Ensure one creature is ~10 km away
-        const farCoordinates = getRandomCoordinates(userLocation, 10); // 10 km
-        creatures.push({
-          id: 'creature-far',
-          name: 'Rare Creature',
-          type: 'phoenix', // Valid type
-          image: 'https://example.com/rare-creature.jpg',
-          description: 'A rare phoenix!',
-          coordinates: farCoordinates as [number, number],
-          iframeUrl: 'https://captures-three.vercel.app/',
-          minigameUrl: 'https://example.com/minigame',
-        });
-
-        setCreatures(creatures);
-      };
-
-      spawnCreatures();
-    }
-  }, [userLocation]);
-
-  // Check if user is near a creature
-  const isUserNearCreature = (userLocation: { lng: number; lat: number }, creatureCoordinates: [number, number]) => {
-    const distance = getDistance(
-      { latitude: userLocation.lat, longitude: userLocation.lng },
-      { latitude: creatureCoordinates[1], longitude: creatureCoordinates[0] }
-    );
-    return distance <= 1000; // 1000 meters = 1 km
-  };
-
-  // Update nearby creatures based on user location
-  useEffect(() => {
-    if (userLocation) {
-      const nearby = creatures.filter((creature) =>
-        isUserNearCreature(userLocation, creature.coordinates)
-      );
-      setNearbyCreatures(nearby);
-    }
-  }, [userLocation, creatures]);
-
   // Render clusters
   const renderClusters = useMemo(() => {
     return clusters.map((cluster) => {
@@ -399,83 +313,68 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   }, [clusters, supercluster, mapRef]);
 
   // Render hotspot clusters
- // Render hotspot clusters
-const renderHotspotClusters = useMemo(() => {
-  return hotspotClusters.map((cluster) => {
-    const [longitude, latitude] = cluster.geometry.coordinates;
+  const renderHotspotClusters = useMemo(() => {
+    return hotspotClusters.map((cluster) => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
 
-    const handleClusterClick = () => {
+      const handleClusterClick = () => {
+        if (cluster.properties.cluster) {
+          const bbox = hotspotSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
+          mapRef.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: bbox,
+            duration: 1000,
+          });
+        } else {
+          const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
+                          defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
+          if (hotspot) {
+            setSelectedHotspot(hotspot);
+          }
+        }
+      };
+
       if (cluster.properties.cluster) {
-        const bbox = hotspotSupercluster.getClusterExpansionZoom(cluster.properties.cluster_id!);
-        mapRef.current?.flyTo({
-          center: [longitude, latitude],
-          zoom: bbox,
-          duration: 1000,
-        });
+        return (
+          <Marker
+            key={`hotspot-cluster-${cluster.properties.cluster_id}`}
+            longitude={longitude}
+            latitude={latitude}
+            onClick={handleClusterClick}
+          >
+            <div className="hotspot-cluster-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+              {cluster.properties.point_count}
+            </div>
+          </Marker>
+        );
       } else {
         const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
                         defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
         if (hotspot) {
-          setSelectedHotspot(hotspot);
+          return (
+            <Marker
+              key={`hotspot-${cluster.properties.id}`}
+              longitude={longitude}
+              latitude={latitude}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                setSelectedHotspot(hotspot);
+              }}
+            >
+              <div className="hotspot-marker" style={{ backgroundColor: hotspot.id.startsWith('custom-hotspot') ? 'purple' : 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+                🔥
+              </div>
+            </Marker>
+          );
         }
+        return null;
       }
-    };
-
-    if (cluster.properties.cluster) {
-      return (
-        <Marker
-          key={`hotspot-cluster-${cluster.properties.cluster_id}`}
-          longitude={longitude}
-          latitude={latitude}
-          onClick={handleClusterClick}
-        >
-          <div className="hotspot-cluster-marker" style={{ backgroundColor: 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-            {cluster.properties.point_count}
-          </div>
-        </Marker>
-      );
-    } else {
-      const hotspot = customHotspots.find((hs) => hs.id === cluster.properties.id) ||
-                      defaultHotspotData.find((hs) => hs.id === cluster.properties.id);
-      if (hotspot) {
-        return (
-          <Marker
-            key={`hotspot-${cluster.properties.id}`}
-            longitude={longitude}
-            latitude={latitude}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setSelectedHotspot(hotspot);
-            }}
-          >
-            <div className="hotspot-marker" style={{ backgroundColor: hotspot.id.startsWith('custom-hotspot') ? 'purple' : 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-              🔥
-            </div>
-          </Marker>
-        );
-      }
-      return null;
-    }
-  });
-}, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
-
-
+    });
+  }, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
     return 'label' in marker && 'id' in marker;
-  };
-
-  // Helper function to generate random coordinates
-  const getRandomCoordinates = (center: { lng: number; lat: number }, radiusInMiles: number): [number, number] => {
-    const radiusInDegrees = radiusInMiles / 69; // Approx conversion
-    const randomAngle = Math.random() * 2 * Math.PI;
-    const randomRadius = Math.random() * radiusInDegrees;
-
-    const lng = center.lng + randomRadius * Math.cos(randomAngle);
-    const lat = center.lat + randomRadius * Math.sin(randomAngle);
-
-    return [lng, lat];
   };
 
   const toggleFullscreen = useCallback(() => {
@@ -696,103 +595,6 @@ const renderHotspotClusters = useMemo(() => {
               📍 {/* Location Pin Emoji */}
             </div>
           </Marker>
-        )}
-
-        {/* Magical Creatures */}
-        {creatures.map((creature) => (
-          <Marker
-            key={creature.id}
-            longitude={creature.coordinates[0]}
-            latitude={creature.coordinates[1]}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setSelectedCreature(creature);
-              setIframeLoaded(false);
-            }}
-          >
-            <div className="creature-marker">
-              🌀 {/* Portal Emoji */}
-            </div>
-          </Marker>
-        ))}
-
-        {/* Popup for Selected Creature */}
-        {selectedCreature && (
-          <Popup
-            longitude={selectedCreature.coordinates[0]}
-            latitude={selectedCreature.coordinates[1]}
-            onClose={() => setSelectedCreature(null)}
-            closeButton={false}
-            anchor="bottom"
-            maxWidth="400px"
-            className="creature-popup-container"
-          >
-            <div className="creature-popup">
-              <h3>{selectedCreature.name}</h3>
-              <p>{selectedCreature.description}</p>
-              <div className="iframe-container">
-                {!iframeLoaded && (
-                  <div className="iframe-loading">
-                    <div className="spinner"></div>
-                    <p>Loading...</p>
-                  </div>
-                )}
-                <iframe
-                  src={selectedCreature.iframeUrl}
-                  width="100%"
-                  height="300px"
-                  style={{ border: 'none', borderRadius: '8px', display: iframeLoaded ? 'block' : 'none' }}
-                  title={selectedCreature.name}
-                  allowFullScreen
-                  onLoad={() => setIframeLoaded(true)}
-                />
-              </div>
-              <div className="creature-popup-buttons">
-                <button
-                  onClick={() => setSelectedCreature(null)}
-                  className="close-button"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    const iframe = document.querySelector('.iframe-container iframe');
-                    if (iframe && iframe.requestFullscreen) {
-                      iframe.requestFullscreen();
-                    }
-                  }}
-                  className="fullscreen-button"
-                >
-                  Fullscreen
-                </button>
-                <button
-                  onClick={() => {
-                    mapRef.current?.flyTo({
-                      center: selectedCreature.coordinates,
-                      zoom: 14,
-                      duration: 2000,
-                    });
-                  }}
-                  className="zoom-button"
-                >
-                  Zoom to Location
-                </button>
-                {/* Play Game Button */}
-                <button
-                  onClick={() => window.open(selectedCreature.minigameUrl, '_blank')}
-                  className="play-game-button"
-                  disabled={!nearbyCreatures.some((creature) => creature.id === selectedCreature.id)}
-                  title={
-                    nearbyCreatures.some((creature) => creature.id === selectedCreature.id)
-                      ? "Play the mini-game!"
-                      : "You must be within 1 km of the creature to play the game."
-                  }
-                >
-                  🎮 Play Game
-                </button>
-              </div>
-            </div>
-          </Popup>
         )}
 
         {/* Earthquake Markers (Clustered) */}
