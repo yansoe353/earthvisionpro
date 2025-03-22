@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 interface CustomPromptProps {
   onSubmit: (prompt: string) => void;
+  onClose: () => void;
 }
 
-const CustomPrompt: React.FC<CustomPromptProps> = ({ onSubmit }) => {
+const CustomPrompt: React.FC<CustomPromptProps> = ({ onSubmit, onClose }) => {
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -12,6 +13,7 @@ const CustomPrompt: React.FC<CustomPromptProps> = ({ onSubmit }) => {
     if (prompt.trim()) {
       onSubmit(prompt);
       setPrompt('');
+      onClose();
     }
   };
 
@@ -26,6 +28,9 @@ const CustomPrompt: React.FC<CustomPromptProps> = ({ onSubmit }) => {
       />
       <button type="submit" className="custom-prompt-button">
         Ask
+      </button>
+      <button type="button" onClick={onClose} className="custom-prompt-close-button">
+        Close
       </button>
     </form>
   );
