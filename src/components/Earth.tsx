@@ -362,7 +362,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               }}
             >
               <div className="hotspot-marker" style={{ backgroundColor: hotspot.id.startsWith('custom-hotspot') ? 'purple' : 'orange', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
-                🔥
+                🌌
               </div>
             </Marker>
           );
