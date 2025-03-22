@@ -6,9 +6,13 @@ import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import { Chrono } from 'react-chrono';
 import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { debounce } from 'lodash';
-import CustomPrompt from './components/CustomPrompt'; // Import the CustomPrompt component
 import './index.css';
+
+// Initialize the Gemini API client
+const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 // Language mapping to understand the nuances of the translation
 const languageMapping: { [key: string]: string } = {
@@ -24,7 +28,7 @@ const translationCache = new Map<string, string>();
 const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
 let lastRequestTime = 0;
 
-// Translation function using the Groq API with rate limiting and caching
+// Translation function using the Gemini API with rate limiting and caching
 const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -43,30 +47,20 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 5000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      const responseText = completion.choices[0].message.content.trim();
-      translationCache.set(cacheKey, responseText);
-      return responseText;
+    // Handle the Gemini API response
+    if (responseText.includes('Here are a few options')) {
+      // Extract the first translation option
+      const options = responseText.split('Here are a few options')[1].trim().split('\n');
+      const translatedText = options[0].trim();
+      translationCache.set(cacheKey, translatedText);
+      return translatedText;
     }
 
-    return text; // Fallback to original text if translation fails
+    translationCache.set(cacheKey, responseText);
+    return responseText;
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Fallback to original text if translation fails
@@ -259,7 +253,6 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
-  const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -603,8 +596,8 @@ function App() {
     }
   };
 
-  // Handle custom prompt submission
-  const handleCustomPrompt = async (prompt: string) => {
+  // Handle AI chatbot submission
+  const handleAIChatbot = async (prompt: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
 
@@ -613,37 +606,22 @@ function App() {
     setTranslatedFacts('');
 
     try {
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.7,
-        max_tokens: 5000,
-      });
+      const completion = await model.generateContent(prompt);
 
       if (completion.choices && completion.choices[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
-        setFacts((prevFacts) => `${prevFacts}\n\n## Custom Analysis\n${newAnalysis}`);
+        setFacts((prevFacts) => `${prevFacts}\n\n## AI Chatbot Response\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
           const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## Custom Analysis\n${translatedText}`);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## AI Chatbot Response\n${translatedText}`);
         } else {
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## Custom Analysis\n${newAnalysis}`);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## AI Chatbot Response\n${newAnalysis}`);
         }
       }
     } catch (error) {
-      console.error('Error during custom analysis:', error);
-      setFacts((prevFacts) => `${prevFacts}\n\nError performing custom analysis. Please try again.`);
+      console.error('Error during AI chatbot response:', error);
+      setFacts((prevFacts) => `${prevFacts}\n\nError generating AI chatbot response. Please try again.`);
     } finally {
       setLanguage(currentLang);
       setAnalysisLoading(false);
@@ -808,15 +786,7 @@ function App() {
                 alt="Captured view"
                 className="captured-image"
                 loading="lazy"
-                onClick={() => setIsCustomPromptOpen(true)}
-                style={{ cursor: 'pointer' }}
               />
-              {isCustomPromptOpen && (
-                <CustomPrompt
-                  onSubmit={handleCustomPrompt}
-                  onClose={() => setIsCustomPromptOpen(false)}
-                />
-              )}
             </div>
           )}
         </div>
