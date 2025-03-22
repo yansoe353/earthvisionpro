@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -8,6 +8,7 @@ import { Chrono } from 'react-chrono';
 import axios from 'axios';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { debounce } from 'lodash';
+import CustomPrompt from './components/CustomPrompt'; // Import the CustomPrompt component
 import './index.css';
 
 // Initialize the Gemini API client
@@ -596,6 +597,53 @@ function App() {
     }
   };
 
+  // Handle custom prompt submission
+  const handleCustomPrompt = async (prompt: string) => {
+    if (!currentLocation || !facts) return;
+    setAnalysisLoading(true);
+
+    const currentLang = language;
+    setLanguage('en');
+    setTranslatedFacts('');
+
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+
+      if (completion.choices && completion.choices[0]?.message?.content) {
+        const newAnalysis = completion.choices[0].message.content;
+        setFacts((prevFacts) => `${prevFacts}\n\n## Custom Analysis\n${newAnalysis}`);
+
+        if (currentLang !== 'en') {
+          const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## Custom Analysis\n${translatedText}`);
+        } else {
+          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## Custom Analysis\n${newAnalysis}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error during custom analysis:', error);
+      setFacts((prevFacts) => `${prevFacts}\n\nError performing custom analysis. Please try again.`);
+    } finally {
+      setLanguage(currentLang);
+      setAnalysisLoading(false);
+    }
+  };
+
   // Save analysis to a file
   const saveAnalysis = () => {
     const content = `=== Analysis Report ===\n\n` +
@@ -747,6 +795,7 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
+          <CustomPrompt onSubmit={handleCustomPrompt} /> {/* Add the CustomPrompt component */}
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
