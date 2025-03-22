@@ -24,7 +24,7 @@ const translationCache = new Map<string, string>();
 const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
 let lastRequestTime = 0;
 
-// Translation function using the Gemini API with rate limiting and caching
+// Translation function using the Groq API with rate limiting and caching
 const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -43,20 +43,30 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
 
-    // Handle the Gemini API response
-    if (responseText.includes('Here are a few options')) {
-      // Extract the first translation option
-      const options = responseText.split('Here are a few options')[1].trim().split('\n');
-      const translatedText = options[0].trim();
-      translationCache.set(cacheKey, translatedText);
-      return translatedText;
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      model: 'deepseek-r1-distill-llama-70b',
+      temperature: 0.7,
+      max_tokens: 5000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const responseText = completion.choices[0].message.content.trim();
+      translationCache.set(cacheKey, responseText);
+      return responseText;
     }
 
-    translationCache.set(cacheKey, responseText);
-    return responseText;
+    return text; // Fallback to original text if translation fails
   } catch (error) {
     console.error('Translation error:', error);
     return text; // Fallback to original text if translation fails
