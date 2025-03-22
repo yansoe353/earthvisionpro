@@ -254,6 +254,7 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
+  const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -795,7 +796,24 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
-          <CustomPrompt onSubmit={handleCustomPrompt} /> {/* Add the CustomPrompt component */}
+          {capturedImage && (
+            <div className="captured-image-container">
+              <img
+                src={capturedImage}
+                alt="Captured view"
+                className="captured-image"
+                loading="lazy"
+                onClick={() => setIsCustomPromptOpen(true)}
+                style={{ cursor: 'pointer' }}
+              />
+              {isCustomPromptOpen && (
+                <CustomPrompt
+                  onSubmit={handleCustomPrompt}
+                  onClose={() => setIsCustomPromptOpen(false)}
+                />
+              )}
+            </div>
+          )}
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
