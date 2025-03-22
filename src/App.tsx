@@ -6,14 +6,9 @@ import SearchBar from './components/SearchBar';
 import MarkdownContent from './components/MarkdownContent';
 import { Chrono } from 'react-chrono';
 import axios from 'axios';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { debounce } from 'lodash';
 import CustomPrompt from './components/CustomPrompt'; // Import the CustomPrompt component
 import './index.css';
-
-// Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Language mapping to understand the nuances of the translation
 const languageMapping: { [key: string]: string } = {
