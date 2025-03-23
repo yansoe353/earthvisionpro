@@ -28,7 +28,7 @@ const EarthImageGenerationPanel: React.FC<EarthImageGenerationPanelProps> = ({ o
         },
       ]);
 
-      if (result.response.content && result.response.content.parts && result.response.content.parts[0]) {
+      if (result.response && result.response.content && result.response.content.parts && result.response.content.parts[0]) {
         const imageData = result.response.content.parts[0];
         setImageUrl(imageData.image);
       } else {
