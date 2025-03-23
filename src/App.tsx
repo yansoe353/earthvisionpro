@@ -827,7 +827,7 @@ function App() {
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel Locations
+                    Analysis of Travel Destinations
                   </button>
                 </div>
                 {memoizedDynamicThemes.length > 0 && (
