@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
 import Earth from './components/Earth';
 import { Groq } from 'groq-sdk';
 import NewsPanel from './components/NewsPanel';
@@ -12,7 +12,7 @@ import './index.css';
 
 // Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Language mapping to understand the nuances of the translation
 const languageMapping: { [key: string]: string } = {
@@ -48,7 +48,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
 
   try {
     const result = await model.generateContent(prompt);
-    const responseText = result.text();
+    const responseText = result.response.text();
 
     // Handle the Gemini API response
     if (responseText.includes('Here are a few options')) {
@@ -176,7 +176,7 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
       max_tokens: 5000,
     });
 
-    if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+    if (completion.choices && completion.choices[0]?.message?.content) {
       return completion.choices[0].message.content.trim();
     }
   } catch (error) {
@@ -205,7 +205,7 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
       max_tokens: 1000,
     });
 
-    if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+    if (completion.choices && completion.choices[0]?.message?.content) {
       return completion.choices[0].message.content.trim();
     }
     return 'No news available for this location.';
@@ -308,7 +308,7 @@ function App() {
         max_tokens: 1000,
       });
 
-      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      if (completion.choices && completion.choices[0]?.message?.content) {
         const response = completion.choices[0].message.content;
 
         // Extract historical insights
@@ -336,7 +336,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              historicalEvents.map(async (event) => ({
+              eventsWithImages.map(async (event) => ({
                 ...event,
                 cardTitle: await rateLimitedTranslateText(event.cardTitle, language),
                 cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, language),
@@ -424,7 +424,7 @@ function App() {
         max_tokens: 8000,
       });
 
-      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      if (completion.choices && completion.choices[0]?.message?.content) {
         return completion.choices[0].message.content;
       }
       return 'No analysis available.';
@@ -531,7 +531,7 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      if (completion.choices && completion.choices[0]?.message?.content) {
         const themes = JSON.parse(completion.choices[0].message.content) as DynamicTheme[];
         setDynamicThemes(themes);
       }
@@ -576,7 +576,7 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      if (completion.choices && completion.choices[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
@@ -590,38 +590,6 @@ function App() {
     } catch (error) {
       console.error('Error during analysis:', error);
       setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
-    } finally {
-      setLanguage(currentLang);
-      setAnalysisLoading(false);
-    }
-  };
-
-  // Handle AI chatbot submission
-  const handleAIChatbot = async (prompt: string) => {
-    if (!currentLocation || !facts) return;
-    setAnalysisLoading(true);
-
-    const currentLang = language;
-    setLanguage('en');
-    setTranslatedFacts('');
-
-    try {
-      const completion = await model.generateContent(prompt);
-
-      if (completion.text()) {
-        const newAnalysis = completion.text();
-        setFacts((prevFacts) => `${prevFacts}\n\n## AI Chatbot Response\n${newAnalysis}`);
-
-        if (currentLang !== 'en') {
-          const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## AI Chatbot Response\n${translatedText}`);
-        } else {
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## AI Chatbot Response\n${newAnalysis}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error during AI chatbot response:', error);
-      setFacts((prevFacts) => `${prevFacts}\n\nError generating AI chatbot response. Please try again.`);
     } finally {
       setLanguage(currentLang);
       setAnalysisLoading(false);
@@ -779,16 +747,6 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
-          {capturedImage && (
-            <div className="captured-image-container">
-              <img
-                src={capturedImage}
-                alt="Captured view"
-                className="captured-image"
-                loading="lazy"
-              />
-            </div>
-          )}
         </div>
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
@@ -827,7 +785,7 @@ function App() {
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel Destinations
+                    Analysis of Travel locations
                   </button>
                 </div>
                 {memoizedDynamicThemes.length > 0 && (
