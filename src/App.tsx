@@ -246,7 +246,7 @@ function App() {
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
+  const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
@@ -263,7 +263,7 @@ function App() {
   // Debounce the handleSearch function
   const debouncedHandleSearch = useCallback(debounce((lng: number, lat: number) => {
     handleSearch(lng, lat);
-  }, 300), []);
+  }), 300), []);
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = async (newContent: string) => {
@@ -336,7 +336,7 @@ function App() {
             setHistoricalInsights(translatedInsights);
 
             const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event) => ({
+              historicalEvents.map(async (event) => ({
                 ...event,
                 cardTitle: await rateLimitedTranslateText(event.cardTitle, language),
                 cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, language),
@@ -371,7 +371,7 @@ function App() {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
       const videos = await fetchYouTubeVideos(locationName);
-      setYoutubeVideos(videos);
+      setYouTubeVideos(videos);
     }
   };
 
