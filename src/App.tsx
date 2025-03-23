@@ -176,8 +176,8 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
       max_tokens: 5000,
     });
 
-    if (completion.content) {
-      return completion.content.trim();
+    if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      return completion.choices[0].message.content.trim();
     }
   } catch (error) {
     console.error('Error generating YouTube search prompt:', error);
@@ -205,8 +205,8 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
       max_tokens: 1000,
     });
 
-    if (completion.content) {
-      return completion.content.trim();
+    if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+      return completion.choices[0].message.content.trim();
     }
     return 'No news available for this location.';
   } catch (error) {
@@ -308,8 +308,8 @@ function App() {
         max_tokens: 1000,
       });
 
-      if (completion.content) {
-        const response = completion.content;
+      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+        const response = completion.choices[0].message.content;
 
         // Extract historical insights
         const insights = response.split('JSON format like this:')[0].trim();
@@ -424,8 +424,8 @@ function App() {
         max_tokens: 8000,
       });
 
-      if (completion.content) {
-        return completion.content;
+      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+        return completion.choices[0].message.content;
       }
       return 'No analysis available.';
     } catch (error) {
@@ -531,8 +531,8 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.content) {
-        const themes = JSON.parse(completion.content) as DynamicTheme[];
+      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+        const themes = JSON.parse(completion.choices[0].message.content) as DynamicTheme[];
         setDynamicThemes(themes);
       }
     } catch (error) {
@@ -576,8 +576,8 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.content) {
-        const newAnalysis = completion.content;
+      if (completion.choices && completion.choices.length > 0 && completion.choices[0].message?.content) {
+        const newAnalysis = completion.choices[0].message.content;
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
