@@ -246,7 +246,7 @@ function App() {
   const [translatedFacts, setTranslatedFacts] = useState<string>('');
   const [translating, setTranslating] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [isNewsPanelActive, setIsNewsPanelActive] = useState(false);
   const [isNewsLoading, setIsNewsLoading] = useState(false);
@@ -371,7 +371,7 @@ function App() {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
       const videos = await fetchYouTubeVideos(locationName);
-      setYouTubeVideos(videos);
+      setYoutubeVideos(videos);
     }
   };
 
