@@ -234,6 +234,48 @@ interface NewsArticle {
   url: string;
 }
 
+// Generate Earth image using Google DeepMind based on location info from Groq
+const generateEarthImage = async (location: string): Promise<string | null> => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Generate a detailed description of the Earth's surface for ${location}. Include geographical features, landmarks, and environmental characteristics.`,
+        },
+      ],
+      model: 'deepseek-r1-distill-llama-70b',
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    if (completion.choices && completion.choices[0]?.message?.content) {
+      const description = completion.choices[0].message.content.trim();
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: description }),
+      });
+
+      const data = await response.json();
+      if (data.image) {
+        return data.image;
+      }
+    }
+  } catch (error) {
+    console.error('Error generating Earth image:', error);
+  }
+  return null;
+};
+
 // App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -253,6 +295,7 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
+  const [earthImage, setEarthImage] = useState<string | null>(null);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -502,6 +545,10 @@ function App() {
 
       await generateDynamicThemes(locationName);
       await fetchYouTubeVideos(locationName);
+
+      // Generate Earth image
+      const earthImage = await generateEarthImage(locationName);
+      setEarthImage(earthImage);
     } catch (error) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region. Please try again.');
@@ -755,6 +802,11 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" loading="lazy" />
+              </div>
+            )}
+            {earthImage && (
+              <div className="earth-image-container">
+                <img src={earthImage} alt="Generated Earth view" className="earth-image" loading="lazy" />
               </div>
             )}
             <MarkdownContent
