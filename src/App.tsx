@@ -48,7 +48,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
 
   try {
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const responseText = result.text();
 
     // Handle the Gemini API response
     if (responseText.includes('Here are a few options')) {
@@ -176,8 +176,8 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
       max_tokens: 5000,
     });
 
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
+    if (completion.content) {
+      return completion.content.trim();
     }
   } catch (error) {
     console.error('Error generating YouTube search prompt:', error);
@@ -205,8 +205,8 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
       max_tokens: 1000,
     });
 
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
+    if (completion.content) {
+      return completion.content.trim();
     }
     return 'No news available for this location.';
   } catch (error) {
@@ -308,8 +308,8 @@ function App() {
         max_tokens: 1000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const response = completion.choices[0].message.content;
+      if (completion.content) {
+        const response = completion.content;
 
         // Extract historical insights
         const insights = response.split('JSON format like this:')[0].trim();
@@ -424,8 +424,8 @@ function App() {
         max_tokens: 8000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content;
+      if (completion.content) {
+        return completion.content;
       }
       return 'No analysis available.';
     } catch (error) {
@@ -531,8 +531,8 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const themes = JSON.parse(completion.choices[0].message.content) as DynamicTheme[];
+      if (completion.content) {
+        const themes = JSON.parse(completion.content) as DynamicTheme[];
         setDynamicThemes(themes);
       }
     } catch (error) {
@@ -576,8 +576,8 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const newAnalysis = completion.choices[0].message.content;
+      if (completion.content) {
+        const newAnalysis = completion.content;
         setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
@@ -608,8 +608,8 @@ function App() {
     try {
       const completion = await model.generateContent(prompt);
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const newAnalysis = completion.choices[0].message.content;
+      if (completion.text()) {
+        const newAnalysis = completion.text();
         setFacts((prevFacts) => `${prevFacts}\n\n## AI Chatbot Response\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
@@ -827,7 +827,7 @@ function App() {
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel locations
+                    Analysis of Travel Locations
                   </button>
                 </div>
                 {memoizedDynamicThemes.length > 0 && (
