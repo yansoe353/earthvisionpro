@@ -263,7 +263,7 @@ function App() {
   // Debounce the handleSearch function
   const debouncedHandleSearch = useCallback(debounce((lng: number, lat: number) => {
     handleSearch(lng, lat);
-  }), 300), []);
+  }, 300), []);
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = async (newContent: string) => {
