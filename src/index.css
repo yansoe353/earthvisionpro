@@ -40,6 +40,25 @@ html, body, #root {
   position: relative;
 }
 
+
+/* Ensure the image container is responsive */
+.earth-image-container {
+  width: 100%;
+  max-width: 600px; /* Adjust as needed */
+  margin: 0 auto; /* Center the container */
+  overflow: hidden; /* Prevent overflow */
+  border-radius: 8px; /* Optional: Add rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow */
+}
+
+/* Make the image responsive */
+.earth-image {
+  width: 100%;
+  height: auto; /* Maintain aspect ratio */
+  display: block; /* Remove extra space below the image */
+  object-fit: cover; /* Ensure the image covers the container */
+}
+
 .info-panel {
   flex: 1;
   height: 100vh;
