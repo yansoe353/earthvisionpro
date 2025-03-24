@@ -11,7 +11,7 @@ import { debounce } from 'lodash';
 import './index.css';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI('AIzaSyBAJJLHI8kwwmNJwfuTInH2KYIGs9Nnhbc');
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Language mapping to understand the nuances of the translation
@@ -236,38 +236,25 @@ interface NewsArticle {
 
 // Generate Earth image using Google DeepMind based on location info from Groq
 const generateEarthImage = async (location: string): Promise<string | null> => {
+  const contents = `Create a 3D rendered image of a beautiful landscaping photography for ${location} with detailed geographical features, landmarks, and environmental characteristics.`;
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash-exp',
+    generationConfig: {
+      responseModalities: ['Text', 'Image'],
+    },
+  });
+
   try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a detailed description of the Earth's surface for ${location}. Include geographical features, landmarks, and environmental characteristics.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      const description = completion.choices[0].message.content.trim();
-
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: description }),
-      });
-
-      const data = await response.json();
-      if (data.image) {
-        return data.image;
+    const response = await model.generateContent(contents);
+    for (const part of response.response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        const imageData = part.inlineData.data;
+        const buffer = Buffer.from(imageData, 'base64');
+        const imagePath = 'earth-landscaping-image.png';
+        fs.writeFileSync(imagePath, buffer);
+        console.log('Image saved as', imagePath);
+        return imagePath;
       }
     }
   } catch (error) {
@@ -793,6 +780,16 @@ function App() {
             disabled={!currentLocation || loading}
           >
             🕰️ View Historical Insights
+          </button>
+          <button
+            onClick={async () => {
+              const earthImage = await generateEarthImage(currentLocation);
+              setEarthImage(earthImage);
+            }}
+            className="generate-image-button"
+            disabled={!currentLocation || loading}
+          >
+            🌄 Generate Earth Landscaping Photography
           </button>
         </div>
         {loading ? (
