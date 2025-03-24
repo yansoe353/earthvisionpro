@@ -92,172 +92,22 @@ const fetchImage = async (query: string): Promise<string | null> => {
   }
 };
 
-// List of YouTube API keys
-const YOUTUBE_API_KEYS = [
-  import.meta.env.VITE_YOUTUBE_API_KEY_1,
-  import.meta.env.VITE_YOUTUBE_API_KEY_2,
-  import.meta.env.VITE_YOUTUBE_API_KEY_3,
-];
-
-interface YouTubeVideo {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-}
-
-// Fetch YouTube videos using the generated prompt
-const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => {
-  const searchPrompt = await generateYouTubeSearchPrompt(location);
-  if (!searchPrompt) {
-    console.error('Failed to generate YouTube search prompt.');
-    return [];
-  }
-
-  for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
-    const apiKey = YOUTUBE_API_KEYS[i];
-    if (!apiKey) {
-      console.error(`YouTube API key ${i + 1} is missing.`);
-      continue;
-    }
-
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
-        continue;
-      }
-
-      const data = await response.json();
-      if (data.items && data.items.length > 0) {
-        return data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium.url,
-        }));
-      } else {
-        console.warn('No YouTube videos found for the location:', location);
-        return [];
-      }
-    } catch (error) {
-      console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
-      continue;
-    }
-  }
-
-  console.error('All YouTube API keys failed.');
-  return [];
-};
-
-// Generate YouTube search prompt using Groq API
-const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 5000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
-  } catch (error) {
-    console.error('Error generating YouTube search prompt:', error);
-  }
-  return null;
-};
-
-// Generate news content using Groq API
-const generateNewsWithAI = async (location: string): Promise<string> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
-    return 'No news available for this location.';
-  } catch (error) {
-    console.error('Error generating news:', error);
-    return 'Failed to generate news. Please try again.';
-  }
-};
-
-interface HistoricalEvent {
-  title: string;
-  cardTitle: string;
-  cardSubtitle: string;
-  cardDetailedText: string;
-  image?: string;
-}
-
-interface DynamicTheme {
-  name: string;
-  prompt: string;
-}
-
-interface NewsArticle {
-  title: string;
-  description: string;
-  url: string;
-}
-
-// Generate Earth image using Google DeepMind based on location info from Groq
+// Generate Earth image using Pexels API as a fallback
 const generateEarthImage = async (location: string): Promise<string | null> => {
-  const contents = `Create a 3D rendered image of a beautiful landscaping photography for ${location} with detailed geographical features, landmarks, and environmental characteristics.`;
-
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
-  });
-
   try {
-    const response = await model.generateContent(contents);
-    if (response.response.candidates) {
-      for (const part of response.response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          const imageData = part.inlineData.data;
-          const imageUrl = `data:image/png;base64,${imageData}`;
-          console.log('Image generated:', imageUrl);
-          return imageUrl; // Return the base64 URL instead of saving to a file
-        }
-      }
+    // Fetch an image from Pexels API
+    const imageUrl = await fetchImage(location);
+    if (imageUrl) {
+      console.log('Image fetched from Pexels:', imageUrl);
+      return imageUrl;
+    } else {
+      console.warn('No image found for the location. Using a placeholder.');
+      return 'https://via.placeholder.com/600x400'; // Placeholder image
     }
   } catch (error) {
     console.error('Error generating Earth image:', error);
+    return null;
   }
-  return null;
 };
 
 // App Component
@@ -533,7 +383,7 @@ function App() {
       await generateDynamicThemes(locationName);
       await fetchYouTubeVideos(locationName);
 
-      // Generate Earth image
+      // Generate Earth image using Pexels API
       const earthImage = await generateEarthImage(locationName);
       setEarthImage(earthImage);
     } catch (error) {
