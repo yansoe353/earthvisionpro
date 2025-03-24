@@ -240,21 +240,18 @@ const generateEarthImage = async (location: string): Promise<string | null> => {
 
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash-exp',
-    generationConfig: {
-      responseModalities: ['Text', 'Image'],
-    },
   });
 
   try {
     const response = await model.generateContent(contents);
-    for (const part of response.response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        const imageData = part.inlineData.data;
-        const buffer = Buffer.from(imageData, 'base64');
-        const imagePath = 'earth-landscaping-image.png';
-        fs.writeFileSync(imagePath, buffer);
-        console.log('Image saved as', imagePath);
-        return imagePath;
+    if (response.response.candidates) {
+      for (const part of response.response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          const imageData = part.inlineData.data;
+          const imageUrl = `data:image/png;base64,${imageData}`;
+          console.log('Image generated:', imageUrl);
+          return imageUrl; // Return the base64 URL instead of saving to a file
+        }
       }
     }
   } catch (error) {
@@ -291,9 +288,12 @@ function App() {
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
   // Debounce the handleSearch function
-  const debouncedHandleSearch = useCallback(debounce((lng: number, lat: number) => {
-    handleSearch(lng, lat);
-  }, 300), []);
+  const debouncedHandleSearch = useCallback(
+    debounce((lng: number, lat: number) => {
+      handleSearch(lng, lat);
+    }, 300),
+    []
+  );
 
   // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = async (newContent: string) => {
