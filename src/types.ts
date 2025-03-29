@@ -16,6 +16,7 @@ export interface Earthquake {
 }
 
 
+
 /**
  * Represents a user-generated marker on the map.
  */
