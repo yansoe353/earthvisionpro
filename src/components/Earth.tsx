@@ -15,7 +15,7 @@ import { MAPBOX_STYLES } from '../constants/mapboxStyles';
 import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
-import { defaultHotspotData } from './hotspotData'; // Import the default hotspot data
+import { defaultHotspotData } from './hotspotData';
 
 type Cluster = Feature<Point, {
   cluster?: boolean;
@@ -23,7 +23,7 @@ type Cluster = Feature<Point, {
   id?: string;
   mag?: number;
   cluster_id?: number;
-  time?: number; // Add the time property
+  time?: number;
 }>;
 
 type Hotspot = {
@@ -70,10 +70,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
   const [showTransit, setShowTransit] = useState(false);
-  const [showWeather, setShowWeather] = useState(true); // Set to true to enable weather layer by default
+  const [showWeather, setShowWeather] = useState(true);
 
   // Weather layer states
-  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>('clouds_new'); // Set a default weather layer
+  const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>('clouds_new');
   const [showWeatherTabs, setShowWeatherTabs] = useState(false);
 
   // OpenWeatherMap tile URL
@@ -516,10 +516,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setShowContour={setShowContour}
         showPointsOfInterest={showPointsOfInterest}
         setShowPointsOfInterest={setShowPointsOfInterest}
-        showWeather={showWeather}
-        setShowWeather={setShowWeather}
         showTransit={showTransit}
         setShowTransit={setShowTransit}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
       />
 
       {/* Feature Panel */}
@@ -540,7 +540,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           mapStyles={MAPBOX_STYLES}
           terrainExaggeration={terrainExaggeration}
           setTerrainExaggeration={setTerrainExaggeration}
-          addCustomHotspot={addCustomHotspot} // Pass the function to add custom hotspots
+          addCustomHotspot={addCustomHotspot}
         />
       )}
 
@@ -650,14 +650,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               onClose={() => setSelectedFeature(null)}
               onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
               onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
-            >
-              {/* Display earthquake occurrence time */}
-              {selectedFeature.properties.time && (
-                <div>
-                  Occurred at: {new Date(selectedFeature.properties.time).toLocaleString()}
-                </div>
-              )}
-            </MarkerPopup>
+            />
           </Popup>
         )}
 
