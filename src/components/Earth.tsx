@@ -17,7 +17,14 @@ import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { defaultHotspotData } from './hotspotData'; // Import the default hotspot data
 
-type Cluster = Feature<Point, { cluster?: boolean; point_count?: number; id?: string; mag?: number; cluster_id?: number }>;
+type Cluster = Feature<Point, {
+  cluster?: boolean;
+  point_count?: number;
+  id?: string;
+  mag?: number;
+  cluster_id?: number;
+  time?: number; // Add the time property
+}>;
 
 type Hotspot = {
   id: string;
