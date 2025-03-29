@@ -1,6 +1,7 @@
 /**
  * Represents an earthquake event.
  */
+// types.ts
 export interface Earthquake {
   id: string; // Unique identifier for the earthquake
   geometry: {
@@ -10,8 +11,10 @@ export interface Earthquake {
     title: string; // Title of the earthquake event
     mag: number; // Magnitude of the earthquake
     place: string; // Location description
+    time: number; // Time of the earthquake in milliseconds since the epoch
   };
 }
+
 
 /**
  * Represents a user-generated marker on the map.
