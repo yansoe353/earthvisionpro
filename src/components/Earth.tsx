@@ -112,7 +112,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     if (earthquakes.length > 0) {
       const points = earthquakes.map((eq) => ({
         type: "Feature" as const,
-        properties: { id: eq.id, mag: eq.properties.mag },
+        properties: { id: eq.id, mag: eq.properties.mag, time: eq.properties.time },
         geometry: {
           type: "Point" as const,
           coordinates: [eq.geometry.coordinates[0], eq.geometry.coordinates[1]],
@@ -263,6 +263,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               title: `Earthquake - ${cluster.properties.id}`,
               mag: cluster.properties.mag || 0,
               place: 'Unknown',
+              time: cluster.properties.time || 0,
             },
           };
           setSelectedFeature(earthquake);
@@ -299,6 +300,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   title: `Earthquake - ${cluster.properties.id}`,
                   mag: cluster.properties.mag || 0,
                   place: 'Unknown',
+                  time: cluster.properties.time || 0,
                 },
               };
               setSelectedFeature(earthquake);
@@ -641,7 +643,14 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               onClose={() => setSelectedFeature(null)}
               onDelete={isUserMarker(selectedFeature) ? deleteUserMarker : undefined}
               onUpdateNote={isUserMarker(selectedFeature) ? updateMarkerNote : undefined}
-            />
+            >
+              {/* Display earthquake occurrence time */}
+              {selectedFeature.properties.time && (
+                <div>
+                  Occurred at: {new Date(selectedFeature.properties.time).toLocaleString()}
+                </div>
+              )}
+            </MarkerPopup>
           </Popup>
         )}
 
