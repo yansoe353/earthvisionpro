@@ -73,6 +73,18 @@ export interface WeatherData {
   };
 }
 
+// types.ts
+type Cluster = Feature<Point, {
+  cluster?: boolean;
+  point_count?: number;
+  id?: string;
+  mag?: number;
+  cluster_id?: number;
+  time?: number; // Add the time property
+}>;
+
+
+
 /**
  * Props for the Earth component.
  */
