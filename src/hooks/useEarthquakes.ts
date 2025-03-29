@@ -12,15 +12,7 @@ const useEarthquakes = (showDisasterAlerts: boolean) => {
       fetch(USGS_API_URL)
         .then((response) => response.json())
         .then((data) => {
-          const formattedEarthquakes = data.features.map((feature: any) => ({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              // Format the time to a human-readable string
-              formattedTime: new Date(feature.properties.time).toLocaleString()
-            }
-          }));
-          setEarthquakes(formattedEarthquakes);
+          setEarthquakes(data.features);
         })
         .catch((error) => {
           console.error('Error fetching earthquake data:', error);
