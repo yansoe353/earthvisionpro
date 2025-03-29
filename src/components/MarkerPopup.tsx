@@ -1,3 +1,4 @@
+// MarkerPopup.tsx
 import React, { useState, useEffect } from 'react';
 import { Earthquake, UserMarker } from '../types';
 
@@ -8,7 +9,7 @@ interface MarkerPopupProps {
   onUpdateNote?: (id: string, note: string) => void;
 }
 
-const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupProps) => {
+const MarkerPopup: React.FC<MarkerPopupProps> = ({ marker, onClose, onDelete, onUpdateNote }) => {
   // Type guard to check if the marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
     return 'label' in marker && 'id' in marker;
@@ -80,6 +81,10 @@ const MarkerPopup = ({ marker, onClose, onDelete, onUpdateNote }: MarkerPopupPro
           <p><strong>Location:</strong> {marker.properties.place}</p>
           <p>
             <strong>Coordinates:</strong> {marker.geometry.coordinates[0]}, {marker.geometry.coordinates[1]}
+          </p>
+          {/* Display earthquake occurrence time */}
+          <p>
+            <strong>Occurred at:</strong> {new Date(marker.properties.time).toLocaleString()}
           </p>
         </>
       )}
