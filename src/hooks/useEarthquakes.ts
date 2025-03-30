@@ -6,23 +6,56 @@ const USGS_API_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/
 
 const useEarthquakes = (showDisasterAlerts: boolean) => {
   const [earthquakes, setEarthquakes] = useState<Earthquake[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (showDisasterAlerts) {
-      fetch(USGS_API_URL)
-        .then((response) => response.json())
-        .then((data) => {
-          setEarthquakes(data.features);
-        })
-        .catch((error) => {
-          console.error('Error fetching earthquake data:', error);
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const fetchEarthquakes = async () => {
+      if (!showDisasterAlerts) {
+        if (isMounted) setEarthquakes([]);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(USGS_API_URL, {
+          signal: controller.signal
         });
-    } else {
-      setEarthquakes([]);
-    }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setEarthquakes(data.features || []);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError' && isMounted) {
+          console.error('Error fetching earthquake data:', err);
+          setError('Failed to load earthquake data');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchEarthquakes();
+    const interval = setInterval(fetchEarthquakes, 5 * 60 * 1000); // Refresh every 5 minutes
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [showDisasterAlerts]);
 
-  return { earthquakes };
+  return { earthquakes, loading, error };
 };
 
 export default useEarthquakes;
