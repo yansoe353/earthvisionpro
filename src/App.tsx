@@ -14,7 +14,7 @@ import './index.css';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-// Language mapping to understand the nuances of the translation
+// Language mapping
 const languageMapping: { [key: string]: string } = {
   en: 'English',
   my: 'Myanmar (Burmese)',
@@ -25,10 +25,56 @@ const languageMapping: { [key: string]: string } = {
 const translationCache = new Map<string, string>();
 
 // Rate limit delay
-const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
+const RATE_LIMIT_DELAY = 1000;
 let lastRequestTime = 0;
 
-// Translation function using the Gemini API with rate limiting and caching
+// Interfaces
+interface DynamicTheme {
+  name: string;
+  prompt: string;
+}
+
+interface HistoricalEvent {
+  title: string;
+  cardTitle: string;
+  cardSubtitle: string;
+  cardDetailedText: string;
+  image?: string;
+}
+
+interface NewsArticle {
+  title: string;
+  description: string;
+  url: string;
+}
+
+interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+}
+
+interface DisasterType {
+  id: string;
+  type: string;
+  year: number;
+  severity: string;
+  description?: string;
+}
+
+interface DisasterData {
+  overallRisk: number;
+  summary: string;
+  types: {
+    name: string;
+    risk: number;
+    description: string;
+    recommendations: string[];
+  }[];
+}
+
+// Rate-limited translation function
 const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -50,9 +96,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // Handle the Gemini API response
     if (responseText.includes('Here are a few options')) {
-      // Extract the first translation option
       const options = responseText.split('Here are a few options')[1].trim().split('\n');
       const translatedText = options[0].trim();
       translationCache.set(cacheKey, translatedText);
@@ -63,7 +107,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
     return responseText;
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Fallback to original text if translation fails
+    return text;
   }
 };
 
@@ -80,46 +124,27 @@ const fetchImage = async (query: string): Promise<string | null> => {
       },
     });
 
-    if (response.data.photos && response.data.photos.length > 0) {
-      return response.data.photos[0].src.large;
-    } else {
-      console.warn('No images found for the query:', query);
-      return null;
-    }
+    return response.data.photos?.[0]?.src.large || null;
   } catch (error) {
     console.error('Error fetching image:', error);
     return null;
   }
 };
 
-// List of YouTube API keys
+// YouTube API keys
 const YOUTUBE_API_KEYS = [
   import.meta.env.VITE_YOUTUBE_API_KEY_1,
   import.meta.env.VITE_YOUTUBE_API_KEY_2,
   import.meta.env.VITE_YOUTUBE_API_KEY_3,
 ];
 
-interface YouTubeVideo {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-}
-
-// Fetch YouTube videos using the generated prompt
+// Fetch YouTube videos
 const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => {
   const searchPrompt = await generateYouTubeSearchPrompt(location);
-  if (!searchPrompt) {
-    console.error('Failed to generate YouTube search prompt.');
-    return [];
-  }
+  if (!searchPrompt) return [];
 
-  for (let i = 0; i < YOUTUBE_API_KEYS.length; i++) {
-    const apiKey = YOUTUBE_API_KEYS[i];
-    if (!apiKey) {
-      console.error(`YouTube API key ${i + 1} is missing.`);
-      continue;
-    }
+  for (const apiKey of YOUTUBE_API_KEYS) {
+    if (!apiKey) continue;
 
     try {
       const response = await fetch(
@@ -128,35 +153,26 @@ const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => 
         )}&type=video&maxResults=5&key=${apiKey}`
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`YouTube API request failed with key ${i + 1}:`, response.status, response.statusText, errorData);
-        continue;
-      }
+      if (!response.ok) continue;
 
       const data = await response.json();
-      if (data.items && data.items.length > 0) {
+      if (data.items?.length > 0) {
         return data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
           description: item.snippet.description,
           thumbnail: item.snippet.thumbnails.medium.url,
         }));
-      } else {
-        console.warn('No YouTube videos found for the location:', location);
-        return [];
       }
     } catch (error) {
-      console.error(`Error fetching YouTube videos with key ${i + 1}:`, error);
-      continue;
+      console.error(`Error fetching YouTube videos:`, error);
     }
   }
 
-  console.error('All YouTube API keys failed.');
   return [];
 };
 
-// Generate YouTube search prompt using Groq API
+// Generate YouTube search prompt
 const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
   try {
     const groq = new Groq({
@@ -168,7 +184,7 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
       messages: [
         {
           role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}. The prompt should be concise and optimized for finding relevant travel content.`,
+          content: `Generate a YouTube search prompt for travel videos about ${location}.`,
         },
       ],
       model: 'deepseek-r1-distill-llama-70b',
@@ -176,16 +192,14 @@ const generateYouTubeSearchPrompt = async (location: string): Promise<string | n
       max_tokens: 5000,
     });
 
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
+    return completion.choices?.[0]?.message?.content?.trim() || null;
   } catch (error) {
     console.error('Error generating YouTube search prompt:', error);
+    return null;
   }
-  return null;
 };
 
-// Generate news content using Groq API
+// Generate news content
 const generateNewsWithAI = async (location: string): Promise<string> => {
   try {
     const groq = new Groq({
@@ -197,7 +211,7 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
       messages: [
         {
           role: 'user',
-          content: `Generate a brief news summary about ${location}. Focus on recent events, cultural highlights, or significant developments.`,
+          content: `Generate a brief news summary about ${location}.`,
         },
       ],
       model: 'deepseek-r1-distill-llama-70b',
@@ -205,54 +219,196 @@ const generateNewsWithAI = async (location: string): Promise<string> => {
       max_tokens: 1000,
     });
 
-    if (completion.choices && completion.choices[0]?.message?.content) {
-      return completion.choices[0].message.content.trim();
-    }
-    return 'No news available for this location.';
+    return completion.choices?.[0]?.message?.content?.trim() || 'No news available.';
   } catch (error) {
     console.error('Error generating news:', error);
-    return 'Failed to generate news. Please try again.';
+    return 'Failed to generate news.';
   }
 };
 
-interface HistoricalEvent {
-  title: string;
-  cardTitle: string;
-  cardSubtitle: string;
-  cardDetailedText: string;
-  image?: string;
-}
-
-interface DynamicTheme {
-  name: string;
-  prompt: string;
-}
-
-interface NewsArticle {
-  title: string;
-  description: string;
-  url: string;
-}
-
-// Generate Earth image using Pexels API as a fallback
+// Generate Earth image
 const generateEarthImage = async (location: string): Promise<string | null> => {
   try {
-    // Fetch an image from Pexels API
     const imageUrl = await fetchImage(location);
-    if (imageUrl) {
-      console.log('Image fetched from Pexels:', imageUrl);
-      return imageUrl;
-    } else {
-      console.warn('No image found for the location. Using a placeholder.');
-      return 'https://via.placeholder.com/600x400'; // Placeholder image
-    }
+    return imageUrl || 'https://via.placeholder.com/600x400';
   } catch (error) {
     console.error('Error generating Earth image:', error);
     return null;
   }
 };
 
-// App Component
+// Fetch historical disasters
+const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
+  try {
+    const response = await fetch(
+      `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
+    );
+    const data = await response.json();
+    return data.data?.map((disaster: any) => ({
+      id: disaster.id,
+      type: disaster.type[0],
+      year: new Date(disaster.date.created).getFullYear(),
+      severity: disaster.severity,
+      description: disaster.description
+    })) || [];
+  } catch (error) {
+    console.error('Error fetching historical disasters:', error);
+    return [];
+  }
+};
+
+// Disaster Widget Component
+const DisasterWidget = ({ 
+  data, 
+  loading,
+  history,
+  onClose,
+  language,
+  onTranslate
+}: {
+  data: DisasterData | null;
+  loading: boolean;
+  history: DisasterType[];
+  onClose: () => void;
+  language: 'en' | 'my' | 'th';
+  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>;
+}) => {
+  const [translatedData, setTranslatedData] = useState<DisasterData | null>(null);
+  const [translating, setTranslating] = useState(false);
+
+  useEffect(() => {
+    if (language !== 'en' && data) {
+      const translateDisasterData = async () => {
+        setTranslating(true);
+        try {
+          const translatedSummary = await onTranslate(data.summary, language);
+          const translatedTypes = await Promise.all(
+            data.types.map(async (type) => ({
+              ...type,
+              name: await onTranslate(type.name, language),
+              description: await onTranslate(type.description, language),
+              recommendations: await Promise.all(
+                type.recommendations.map(rec => onTranslate(rec, language))
+              )
+            }))
+          );
+          setTranslatedData({
+            ...data,
+            summary: translatedSummary,
+            types: translatedTypes
+          });
+        } catch (error) {
+          console.error('Translation error:', error);
+        } finally {
+          setTranslating(false);
+        }
+      };
+      translateDisasterData();
+    } else {
+      setTranslatedData(data);
+    }
+  }, [data, language, onTranslate]);
+
+  const getRiskColor = (risk: number): string => {
+    if (risk <= 3) return '#4CAF50';
+    if (risk <= 6) return '#FFC107';
+    return '#F44336';
+  };
+
+  if (loading) return (
+    <div className="disaster-widget loading">
+      {language === 'en' ? 'Analyzing disaster risks...' : 
+       language === 'my' ? 'သဘာဝဘေးအန္တရာယ်များကို ဆန်းစစ်နေသည်...' : 
+       'กำลังวิเคราะห์ความเสี่ยงภัยธรรมชาติ...'}
+    </div>
+  );
+
+  if (!translatedData) return null;
+
+  return (
+    <div className="disaster-widget">
+      <div className="widget-header">
+        <h3>🌍 {language === 'en' ? 'Disaster Risk Assessment' : 
+            language === 'my' ? 'သဘာဝဘေးအန္တရာယ် အကဲဖြတ်ချက်' : 
+            'การประเมินความเสี่ยงภัยธรรมชาติ'}</h3>
+        <button className="close-button" onClick={onClose}>&times;</button>
+      </div>
+      
+      <div className="risk-level" style={{ backgroundColor: getRiskColor(translatedData.overallRisk) }}>
+        {language === 'en' ? 'Overall Risk' : 
+         language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' : 
+         'ความเสี่ยงโดยรวม'}: {translatedData.overallRisk}/10
+      </div>
+      
+      <div className="risk-summary">
+        <h4>{language === 'en' ? 'Summary' : language === 'my' ? 'အကျဉ်းချုပ်' : 'สรุป'}</h4>
+        <p>{translatedData.summary}</p>
+      </div>
+      
+      <div className="disaster-types">
+        <h4>{language === 'en' ? 'Risk by Disaster Type' : 
+             language === 'my' ? 'ဘေးအန္တရာယ်အမျိုးအစားအလိုက် အန္တရာယ်' : 
+             'ความเสี่ยงตามประเภทภัยพิบัติ'}</h4>
+        {translatedData.types.map((type) => (
+          <div key={type.name} className="disaster-type">
+            <div className="type-header">
+              <h5>{type.name}</h5>
+              <span className="type-risk" style={{ color: getRiskColor(type.risk) }}>
+                {type.risk}/10
+              </span>
+            </div>
+            <div className="risk-meter">
+              <div 
+                className="risk-fill" 
+                style={{
+                  width: `${type.risk * 10}%`,
+                  backgroundColor: getRiskColor(type.risk)
+                }}
+              />
+            </div>
+            <p>{type.description}</p>
+            {type.recommendations.length > 0 && (
+              <div className="recommendations">
+                <h6>{language === 'en' ? 'Recommendations' : 
+                     language === 'my' ? 'အကြံပြုချက်များ' : 
+                     'คำแนะนำ'}:</h6>
+                <ul>
+                  {type.recommendations.map((rec, i) => (
+                    <li key={i}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      {history.length > 0 && (
+        <div className="historical-data">
+          <h4>{language === 'en' ? 'Historical Events' : 
+               language === 'my' ? 'သမိုင်းကြောင်းဆိုင်ရာ ဖြစ်ရပ်များ' : 
+               'เหตุการณ์ในอดีต'}</h4>
+          <div className="history-scroll">
+            {history.map((event) => (
+              <div key={event.id} className="history-event">
+                <div className="event-year">{event.year}</div>
+                <div className="event-details">
+                  <strong>{event.type}</strong> - {event.severity}
+                  {event.description && <p>{event.description}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {translating && <div className="translating">{language === 'en' ? 'Translating...' : 
+                          language === 'my' ? 'ဘာသာပြန်နေသည်...' : 
+                          'กำลังแปล...'}</div>}
+    </div>
+  );
+};
+
+// Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -272,6 +428,10 @@ function App() {
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
   const [earthImage, setEarthImage] = useState<string | null>(null);
+  const [disasterData, setDisasterData] = useState<DisasterData | null>(null);
+  const [disasterLoading, setDisasterLoading] = useState(false);
+  const [disasterHistory, setDisasterHistory] = useState<DisasterType[]>([]);
+  const [showDisasterWidget, setShowDisasterWidget] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -279,7 +439,6 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
-  // Debounce the handleSearch function
   const debouncedHandleSearch = useCallback(
     debounce((lng: number, lat: number) => {
       handleSearch(lng, lat);
@@ -287,7 +446,6 @@ function App() {
     []
   );
 
-  // Handle rewritten content from MarkdownContent
   const handleRewrittenContent = async (newContent: string) => {
     setFacts(newContent);
     if (language !== 'en') {
@@ -298,7 +456,6 @@ function App() {
     }
   };
 
-  // Fetch historical insights and events using Groq API
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
 
@@ -313,16 +470,7 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also, provide a list of historical events in JSON format like this:
-            [
-              {
-                "title": "Event Year",
-                "cardTitle": "Event Title",
-                "cardSubtitle": "Event Subtitle",
-                "cardDetailedText": "Detailed description of the event."
-              }
-            ]
-            Keep the response concise and engaging.`,
+            content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also provide a list of historical events in JSON format.`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
@@ -330,29 +478,22 @@ function App() {
         max_tokens: 1000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
+      if (completion.choices?.[0]?.message?.content) {
         const response = completion.choices[0].message.content;
-
-        // Extract historical insights
         const insights = response.split('JSON format like this:')[0].trim();
         setHistoricalInsights(insights);
 
-        // Extract historical events from JSON
-        const eventsJson = response.match(/\[.*\]/s)?.[0]; // Match JSON array
+        const eventsJson = response.match(/\[.*\]/s)?.[0];
         if (eventsJson) {
           const events = JSON.parse(eventsJson) as HistoricalEvent[];
-
-          // Fetch images for each event using Pexels API
           const eventsWithImages = await Promise.all(
-            events.map(async (event) => {
-              const imageUrl = await fetchImage(event.cardTitle); // Use event title as the search query
-              return { ...event, image: imageUrl || 'https://via.placeholder.com/300x200' }; // Fallback to placeholder
-            })
+            events.map(async (event) => ({
+              ...event,
+              image: await fetchImage(event.cardTitle) || 'https://via.placeholder.com/300x200',
+            }))
           );
-
           setHistoricalEvents(eventsWithImages);
 
-          // Translate content if the current language is not English
           if (language !== 'en') {
             const translatedInsights = await rateLimitedTranslateText(insights, language);
             setHistoricalInsights(translatedInsights);
@@ -367,21 +508,15 @@ function App() {
             );
             setHistoricalEvents(translatedEvents);
           }
-        } else {
-          console.error('No historical events found in the response.');
-          setHistoricalEvents([]);
         }
       }
     } catch (error) {
       console.error('Error fetching historical insights:', error);
-      setHistoricalInsights('Failed to fetch historical insights. Please try again.');
-      setHistoricalEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle search for a location
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
 
@@ -389,33 +524,26 @@ function App() {
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
     const data = await response.json();
-    if (data.features && data.features.length > 0) {
+    if (data.features?.length > 0) {
       const locationName = data.features[0].place_name;
       setCurrentLocation(locationName);
-      const videos = await fetchYouTubeVideos(locationName);
-      setYoutubeVideos(videos);
+      setYoutubeVideos(await fetchYouTubeVideos(locationName));
     }
   };
 
-  // Fetch location name from Mapbox Geocoding API
   const fetchLocationName = async (lng: number, lat: number): Promise<string> => {
-    const accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`;
-
     try {
-      const response = await fetch(url);
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
+      );
       const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        return data.features[0].place_name;
-      }
-      return 'Unknown Location';
+      return data.features?.[0]?.place_name || 'Unknown Location';
     } catch (error) {
       console.error('Error fetching location name:', error);
       return 'Unknown Location';
     }
   };
 
-  // Analyze image and location with Groq API
   const analyzeWithGroq = async (imageUrl: string, locationName: string): Promise<string> => {
     const groq = new Groq({
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
@@ -446,100 +574,29 @@ function App() {
         max_tokens: 8000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        return completion.choices[0].message.content;
-      }
-      return 'No analysis available.';
+      return completion.choices?.[0]?.message?.content || 'No analysis available.';
     } catch (error) {
       console.error('Error analyzing with Groq:', error);
-      return 'Error analyzing the image. Please try again.';
+      return 'Error analyzing the image.';
     }
   };
 
-  // Capture the current view of the globe
-  const captureView = async () => {
-    if (!earthContainerRef.current || !earthRef.current) {
-      console.error('Earth container or reference is not available.');
-      return;
-    }
-
-    console.log('Capturing view...');
-
-    // Reset historical insights and events
-    setHistoricalInsights('');
-    setHistoricalEvents([]);
-
-    setShowWeatherWidget(false);
-    setLoading(true);
-    setDynamicThemes([]);
-
-    const timeout = setTimeout(() => {
-      console.error('Analyzing view is taking too long. Please check your internet connection or try again later.');
-      setFacts('Error: Analyzing view is taking too long. Please check your internet connection or try again later.');
-      setLoading(false);
-    }, 60000); // 30 seconds timeout
-
+  const analyzeDisasters = async (location: string, lat: number, lng: number) => {
+    setDisasterLoading(true);
+    setShowDisasterWidget(true);
+    
     try {
-      const map = earthRef.current.getMap();
-      if (!map) {
-        throw new Error('Map instance not found.');
-      }
-
-      console.log('Map instance found.');
-
-      await new Promise((resolve) => {
-        map.once('idle', resolve);
-      });
-
-      const canvas = map.getCanvas();
-      if (!canvas) {
-        throw new Error('Canvas not found.');
-      }
-
-      console.log('Canvas found.');
-
-      // Reduce the resolution of the captured image for better performance on mobile
-      const dataUrl = canvas.toDataURL('image/png', 0.5); // Reduce quality
-      setCapturedImage(dataUrl);
-
-      const center = map.getCenter();
-      const lng = center.lng;
-      const lat = center.lat;
-
-      console.log('Captured view center:', lng, lat);
-
-      const locationName = await fetchLocationName(lng, lat);
-      setCurrentLocation(locationName);
-
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
-      setFacts(analysis);
-
-      // Translate the analysis if the current language is not English
-      if (language !== 'en') {
-        const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
-        setTranslatedFacts(translatedAnalysis);
-      } else {
-        setTranslatedFacts(analysis);
-      }
-
-      await generateDynamicThemes(locationName);
-      await fetchYouTubeVideos(locationName);
-
-      // Generate Earth image using Pexels API
-      const earthImage = await generateEarthImage(locationName);
-      setEarthImage(earthImage);
-    } catch (error) {
-      console.error('Error capturing view:', error);
-      setFacts('Error getting facts about this region. Please try again.');
-    } finally {
-      clearTimeout(timeout);
-      setLoading(false);
-    }
-  };
-
-  // Generate dynamic themes for analysis
-  const generateDynamicThemes = async (location: string) => {
-    try {
+      // Get current disaster alerts
+      const response = await fetch(
+        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
+      );
+      const currentDisasters = await response.json();
+      
+      // Get historical disaster data
+      const history = await fetchHistoricalDisasters(lat, lng);
+      setDisasterHistory(history);
+      
+      // Analyze with AI
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
@@ -549,25 +606,126 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Based on the location "${location}", suggest 3 unique and specific analysis themes. Return the response as a JSON array of objects with "name" and "prompt" properties.`,
+            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}. 
+            Current alerts: ${JSON.stringify(currentDisasters.data)}.
+            Historical data: ${JSON.stringify(history)}.
+            Provide a detailed risk assessment with:
+            1. Overall risk score (1-10)
+            2. Risk breakdown by disaster type
+            3. Summary of findings
+            4. Recommendations
+            Format as JSON with this structure:
+            {
+              "overallRisk": number,
+              "summary": string,
+              "types": [{
+                "name": string,
+                "risk": number,
+                "description": string,
+                "recommendations": string[]
+              }]
+            }`,
           },
         ],
         model: 'llama-3.2-90b-vision-preview',
-        temperature: 0.95,
-        max_tokens: 5000,
+        temperature: 0.7,
+        max_tokens: 2000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
-        const themes = JSON.parse(completion.choices[0].message.content) as DynamicTheme[];
-        setDynamicThemes(themes);
+      if (completion.choices?.[0]?.message?.content) {
+        const analysis = JSON.parse(completion.choices[0].message.content);
+        setDisasterData(analysis);
+        setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
       }
     } catch (error) {
-      console.error('Error generating dynamic themes:', error);
-      setDynamicThemes([]);
+      console.error('Disaster analysis error:', error);
+    } finally {
+      setDisasterLoading(false);
     }
   };
 
-  // Analyze with a specific perspective
+  const captureView = async () => {
+    if (!earthContainerRef.current || !earthRef.current) return;
+
+    setShowWeatherWidget(false);
+    setLoading(true);
+    setDynamicThemes([]);
+    setHistoricalInsights('');
+    setHistoricalEvents([]);
+
+    const timeout = setTimeout(() => {
+      setFacts('Error: Analyzing view is taking too long.');
+      setLoading(false);
+    }, 60000);
+
+    try {
+      const map = earthRef.current.getMap();
+      if (!map) throw new Error('Map instance not found.');
+
+      await new Promise((resolve) => {
+        map.once('idle', resolve);
+      });
+
+      const canvas = map.getCanvas();
+      if (!canvas) throw new Error('Canvas not found.');
+
+      const dataUrl = canvas.toDataURL('image/png', 0.5);
+      setCapturedImage(dataUrl);
+
+      const center = map.getCenter();
+      const lng = center.lng;
+      const lat = center.lat;
+
+      const locationName = await fetchLocationName(lng, lat);
+      setCurrentLocation(locationName);
+
+      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      setFacts(analysis);
+
+      if (language !== 'en') {
+        const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
+        setTranslatedFacts(translatedAnalysis);
+      } else {
+        setTranslatedFacts(analysis);
+      }
+
+      // Generate dynamic themes
+      try {
+        const groq = new Groq({
+          apiKey: import.meta.env.VITE_GROQ_API_KEY,
+          dangerouslyAllowBrowser: true,
+        });
+
+        const completion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'user',
+              content: `Based on the location "${locationName}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
+            },
+          ],
+          model: 'llama-3.2-90b-vision-preview',
+          temperature: 0.95,
+          max_tokens: 5000,
+        });
+
+        if (completion.choices?.[0]?.message?.content) {
+          setDynamicThemes(JSON.parse(completion.choices[0].message.content));
+        }
+      } catch (error) {
+        console.error('Error generating dynamic themes:', error);
+      }
+
+      setYoutubeVideos(await fetchYouTubeVideos(locationName));
+      setEarthImage(await generateEarthImage(locationName));
+    } catch (error) {
+      console.error('Error capturing view:', error);
+      setFacts('Error getting facts about this region.');
+    } finally {
+      clearTimeout(timeout);
+      setLoading(false);
+    }
+  };
+
   const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
@@ -583,9 +741,9 @@ function App() {
       });
 
       const defaultPromptMap: { [key: string]: string } = {
-        'Environmental Factors': `Based on the location "${currentLocation}", provide additional analysis about its environmental aspects, biodiversity, and climate.`,
-        'Economic Areas': `Based on the location "${currentLocation}", provide additional analysis about its economic significance, industries, and market strengths.`,
-        'Travel Destinations': `Based on the location "${currentLocation}", provide additional analysis about its travel destinations, landmarks, and cultural attractions.`,
+        'Environmental Factors': `Analyze environmental aspects of ${currentLocation}.`,
+        'Economic Areas': `Analyze economic significance of ${currentLocation}.`,
+        'Travel Destinations': `Analyze travel destinations in ${currentLocation}.`,
       };
 
       const prompt = customPrompt || defaultPromptMap[perspective];
@@ -602,27 +760,25 @@ function App() {
         max_tokens: 5000,
       });
 
-      if (completion.choices && completion.choices[0]?.message?.content) {
+      if (completion.choices?.[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
-        setFacts((prevFacts) => `${prevFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+        setFacts(prev => `${prev}\n\n## ${perspective} Analysis\n${newAnalysis}`);
 
         if (currentLang !== 'en') {
           const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${translatedText}`);
+          setTranslatedFacts(prev => `${prev}\n\n## ${perspective} Analysis\n${translatedText}`);
         } else {
-          setTranslatedFacts((prevTranslatedFacts) => `${prevTranslatedFacts}\n\n## ${perspective} Analysis\n${newAnalysis}`);
+          setTranslatedFacts(prev => `${prev}\n\n## ${perspective} Analysis\n${newAnalysis}`);
         }
       }
     } catch (error) {
       console.error('Error during analysis:', error);
-      setFacts((prevFacts) => `${prevFacts}\n\nError analyzing ${perspective} perspective. Please try again.`);
     } finally {
       setLanguage(currentLang);
       setAnalysisLoading(false);
     }
   };
 
-  // Save analysis to a file
   const saveAnalysis = () => {
     const content = `=== Analysis Report ===\n\n` +
       `Location: ${currentLocation}\n\n` +
@@ -638,55 +794,66 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Handle language change for all insights and content
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
 
-    // Translate all content
     const translateAllContent = async () => {
       if (facts) {
-        const translatedFactsText = await rateLimitedTranslateText(facts, newLanguage);
-        setTranslatedFacts(translatedFactsText);
+        setTranslatedFacts(await rateLimitedTranslateText(facts, newLanguage));
       }
 
       if (historicalInsights) {
-        const translatedHistoricalInsights = await rateLimitedTranslateText(historicalInsights, newLanguage);
-        setHistoricalInsights(translatedHistoricalInsights);
+        setHistoricalInsights(await rateLimitedTranslateText(historicalInsights, newLanguage));
       }
 
       if (historicalEvents.length > 0) {
-        const translatedEvents = await Promise.all(
+        setHistoricalEvents(await Promise.all(
           historicalEvents.map(async (event) => ({
             ...event,
             cardTitle: await rateLimitedTranslateText(event.cardTitle, newLanguage),
             cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, newLanguage),
             cardDetailedText: await rateLimitedTranslateText(event.cardDetailedText, newLanguage),
           }))
-        );
-        setHistoricalEvents(translatedEvents);
+        ));
       }
 
       if (newsArticles.length > 0) {
-        const translatedNewsArticles = await Promise.all(
+        setNewsArticles(await Promise.all(
           newsArticles.map(async (article) => ({
             ...article,
             title: await rateLimitedTranslateText(article.title, newLanguage),
             description: await rateLimitedTranslateText(article.description, newLanguage),
           }))
-        );
-        setNewsArticles(translatedNewsArticles);
+        ));
       }
 
       if (dynamicThemes.length > 0) {
-        const translatedThemes = await Promise.all(
+        setDynamicThemes(await Promise.all(
           dynamicThemes.map(async (theme) => ({
             ...theme,
             name: await rateLimitedTranslateText(theme.name, newLanguage),
             prompt: await rateLimitedTranslateText(theme.prompt, newLanguage),
           }))
+        ));
+      }
+
+      if (disasterData) {
+        const translatedSummary = await rateLimitedTranslateText(disasterData.summary, newLanguage);
+        const translatedTypes = await Promise.all(
+          disasterData.types.map(async (type) => ({
+            ...type,
+            name: await rateLimitedTranslateText(type.name, newLanguage),
+            description: await rateLimitedTranslateText(type.description, newLanguage),
+            recommendations: await Promise.all(
+              type.recommendations.map(rec => rateLimitedTranslateText(rec, newLanguage))
+          }))
         );
-        setDynamicThemes(translatedThemes);
+        setDisasterData({
+          ...disasterData,
+          summary: translatedSummary,
+          types: translatedTypes
+        });
       }
     };
 
@@ -694,18 +861,11 @@ function App() {
     setTranslating(false);
   };
 
-  // Memoize dynamic themes
   const memoizedDynamicThemes = useMemo(() => dynamicThemes, [dynamicThemes]);
 
-  // Add touch event listeners if needed
   useEffect(() => {
-    const handleTouchMove = (event: TouchEvent) => {
-      // Handle touch move event
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      // Handle touch end event
-    };
+    const handleTouchMove = (event: TouchEvent) => {};
+    const handleTouchEnd = (event: TouchEvent) => {};
 
     if (earthContainerRef.current) {
       earthContainerRef.current.addEventListener('touchmove', handleTouchMove);
@@ -732,15 +892,29 @@ function App() {
           />
         </Suspense>
       </div>
+      
+      {showDisasterWidget && (
+        <DisasterWidget 
+          data={disasterData}
+          loading={disasterLoading}
+          history={disasterHistory}
+          onClose={() => setShowDisasterWidget(false)}
+          language={language}
+          onTranslate={rateLimitedTranslateText}
+        />
+      )}
+      
       <div className="info-panel">
         <SearchBar onSearch={debouncedHandleSearch} />
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
+        
         <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
           <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
             &times;
           </button>
+          
           <div className="language-buttons">
             <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
               English
@@ -753,6 +927,7 @@ function App() {
             </button>
             {translating && <p>Translating...</p>}
           </div>
+          
           <button
             onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
@@ -766,6 +941,7 @@ function App() {
           >
             📰 Read News
           </button>
+          
           <button
             onClick={fetchHistoricalInsights}
             className="historical-insights-button"
@@ -773,6 +949,7 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
+          
           <button
             onClick={async () => {
               const earthImage = await generateEarthImage(currentLocation);
@@ -781,9 +958,23 @@ function App() {
             className="generate-image-button"
             disabled={!currentLocation || loading}
           >
-            🌄 Generate Earth Landscaping Photography
+            🌄 Generate Earth Image
+          </button>
+          
+          <button
+            onClick={async () => {
+              const center = earthRef.current?.getMap()?.getCenter();
+              if (center && currentLocation) {
+                await analyzeDisasters(currentLocation, center.lat, center.lng);
+              }
+            }}
+            className="disaster-button"
+            disabled={!currentLocation || loading}
+          >
+            🌋 Analyze Disaster Risks
           </button>
         </div>
+        
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
@@ -793,17 +984,21 @@ function App() {
                 <img src={capturedImage} alt="Captured view" className="captured-image" loading="lazy" />
               </div>
             )}
+            
             {earthImage && (
               <div className="earth-image-container">
                 <img src={earthImage} alt="Generated Earth view" className="earth-image" loading="lazy" />
               </div>
             )}
+            
             <MarkdownContent
               content={language === 'en' ? facts : translatedFacts}
               language={language}
               onRewrite={handleRewrittenContent}
             />
+            
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
+            
             {facts && !loading && (
               <div>
                 <div className="analysis-buttons">
@@ -812,23 +1007,24 @@ function App() {
                     className="analysis-button environmental"
                     disabled={analysisLoading}
                   >
-                    Environmental Factors and Biodiversity
+                    Environmental Factors
                   </button>
                   <button
                     onClick={() => analyzeWithPerspective('Economic Areas')}
                     className="analysis-button economic"
                     disabled={analysisLoading}
                   >
-                    Economic Areas and Market Strengths
+                    Economic Areas
                   </button>
                   <button
                     onClick={() => analyzeWithPerspective('Travel Destinations')}
                     className="analysis-button cultural"
                     disabled={analysisLoading}
                   >
-                    Analysis of Travel locations
+                    Travel Destinations
                   </button>
                 </div>
+                
                 {memoizedDynamicThemes.length > 0 && (
                   <div className="analysis-buttons dynamic-buttons">
                     {currentLocation && (
@@ -852,6 +1048,7 @@ function App() {
                     ))}
                   </div>
                 )}
+                
                 <button
                   onClick={saveAnalysis}
                   className="save-analysis-button"
@@ -861,6 +1058,7 @@ function App() {
                 </button>
               </div>
             )}
+            
             {historicalInsights && (
               <div className="historical-insights">
                 <h2>Historical Insights for {currentLocation}</h2>
@@ -895,6 +1093,7 @@ function App() {
                 )}
               </div>
             )}
+            
             {youtubeVideos.length > 0 && (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
@@ -912,7 +1111,6 @@ function App() {
                         allowFullScreen
                       ></iframe>
                       <p>{video.title}</p>
-                      <p>{video.description}</p>
                     </div>
                   ))}
                 </div>
@@ -921,6 +1119,7 @@ function App() {
           </div>
         )}
       </div>
+      
       {isNewsPanelActive && newsArticles.length > 0 && (
         <Suspense fallback={<div>Loading News Panel...</div>}>
           <NewsPanel
