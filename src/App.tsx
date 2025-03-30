@@ -74,6 +74,15 @@ interface DisasterData {
   }[];
 }
 
+interface DisasterWidgetProps {
+  data: DisasterData | null;
+  loading: boolean;
+  history: DisasterType[];
+  onClose: () => void;
+  language: 'en' | 'my' | 'th';
+  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>;
+}
+
 // Rate-limited translation function
 const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
   const now = Date.now();
@@ -258,20 +267,13 @@ const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<Disas
 };
 
 // Disaster Widget Component
-const DisasterWidget = ({ 
+const DisasterWidget: React.FC<DisasterWidgetProps> = ({ 
   data, 
   loading,
   history,
   onClose,
   language,
   onTranslate
-}: {
-  data: DisasterData | null;
-  loading: boolean;
-  history: DisasterType[];
-  onClose: () => void;
-  language: 'en' | 'my' | 'th';
-  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>;
 }) => {
   const [translatedData, setTranslatedData] = useState<DisasterData | null>(null);
   const [translating, setTranslating] = useState(false);
@@ -289,6 +291,7 @@ const DisasterWidget = ({
               description: await onTranslate(type.description, language),
               recommendations: await Promise.all(
                 type.recommendations.map((rec) => onTranslate(rec, language))
+              )
             }))
           );
           setTranslatedData({
