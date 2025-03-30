@@ -362,7 +362,7 @@ const DisasterWidget = ({
                 className="risk-fill" 
                 style={{
                   width: `${type.risk * 10}%`,
-                  backgroundColor: getRiskColor(type.risk)
+                  backgroundColor: getRiskColor(type.risk),
                 }}
               />
             </div>
