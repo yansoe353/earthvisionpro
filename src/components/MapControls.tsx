@@ -82,6 +82,11 @@ const MapControls = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Toggle disaster alerts function
+  const toggleDisasterAlerts = () => {
+    setShowDisasterAlerts(!showDisasterAlerts);
+  };
+
   return (
     <>
       {/* Floating Action Button (FAB) */}
@@ -159,8 +164,11 @@ const MapControls = ({
             { 
               label: 'Disaster Alerts', 
               checked: showDisasterAlerts, 
-              onChange: setShowDisasterAlerts,
-              style: { color: showDisasterAlerts ? (isDarkTheme ? '#ff5555' : '#ff0000') : 'inherit' }
+              onChange: toggleDisasterAlerts,
+              style: { 
+                color: showDisasterAlerts ? (isDarkTheme ? '#ff5555' : '#ff0000') : 'inherit',
+                fontWeight: showDisasterAlerts ? 'bold' : 'normal'
+              }
             },
           ].map(({ label, checked, onChange, style }) => (
             <label 
@@ -177,9 +185,22 @@ const MapControls = ({
                 type="checkbox"
                 checked={checked}
                 onChange={(e) => onChange(e.target.checked)}
-                style={{ margin: 0, cursor: 'pointer' }}
+                style={{ 
+                  margin: 0, 
+                  cursor: 'pointer',
+                  accentColor: label === 'Disaster Alerts' ? (isDarkTheme ? '#ff5555' : '#ff0000') : undefined
+                }}
               />
               {label}
+              {label === 'Disaster Alerts' && (
+                <span style={{ 
+                  marginLeft: 'auto',
+                  fontSize: '12px',
+                  color: isDarkTheme ? '#ff8888' : '#ff4444'
+                }}>
+                  {checked ? 'ON' : 'OFF'}
+                </span>
+              )}
             </label>
           ))}
         </div>
