@@ -121,9 +121,8 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
 };
 
 // Disaster Widget Component
-// Update the DisasterWidget component with these styles and structure
-const DisasterWidget: React.FC<DisasterWidgetProps> = ({ 
-  data, 
+const DisasterWidget: React.FC<DisasterWidgetProps> = ({
+  data,
   loading,
   history,
   onClose,
@@ -147,7 +146,8 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
               description: await onTranslate(type.description, language),
               recommendations: await Promise.all(
                 type.recommendations.map((rec) => onTranslate(rec, language))
-            }))
+            )
+          }))
           );
           setTranslatedData({
             ...data,
@@ -181,8 +181,8 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
   if (loading) return (
     <div className="disaster-widget loading">
       <div className="spinner"></div>
-      {language === 'en' ? 'Analyzing disaster risks...' : 
-       language === 'my' ? 'သဘာဝဘေးအန္တရာယ်များကို ဆန်းစစ်နေသည်...' : 
+      {language === 'en' ? 'Analyzing disaster risks...' :
+       language === 'my' ? 'သဘာဝဘေးအန္တရာယ်များကို ဆန်းစစ်နေသည်...' :
        'กำลังวิเคราะห์ความเสี่ยงภัยธรรมชาติ...'}
     </div>
   );
@@ -192,40 +192,40 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
   return (
     <div className="disaster-widget">
       <div className="widget-header">
-        <h3>🌍 {language === 'en' ? 'Disaster Risk Assessment' : 
-            language === 'my' ? 'သဘာဝဘေးအန္တရာယ် အကဲဖြတ်ချက်' : 
+        <h3>🌍 {language === 'en' ? 'Disaster Risk Assessment' :
+            language === 'my' ? 'သဘာဝဘေးအန္တရာယ် အကဲဖြတ်ချက်' :
             'การประเมินความเสี่ยงภัยธรรมชาติ'}</h3>
         <button className="close-button" onClick={onClose} aria-label="Close">
           &times;
         </button>
       </div>
-      
+
       <div className="risk-indicator">
         <div className="risk-level" style={{ backgroundColor: getRiskColor(translatedData.overallRisk) }}>
           <div className="risk-score">{translatedData.overallRisk}/10</div>
           <div className="risk-label">
-            {language === 'en' ? 'Overall Risk' : 
-             language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' : 
+            {language === 'en' ? 'Overall Risk' :
+             language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' :
              'ความเสี่ยงโดยรวม'} - {getRiskLabel(translatedData.overallRisk)}
           </div>
         </div>
       </div>
-      
+
       <div className="widget-tabs">
-        <button 
+        <button
           className={`tab-button ${activeTab === 'summary' ? 'active' : ''}`}
           onClick={() => setActiveTab('summary')}
         >
           {language === 'en' ? 'Summary' : language === 'my' ? 'အကျဉ်းချုပ်' : 'สรุป'}
         </button>
-        <button 
+        <button
           className={`tab-button ${activeTab === 'types' ? 'active' : ''}`}
           onClick={() => setActiveTab('types')}
         >
           {language === 'en' ? 'Risk Types' : language === 'my' ? 'အန္တရာယ်အမျိုးအစားများ' : 'ประเภทความเสี่ยง'}
         </button>
         {history.length > 0 && (
-          <button 
+          <button
             className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
             onClick={() => setActiveTab('history')}
           >
@@ -233,14 +233,14 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
           </button>
         )}
       </div>
-      
+
       <div className="widget-content">
         {activeTab === 'summary' && (
           <div className="risk-summary">
             <p>{translatedData.summary}</p>
           </div>
         )}
-        
+
         {activeTab === 'types' && (
           <div className="disaster-types">
             {translatedData.types.map((type) => (
@@ -253,8 +253,8 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
                   </div>
                 </div>
                 <div className="risk-meter">
-                  <div 
-                    className="risk-fill" 
+                  <div
+                    className="risk-fill"
                     style={{
                       width: `${type.risk * 10}%`,
                       backgroundColor: getRiskColor(type.risk)
@@ -266,8 +266,8 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
                 </div>
                 {type.recommendations.length > 0 && (
                   <div className="recommendations">
-                    <h5>{language === 'en' ? 'Recommendations' : 
-                         language === 'my' ? 'အကြံပြုချက်များ' : 
+                    <h5>{language === 'en' ? 'Recommendations' :
+                         language === 'my' ? 'အကြံပြုချက်များ' :
                          'คำแนะนำ'}:</h5>
                     <ul>
                       {type.recommendations.map((rec, i) => (
@@ -283,7 +283,7 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
             ))}
           </div>
         )}
-        
+
         {activeTab === 'history' && history.length > 0 && (
           <div className="historical-data">
             <div className="history-scroll">
@@ -302,12 +302,12 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
           </div>
         )}
       </div>
-      
+
       {translating && (
         <div className="translating-overlay">
           <div className="translating-message">
-            {language === 'en' ? 'Translating...' : 
-             language === 'my' ? 'ဘာသာပြန်နေသည်...' : 
+            {language === 'en' ? 'Translating...' :
+             language === 'my' ? 'ဘာသာပြန်နေသည်...' :
              'กำลังแปล...'}
           </div>
         </div>
@@ -654,7 +654,7 @@ function App() {
         messages: [
           {
             role: 'user',
-            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}. 
+            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
             Current alerts: ${JSON.stringify(currentDisasters.data)}.
             Historical data: ${JSON.stringify(history)}.
             Provide a detailed risk assessment with:
@@ -888,9 +888,9 @@ function App() {
           />
         </Suspense>
       </div>
-      
+
       {showDisasterWidget && (
-        <DisasterWidget 
+        <DisasterWidget
           data={disasterData}
           loading={disasterLoading}
           history={disasterHistory}
@@ -899,18 +899,18 @@ function App() {
           onTranslate={rateLimitedTranslateText}
         />
       )}
-      
+
       <div className="info-panel">
         <SearchBar onSearch={debouncedHandleSearch} />
         <button className="menu-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           ☰ Menu
         </button>
-        
+
         <div className={`button-panel ${isMenuOpen ? 'active' : ''}`} ref={buttonPanelRef}>
           <button className="close-panel-button" onClick={() => setIsMenuOpen(false)}>
             &times;
           </button>
-          
+
           <div className="language-buttons">
             <button onClick={() => handleLanguageChange('en')} disabled={language === 'en' || translating}>
               English
@@ -923,7 +923,7 @@ function App() {
             </button>
             {translating && <p>Translating...</p>}
           </div>
-          
+
           <button
             onClick={async () => {
               setIsNewsPanelActive(!isNewsPanelActive);
@@ -937,7 +937,7 @@ function App() {
           >
             📰 Read News
           </button>
-          
+
           <button
             onClick={fetchHistoricalInsights}
             className="historical-insights-button"
@@ -945,7 +945,7 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
-          
+
           <button
             onClick={async () => {
               const earthImage = await generateEarthImage(currentLocation);
@@ -956,7 +956,7 @@ function App() {
           >
             🌄 Generate Earth Image
           </button>
-          
+
           <button
             onClick={async () => {
               const center = earthRef.current?.getMap()?.getCenter();
@@ -970,7 +970,7 @@ function App() {
             🌋 Analyze Disaster Risks
           </button>
         </div>
-        
+
         {loading ? (
           <p className="loading-text">Analyzing view...</p>
         ) : (
@@ -980,21 +980,21 @@ function App() {
                 <img src={capturedImage} alt="Captured view" className="captured-image" loading="lazy" />
               </div>
             )}
-            
+
             {earthImage && (
               <div className="earth-image-container">
                 <img src={earthImage} alt="Generated Earth view" className="earth-image" loading="lazy" />
               </div>
             )}
-            
+
             <MarkdownContent
               content={language === 'en' ? facts : translatedFacts}
               language={language}
               onRewrite={handleRewrittenContent}
             />
-            
+
             {analysisLoading && <p className="loading-text analysis-loading">Generating additional analysis...</p>}
-            
+
             {facts && !loading && (
               <div>
                 <div className="analysis-buttons">
@@ -1020,7 +1020,7 @@ function App() {
                     Travel Destinations
                   </button>
                 </div>
-                
+
                 {memoizedDynamicThemes.length > 0 && (
                   <div className="analysis-buttons dynamic-buttons">
                     <button
@@ -1031,8 +1031,8 @@ function App() {
                       }}
                       disabled={translating || !currentLocation}
                     >
-                      {language === 'en' ? 'Refresh Themes' : 
-                       language === 'my' ? 'အကြောင်းအရာအသစ်များရယူရန်' : 
+                      {language === 'en' ? 'Refresh Themes' :
+                       language === 'my' ? 'အကြောင်းအရာအသစ်များရယူရန်' :
                        'รีเฟรชธีม'}
                     </button>
                     {memoizedDynamicThemes.map((theme, index) => (
@@ -1047,7 +1047,7 @@ function App() {
                     ))}
                   </div>
                 )}
-                
+
                 <button
                   onClick={saveAnalysis}
                   className="save-analysis-button"
@@ -1057,7 +1057,7 @@ function App() {
                 </button>
               </div>
             )}
-            
+
             {historicalInsights && (
               <div className="historical-insights">
                 <h2>Historical Insights for {currentLocation}</h2>
@@ -1092,7 +1092,7 @@ function App() {
                 )}
               </div>
             )}
-            
+
             {youtubeVideos.length > 0 && (
               <div className="youtube-videos">
                 <h2>Travel Videos for {currentLocation}</h2>
@@ -1118,7 +1118,7 @@ function App() {
           </div>
         )}
       </div>
-      
+
       {isNewsPanelActive && newsArticles.length > 0 && (
         <Suspense fallback={<div>Loading News Panel...</div>}>
           <NewsPanel
