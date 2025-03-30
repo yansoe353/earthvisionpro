@@ -496,33 +496,33 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         </div>
       )}
 
-      {/* Map Controls */}
-      <MapControls
-        toggleFeaturePanel={toggleFeaturePanel}
-        isDarkTheme={isDarkTheme}
-        showHeatmap={showHeatmap}
-        setShowHeatmap={setShowHeatmap}
-        showTraffic={showTraffic}
-        setShowTraffic={setShowTraffic}
-        showSatellite={showSatellite}
-        setShowSatellite={setShowSatellite}
-        show3DTerrain={show3DTerrain}
-        setShow3DTerrain={setShow3DTerrain}
-        showChoropleth={showChoropleth}
-        setShowChoropleth={setShowChoropleth}
-        show3DBuildings={show3DBuildings}
-        setShow3DBuildings={setShow3DBuildings}
-        showContour={showContour}
-        setShowContour={setShowContour}
-        showPointsOfInterest={showPointsOfInterest}
-        setShowPointsOfInterest={setShowPointsOfInterest}
-        showWeather={showWeather}
-        setShowWeather={setShowWeather}
-        showTransit={showTransit}
-        setShowTransit={setShowTransit}
-        showDisasterAlerts={showDisasterAlerts}
-        setShowDisasterAlerts={setShowDisasterAlerts}
-      />
+  // In Earth.tsx, update the MapControls component call to:
+<MapControls
+  toggleFeaturePanel={toggleFeaturePanel}
+  isDarkTheme={isDarkTheme}
+  showHeatmap={showHeatmap}
+  setShowHeatmap={setShowHeatmap}
+  showTraffic={showTraffic}
+  setShowTraffic={setShowTraffic}
+  showSatellite={showSatellite}
+  setShowSatellite={setShowSatellite}
+  show3DTerrain={show3DTerrain}
+  setShow3DTerrain={setShow3DTerrain}
+  showChoropleth={showChoropleth}
+  setShowChoropleth={setShowChoropleth}
+  show3DBuildings={show3DBuildings}
+  setShow3DBuildings={setShow3DBuildings}
+  showContour={showContour}
+  setShowContour={setShowContour}
+  showPointsOfInterest={showPointsOfInterest}
+  setShowPointsOfInterest={setShowPointsOfInterest}
+  showWeather={showWeather}
+  setShowWeather={setShowWeather}
+  showTransit={showTransit}
+  setShowTransit={setShowTransit}
+  showDisasterAlerts={showDisasterAlerts}
+  setShowDisasterAlerts={setShowDisasterAlerts}
+/>
 
       {/* Feature Panel */}
       {showFeaturePanel && (
