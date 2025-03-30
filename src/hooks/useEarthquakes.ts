@@ -26,14 +26,17 @@ const useEarthquakes = (showDisasterAlerts: boolean) => {
         const response = await fetch(USGS_API_URL, {
           signal: controller.signal
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
         if (isMounted) {
-          setEarthquakes(data.features || []);
+          const sortedEarthquakes = data.features.sort((a: Earthquake, b: Earthquake) =>
+            new Date(b.properties.time).getTime() - new Date(a.properties.time).getTime()
+          );
+          setEarthquakes(sortedEarthquakes);
         }
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError' && isMounted) {
