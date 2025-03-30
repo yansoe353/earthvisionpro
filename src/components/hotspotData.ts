@@ -3,7 +3,7 @@ export const defaultHotspotData = [
     id: 'hotspot-1',
     name: 'Corsewall Lighthouse Hotel and Restaurant',
     description: 'In a 19th-century working lighthouse, this quirky hotel and restaurant is 18 km from Stranraer and 26 km from Dunskey Golf Club in Portpatrick.',
-    coordinates: [55.006647, -5.159099] as [number, number],
+    coordinates: [-5.159099, 55.006647] as [number, number],
     iframeUrl: 'https://captures-three.vercel.app/lighthouse.html',
   },
   {
