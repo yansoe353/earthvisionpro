@@ -25,6 +25,8 @@ interface MapControlsProps {
   setShowTransit: (value: boolean) => void;
   showDisasterAlerts: boolean;
   setShowDisasterAlerts: (value: boolean) => void;
+  // Add this prop to force refresh the map
+  refreshMap: () => void;
 }
 
 const MapControls = ({
@@ -52,12 +54,12 @@ const MapControls = ({
   setShowTransit,
   showDisasterAlerts,
   setShowDisasterAlerts,
+  refreshMap, // Add this prop
 }: MapControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const controlBoxRef = useRef<HTMLDivElement>(null);
 
-  // Update isMobile state on window resize
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -66,7 +68,6 @@ const MapControls = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Click-outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -82,14 +83,23 @@ const MapControls = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Toggle disaster alerts function
   const toggleDisasterAlerts = () => {
-    setShowDisasterAlerts(!showDisasterAlerts);
+    const newValue = !showDisasterAlerts;
+    setShowDisasterAlerts(newValue);
+    
+    // Force a map refresh when toggling disaster alerts
+    refreshMap();
+    
+    // You might also need to clear any existing alerts from the map
+    // This would depend on how your map implementation works
+    if (!newValue) {
+      // Add code here to clear disaster alerts from the map if needed
+      console.log('Disaster alerts turned off - should clear from map');
+    }
   };
 
   return (
     <>
-      {/* Floating Action Button (FAB) */}
       <button
         aria-label="Toggle Controls"
         onClick={() => setIsOpen(!isOpen)}
@@ -119,7 +129,6 @@ const MapControls = ({
         ⚙️
       </button>
 
-      {/* Control Box (Visible when FAB is clicked) */}
       <div
         ref={controlBoxRef}
         style={{
@@ -145,7 +154,6 @@ const MapControls = ({
           transition: 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease',
         }}
       >
-        {/* Layer Toggles */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
             Map Layers
@@ -198,14 +206,13 @@ const MapControls = ({
                   fontSize: '12px',
                   color: isDarkTheme ? '#ff8888' : '#ff4444'
                 }}>
-                  {checked ? 'ON' : 'OFF'}
+                  {checked ? 'ACTIVE' : 'INACTIVE'}
                 </span>
               )}
             </label>
           ))}
         </div>
 
-        {/* Toggle Feature Panel Button */}
         <button
           onClick={toggleFeaturePanel}
           style={{
