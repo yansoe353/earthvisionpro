@@ -576,7 +576,7 @@ function App() {
             const translatedInsights = await rateLimitedTranslateText(insights, language);
             setHistoricalInsights(translatedInsights);
             const translatedEvents = await Promise.all(
-              eventsWithImages.map(async (event) => ({
+              historicalEvents.map(async (event) => ({
                 ...event,
                 cardTitle: await rateLimitedTranslateText(event.cardTitle, language),
                 cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, language),
