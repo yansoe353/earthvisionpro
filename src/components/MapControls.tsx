@@ -1,5 +1,11 @@
 // MapControls.tsx
-import React from 'react';
+import React, { useState } from 'react';
+import { FiSettings, FiLayers, FiMap, FiSun, FiMoon } from 'react-icons/fi';
+import { FaMapMarkedAlt, FaTrafficLight, FaSatellite, FaMountain } from 'react-icons/fa';
+import { RiContrastDropLine, RiBuilding3Line } from 'react-icons/ri';
+import { MdOutlineWater, MdLocationPin, MdWbSunny } from 'react-icons/md';
+import { IoMdAlert } from 'react-icons/io';
+import { BsBusFront } from 'react-icons/bs';
 
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
@@ -54,44 +60,161 @@ const MapControls: React.FC<MapControlsProps> = ({
   showDisasterAlerts,
   setShowDisasterAlerts,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'map' | 'layers'>('map');
+
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <div className="map-controls">
-      <button onClick={toggleFeaturePanel} className="control-button">
-        {isDarkTheme ? '☀️ Light Mode' : '🌙 Dark Mode'}
-      </button>
-      <button onClick={() => setShowHeatmap(!showHeatmap)} className="control-button">
-        {showHeatmap ? '🔥 Hide Heatmap' : '🔥 Show Heatmap'}
-      </button>
-      <button onClick={() => setShowTraffic(!showTraffic)} className="control-button">
-        {showTraffic ? '🚗 Hide Traffic' : '🚗 Show Traffic'}
-      </button>
-      <button onClick={() => setShowSatellite(!showSatellite)} className="control-button">
-        {showSatellite ? '🛰️ Hide Satellite' : '🛰️ Show Satellite'}
-      </button>
-      <button onClick={() => setShow3DTerrain(!show3DTerrain)} className="control-button">
-        {show3DTerrain ? '⛰️ Hide 3D Terrain' : '⛰️ Show 3D Terrain'}
-      </button>
-      <button onClick={() => setShowChoropleth(!showChoropleth)} className="control-button">
-        {showChoropleth ? '🗺️ Hide Choropleth' : '🗺️ Show Choropleth'}
-      </button>
-      <button onClick={() => setShow3DBuildings(!show3DBuildings)} className="control-button">
-        {show3DBuildings ? '🏢 Hide 3D Buildings' : '🏢 Show 3D Buildings'}
-      </button>
-      <button onClick={() => setShowContour(!showContour)} className="control-button">
-        {showContour ? '📉 Hide Contour' : '📉 Show Contour'}
-      </button>
-      <button onClick={() => setShowPointsOfInterest(!showPointsOfInterest)} className="control-button">
-        {showPointsOfInterest ? '📍 Hide POI' : '📍 Show POI'}
-      </button>
-      <button onClick={() => setShowWeather(!showWeather)} className="control-button">
-        {showWeather ? '☀️ Hide Weather' : '☀️ Show Weather'}
-      </button>
-      <button onClick={() => setShowTransit(!showTransit)} className="control-button">
-        {showTransit ? '🚆 Hide Transit' : '🚆 Show Transit'}
-      </button>
-      <button onClick={() => setShowDisasterAlerts(!showDisasterAlerts)} className="control-button">
-        {showDisasterAlerts ? '⚠️ Disable Alerts' : '⚠️ Enable Alerts'}
-      </button>
+    <div className={`map-controls-container ${isExpanded ? 'expanded' : ''}`}>
+      <div className="map-controls-header">
+        <button 
+          onClick={toggleExpand} 
+          className="controls-toggle-button"
+          aria-label={isExpanded ? "Collapse controls" : "Expand controls"}
+        >
+          <FiSettings className="icon" />
+        </button>
+        <h3>{isExpanded ? 'Map Controls' : ''}</h3>
+      </div>
+
+      {isExpanded && (
+        <div className="controls-content">
+          <div className="controls-category-tabs">
+            <button
+              className={`category-tab ${activeCategory === 'map' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('map')}
+            >
+              <FiMap className="icon" />
+              <span>Map</span>
+            </button>
+            <button
+              className={`category-tab ${activeCategory === 'layers' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('layers')}
+            >
+              <FiLayers className="icon" />
+              <span>Layers</span>
+            </button>
+          </div>
+
+          <div className="controls-section">
+            {activeCategory === 'map' && (
+              <>
+                <button 
+                  onClick={toggleFeaturePanel} 
+                  className="control-button"
+                >
+                  {isDarkTheme ? (
+                    <>
+                      <FiSun className="icon" />
+                      <span>Light Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiMoon className="icon" />
+                      <span>Dark Mode</span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+
+            {activeCategory === 'layers' && (
+              <div className="layers-grid">
+                <button
+                  onClick={() => setShowHeatmap(!showHeatmap)}
+                  className={`control-button ${showHeatmap ? 'active' : ''}`}
+                >
+                  <FaMapMarkedAlt className="icon" />
+                  <span>Heatmap</span>
+                </button>
+
+                <button
+                  onClick={() => setShowTraffic(!showTraffic)}
+                  className={`control-button ${showTraffic ? 'active' : ''}`}
+                >
+                  <FaTrafficLight className="icon" />
+                  <span>Traffic</span>
+                </button>
+
+                <button
+                  onClick={() => setShowSatellite(!showSatellite)}
+                  className={`control-button ${showSatellite ? 'active' : ''}`}
+                >
+                  <FaSatellite className="icon" />
+                  <span>Satellite</span>
+                </button>
+
+                <button
+                  onClick={() => setShow3DTerrain(!show3DTerrain)}
+                  className={`control-button ${show3DTerrain ? 'active' : ''}`}
+                >
+                  <FaMountain className="icon" />
+                  <span>3D Terrain</span>
+                </button>
+
+                <button
+                  onClick={() => setShowChoropleth(!showChoropleth)}
+                  className={`control-button ${showChoropleth ? 'active' : ''}`}
+                >
+                  <RiContrastDropLine className="icon" />
+                  <span>Choropleth</span>
+                </button>
+
+                <button
+                  onClick={() => setShow3DBuildings(!show3DBuildings)}
+                  className={`control-button ${show3DBuildings ? 'active' : ''}`}
+                >
+                  <RiBuilding3Line className="icon" />
+                  <span>3D Buildings</span>
+                </button>
+
+                <button
+                  onClick={() => setShowContour(!showContour)}
+                  className={`control-button ${showContour ? 'active' : ''}`}
+                >
+                  <MdOutlineWater className="icon" />
+                  <span>Contour</span>
+                </button>
+
+                <button
+                  onClick={() => setShowPointsOfInterest(!showPointsOfInterest)}
+                  className={`control-button ${showPointsOfInterest ? 'active' : ''}`}
+                >
+                  <MdLocationPin className="icon" />
+                  <span>Points of Interest</span>
+                </button>
+
+                <button
+                  onClick={() => setShowWeather(!showWeather)}
+                  className={`control-button ${showWeather ? 'active' : ''}`}
+                >
+                  <MdWbSunny className="icon" />
+                  <span>Weather</span>
+                </button>
+
+                <button
+                  onClick={() => setShowTransit(!showTransit)}
+                  className={`control-button ${showTransit ? 'active' : ''}`}
+                >
+                  <BsBusFront className="icon" />
+                  <span>Transit</span>
+                </button>
+
+                <button
+                  onClick={() => setShowDisasterAlerts(!showDisasterAlerts)}
+                  className={`control-button ${showDisasterAlerts ? 'active' : ''}`}
+                >
+                  <IoMdAlert className="icon" />
+                  <span>Disaster Alerts</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
