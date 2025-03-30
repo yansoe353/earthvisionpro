@@ -1,8 +1,7 @@
 // MapControls.tsx
 import React from 'react';
-import { EarthProps } from '../types';
 
-interface MapControlsProps extends EarthProps {
+interface MapControlsProps {
   toggleFeaturePanel: () => void;
   isDarkTheme: boolean;
   showHeatmap: boolean;
@@ -58,40 +57,40 @@ const MapControls: React.FC<MapControlsProps> = ({
   return (
     <div className="map-controls">
       <button onClick={toggleFeaturePanel} className="control-button">
-        Toggle Feature Panel
+        {isDarkTheme ? '☀️ Light Mode' : '🌙 Dark Mode'}
       </button>
       <button onClick={() => setShowHeatmap(!showHeatmap)} className="control-button">
-        {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
+        {showHeatmap ? '🔥 Hide Heatmap' : '🔥 Show Heatmap'}
       </button>
       <button onClick={() => setShowTraffic(!showTraffic)} className="control-button">
-        {showTraffic ? 'Hide Traffic' : 'Show Traffic'}
+        {showTraffic ? '🚗 Hide Traffic' : '🚗 Show Traffic'}
       </button>
       <button onClick={() => setShowSatellite(!showSatellite)} className="control-button">
-        {showSatellite ? 'Hide Satellite' : 'Show Satellite'}
+        {showSatellite ? '🛰️ Hide Satellite' : '🛰️ Show Satellite'}
       </button>
       <button onClick={() => setShow3DTerrain(!show3DTerrain)} className="control-button">
-        {show3DTerrain ? 'Hide 3D Terrain' : 'Show 3D Terrain'}
+        {show3DTerrain ? '⛰️ Hide 3D Terrain' : '⛰️ Show 3D Terrain'}
       </button>
       <button onClick={() => setShowChoropleth(!showChoropleth)} className="control-button">
-        {showChoropleth ? 'Hide Choropleth' : 'Show Choropleth'}
+        {showChoropleth ? '🗺️ Hide Choropleth' : '🗺️ Show Choropleth'}
       </button>
       <button onClick={() => setShow3DBuildings(!show3DBuildings)} className="control-button">
-        {show3DBuildings ? 'Hide 3D Buildings' : 'Show 3D Buildings'}
+        {show3DBuildings ? '🏢 Hide 3D Buildings' : '🏢 Show 3D Buildings'}
       </button>
       <button onClick={() => setShowContour(!showContour)} className="control-button">
-        {showContour ? 'Hide Contour' : 'Show Contour'}
+        {showContour ? '📉 Hide Contour' : '📉 Show Contour'}
       </button>
       <button onClick={() => setShowPointsOfInterest(!showPointsOfInterest)} className="control-button">
-        {showPointsOfInterest ? 'Hide Points of Interest' : 'Show Points of Interest'}
+        {showPointsOfInterest ? '📍 Hide POI' : '📍 Show POI'}
       </button>
       <button onClick={() => setShowWeather(!showWeather)} className="control-button">
-        {showWeather ? 'Hide Weather' : 'Show Weather'}
+        {showWeather ? '☀️ Hide Weather' : '☀️ Show Weather'}
       </button>
       <button onClick={() => setShowTransit(!showTransit)} className="control-button">
-        {showTransit ? 'Hide Transit' : 'Show Transit'}
+        {showTransit ? '🚆 Hide Transit' : '🚆 Show Transit'}
       </button>
       <button onClick={() => setShowDisasterAlerts(!showDisasterAlerts)} className="control-button">
-        {showDisasterAlerts ? 'Disable Earthquake Alerts' : 'Enable Earthquake Alerts'}
+        {showDisasterAlerts ? '⚠️ Disable Alerts' : '⚠️ Enable Alerts'}
       </button>
     </div>
   );
