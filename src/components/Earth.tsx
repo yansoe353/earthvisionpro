@@ -15,7 +15,6 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { defaultHotspotData } from './hotspotData';
-import { getEarthquakeColor } from '../utils/getEarthquakeColor';
 
 type Cluster = Feature<Point, {
   cluster?: boolean;
@@ -262,11 +261,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const renderClusters = useMemo(() => {
     if (!showDisasterAlerts) return null;
 
-    return clusters.map((cluster, index) => {
+    return clusters.map((cluster) => {
       const [longitude, latitude] = cluster.geometry.coordinates;
-      const isNewest = index === 0;
-      const magnitude = cluster.properties.mag || 0;
-      const color = isNewest ? 'red' : getEarthquakeColor(magnitude);
 
       const handleClusterClick = () => {
         if (cluster.properties.cluster) {
@@ -284,7 +280,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             },
             properties: {
               title: `Earthquake - ${cluster.properties.id}`,
-              mag: magnitude,
+              mag: cluster.properties.mag || 0,
               place: 'Unknown',
               time: cluster.properties.time || 0,
             },
@@ -301,7 +297,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             latitude={latitude}
             onClick={handleClusterClick}
           >
-            <div className="cluster-marker" style={{ backgroundColor: color, color: 'white' }}>
+            <div className="cluster-marker">
               {cluster.properties.point_count}
             </div>
           </Marker>
@@ -321,7 +317,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                 },
                 properties: {
                   title: `Earthquake - ${cluster.properties.id}`,
-                  mag: magnitude,
+                  mag: cluster.properties.mag || 0,
                   place: 'Unknown',
                   time: cluster.properties.time || 0,
                 },
@@ -329,8 +325,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               setSelectedFeature(earthquake);
             }}
           >
-            <div className="earthquake-marker" style={{ backgroundColor: color, color: 'white' }}>
-              {magnitude}
+            <div className="earthquake-marker">
+              {cluster.properties.mag}
             </div>
           </Marker>
         );
@@ -526,38 +522,39 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       )}
 
       {/* Map Controls */}
-      <MapControls
-        toggleFeaturePanel={toggleFeaturePanel}
-        isDarkTheme={isDarkTheme}
-        showHeatmap={showHeatmap}
-        setShowHeatmap={setShowHeatmap}
-        showTraffic={showTraffic}
-        setShowTraffic={setShowTraffic}
-        showSatellite={showSatellite}
-        setShowSatellite={setShowSatellite}
-        show3DTerrain={show3DTerrain}
-        setShow3DTerrain={setShow3DTerrain}
-        showChoropleth={showChoropleth}
-        setShowChoropleth={setShowChoropleth}
-        show3DBuildings={show3DBuildings}
-        setShow3DBuildings={setShow3DBuildings}
-        showContour={showContour}
-        setShowContour={setShowContour}
-        showPointsOfInterest={showPointsOfInterest}
-        setShowPointsOfInterest={setShowPointsOfInterest}
-        showWeather={showWeather}
-        setShowWeather={setShowWeather}
-        showTransit={showTransit}
-        setShowTransit={setShowTransit}
-        showDisasterAlerts={showDisasterAlerts}
-        setShowDisasterAlerts={(value) => {
-          setShowDisasterAlerts(value);
-          if (mapRef.current) {
-            mapRef.current.triggerRepaint();
-          }
-        }}
-        refreshMap={() => mapRef.current?.triggerRepaint()}
-      />
+    // In Earth.tsx, update the MapControls component call to:
+<MapControls
+  toggleFeaturePanel={toggleFeaturePanel}
+  isDarkTheme={isDarkTheme}
+  showHeatmap={showHeatmap}
+  setShowHeatmap={setShowHeatmap}
+  showTraffic={showTraffic}
+  setShowTraffic={setShowTraffic}
+  showSatellite={showSatellite}
+  setShowSatellite={setShowSatellite}
+  show3DTerrain={show3DTerrain}
+  setShow3DTerrain={setShow3DTerrain}
+  showChoropleth={showChoropleth}
+  setShowChoropleth={setShowChoropleth}
+  show3DBuildings={show3DBuildings}
+  setShow3DBuildings={setShow3DBuildings}
+  showContour={showContour}
+  setShowContour={setShowContour}
+  showPointsOfInterest={showPointsOfInterest}
+  setShowPointsOfInterest={setShowPointsOfInterest}
+  showWeather={showWeather}
+  setShowWeather={setShowWeather}
+  showTransit={showTransit}
+  setShowTransit={setShowTransit}
+  showDisasterAlerts={showDisasterAlerts}
+  setShowDisasterAlerts={(value) => {
+    setShowDisasterAlerts(value);
+    if (mapRef.current) {
+      mapRef.current.triggerRepaint();
+    }
+  }}
+  refreshMap={() => mapRef.current?.triggerRepaint()}
+/>
 
       {/* Feature Panel */}
       {showFeaturePanel && (
