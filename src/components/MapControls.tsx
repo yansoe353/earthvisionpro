@@ -1,40 +1,33 @@
-// MapControls.tsx
-import React, { useState } from 'react';
-import { FiSettings, FiLayers, FiMap, FiSun, FiMoon } from 'react-icons/fi';
-import { FaMapMarkedAlt, FaTrafficLight, FaSatellite, FaMountain } from 'react-icons/fa';
-import { RiContrastDropLine, RiBuilding3Line } from 'react-icons/ri';
-import { MdOutlineWater, MdLocationPin, MdWbSunny } from 'react-icons/md';
-import { IoMdAlert } from 'react-icons/io';
-import { BsBusFront } from 'react-icons/bs';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface MapControlsProps {
   toggleFeaturePanel: () => void;
   isDarkTheme: boolean;
   showHeatmap: boolean;
-  setShowHeatmap: (show: boolean) => void;
+  setShowHeatmap: (value: boolean) => void;
   showTraffic: boolean;
-  setShowTraffic: (show: boolean) => void;
+  setShowTraffic: (value: boolean) => void;
   showSatellite: boolean;
-  setShowSatellite: (show: boolean) => void;
+  setShowSatellite: (value: boolean) => void;
   show3DTerrain: boolean;
-  setShow3DTerrain: (show: boolean) => void;
+  setShow3DTerrain: (value: boolean) => void;
   showChoropleth: boolean;
-  setShowChoropleth: (show: boolean) => void;
+  setShowChoropleth: (value: boolean) => void;
   show3DBuildings: boolean;
-  setShow3DBuildings: (show: boolean) => void;
+  setShow3DBuildings: (value: boolean) => void;
   showContour: boolean;
-  setShowContour: (show: boolean) => void;
+  setShowContour: (value: boolean) => void;
   showPointsOfInterest: boolean;
-  setShowPointsOfInterest: (show: boolean) => void;
+  setShowPointsOfInterest: (value: boolean) => void;
   showWeather: boolean;
-  setShowWeather: (show: boolean) => void;
+  setShowWeather: (value: boolean) => void;
   showTransit: boolean;
-  setShowTransit: (show: boolean) => void;
+  setShowTransit: (value: boolean) => void;
   showDisasterAlerts: boolean;
-  setShowDisasterAlerts: (show: boolean) => void;
+  setShowDisasterAlerts: (value: boolean) => void;
 }
 
-const MapControls: React.FC<MapControlsProps> = ({
+const MapControls = ({
   toggleFeaturePanel,
   isDarkTheme,
   showHeatmap,
@@ -59,163 +52,160 @@ const MapControls: React.FC<MapControlsProps> = ({
   setShowTransit,
   showDisasterAlerts,
   setShowDisasterAlerts,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<'map' | 'layers'>('map');
+}: MapControlsProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const controlBoxRef = useRef<HTMLDivElement>(null);
 
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
+  // Update isMobile state on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click-outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        controlBoxRef.current &&
+        !controlBoxRef.current.contains(event.target as Node) &&
+        !(event.target as HTMLElement).closest('button[aria-label="Toggle Controls"]')
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className={`map-controls-container ${isExpanded ? 'expanded' : ''}`}>
-      <div className="map-controls-header">
-        <button 
-          onClick={toggleExpand} 
-          className="controls-toggle-button"
-          aria-label={isExpanded ? "Collapse controls" : "Expand controls"}
-        >
-          <FiSettings className="icon" />
-        </button>
-        <h3>{isExpanded ? 'Map Controls' : ''}</h3>
-      </div>
+    <>
+      {/* Floating Action Button (FAB) */}
+      <button
+        aria-label="Toggle Controls"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? '16px' : '20px',
+          right: isMobile ? '16px' : '20px',
+          zIndex: 1002,
+          backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          border: '1px solid #ccc',
+          borderRadius: '50%',
+          width: isMobile ? '48px' : '50px',
+          height: isMobile ? '48px' : '50px',
+          cursor: 'pointer',
+          fontSize: isMobile ? '20px' : '24px',
+          color: isDarkTheme ? '#00ffff' : '#000',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'transform 0.3s ease, background-color 0.3s ease',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        ⚙️
+      </button>
 
-      {isExpanded && (
-        <div className="controls-content">
-          <div className="controls-category-tabs">
-            <button
-              className={`category-tab ${activeCategory === 'map' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('map')}
+      {/* Control Box (Visible when FAB is clicked) */}
+      <div
+        ref={controlBoxRef}
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? '80px' : '80px',
+          right: isMobile ? '16px' : '20px',
+          zIndex: 1001,
+          backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          padding: isMobile ? '12px' : '16px',
+          color: isDarkTheme ? '#fff' : '#000',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)',
+          width: isMobile ? 'calc(100% - 32px)' : '280px',
+          maxWidth: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
+          opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease',
+        }}
+      >
+        {/* Layer Toggles */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: isMobile ? '16px' : '18px', color: isDarkTheme ? '#00ffff' : '#000' }}>
+            Map Layers
+          </h3>
+          {[
+            { label: 'Heatmap', checked: showHeatmap, onChange: setShowHeatmap },
+            { label: 'Choropleth', checked: showChoropleth, onChange: setShowChoropleth },
+            { label: 'Points of Interest', checked: showPointsOfInterest, onChange: setShowPointsOfInterest },
+            { label: 'Weather', checked: showWeather, onChange: setShowWeather },
+            { label: 'Transit', checked: showTransit, onChange: setShowTransit },
+            { label: 'Traffic', checked: showTraffic, onChange: setShowTraffic },
+            { label: 'Satellite', checked: showSatellite, onChange: setShowSatellite },
+            { label: '3D Terrain', checked: show3DTerrain, onChange: setShow3DTerrain },
+            { label: '3D Buildings', checked: show3DBuildings, onChange: setShow3DBuildings },
+            { label: 'Contour', checked: showContour, onChange: setShowContour },
+            { 
+              label: 'Disaster Alerts', 
+              checked: showDisasterAlerts, 
+              onChange: setShowDisasterAlerts,
+              style: { color: showDisasterAlerts ? (isDarkTheme ? '#ff5555' : '#ff0000') : 'inherit' }
+            },
+          ].map(({ label, checked, onChange, style }) => (
+            <label 
+              key={label} 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                fontSize: isMobile ? '14px' : '16px',
+                ...style 
+              }}
             >
-              <FiMap className="icon" />
-              <span>Map</span>
-            </button>
-            <button
-              className={`category-tab ${activeCategory === 'layers' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('layers')}
-            >
-              <FiLayers className="icon" />
-              <span>Layers</span>
-            </button>
-          </div>
-
-          <div className="controls-section">
-            {activeCategory === 'map' && (
-              <>
-                <button 
-                  onClick={toggleFeaturePanel} 
-                  className="control-button"
-                >
-                  {isDarkTheme ? (
-                    <>
-                      <FiSun className="icon" />
-                      <span>Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <FiMoon className="icon" />
-                      <span>Dark Mode</span>
-                    </>
-                  )}
-                </button>
-              </>
-            )}
-
-            {activeCategory === 'layers' && (
-              <div className="layers-grid">
-                <button
-                  onClick={() => setShowHeatmap(!showHeatmap)}
-                  className={`control-button ${showHeatmap ? 'active' : ''}`}
-                >
-                  <FaMapMarkedAlt className="icon" />
-                  <span>Heatmap</span>
-                </button>
-
-                <button
-                  onClick={() => setShowTraffic(!showTraffic)}
-                  className={`control-button ${showTraffic ? 'active' : ''}`}
-                >
-                  <FaTrafficLight className="icon" />
-                  <span>Traffic</span>
-                </button>
-
-                <button
-                  onClick={() => setShowSatellite(!showSatellite)}
-                  className={`control-button ${showSatellite ? 'active' : ''}`}
-                >
-                  <FaSatellite className="icon" />
-                  <span>Satellite</span>
-                </button>
-
-                <button
-                  onClick={() => setShow3DTerrain(!show3DTerrain)}
-                  className={`control-button ${show3DTerrain ? 'active' : ''}`}
-                >
-                  <FaMountain className="icon" />
-                  <span>3D Terrain</span>
-                </button>
-
-                <button
-                  onClick={() => setShowChoropleth(!showChoropleth)}
-                  className={`control-button ${showChoropleth ? 'active' : ''}`}
-                >
-                  <RiContrastDropLine className="icon" />
-                  <span>Choropleth</span>
-                </button>
-
-                <button
-                  onClick={() => setShow3DBuildings(!show3DBuildings)}
-                  className={`control-button ${show3DBuildings ? 'active' : ''}`}
-                >
-                  <RiBuilding3Line className="icon" />
-                  <span>3D Buildings</span>
-                </button>
-
-                <button
-                  onClick={() => setShowContour(!showContour)}
-                  className={`control-button ${showContour ? 'active' : ''}`}
-                >
-                  <MdOutlineWater className="icon" />
-                  <span>Contour</span>
-                </button>
-
-                <button
-                  onClick={() => setShowPointsOfInterest(!showPointsOfInterest)}
-                  className={`control-button ${showPointsOfInterest ? 'active' : ''}`}
-                >
-                  <MdLocationPin className="icon" />
-                  <span>Points of Interest</span>
-                </button>
-
-                <button
-                  onClick={() => setShowWeather(!showWeather)}
-                  className={`control-button ${showWeather ? 'active' : ''}`}
-                >
-                  <MdWbSunny className="icon" />
-                  <span>Weather</span>
-                </button>
-
-                <button
-                  onClick={() => setShowTransit(!showTransit)}
-                  className={`control-button ${showTransit ? 'active' : ''}`}
-                >
-                  <BsBusFront className="icon" />
-                  <span>Transit</span>
-                </button>
-
-                <button
-                  onClick={() => setShowDisasterAlerts(!showDisasterAlerts)}
-                  className={`control-button ${showDisasterAlerts ? 'active' : ''}`}
-                >
-                  <IoMdAlert className="icon" />
-                  <span>Disaster Alerts</span>
-                </button>
-              </div>
-            )}
-          </div>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+                style={{ margin: 0, cursor: 'pointer' }}
+              />
+              {label}
+            </label>
+          ))}
         </div>
-      )}
-    </div>
+
+        {/* Toggle Feature Panel Button */}
+        <button
+          onClick={toggleFeaturePanel}
+          style={{
+            padding: '8px 12px',
+            backgroundColor: isDarkTheme ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            border: `1px solid ${isDarkTheme ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'}`,
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: isMobile ? '14px' : '16px',
+            color: isDarkTheme ? '#00ffff' : '#000',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+          }}
+        >
+          {isDarkTheme ? '🌙' : '☀️'} Toggle Feature Panel
+        </button>
+      </div>
+    </>
   );
 };
 
