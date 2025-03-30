@@ -120,152 +120,6 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   }
 };
 
-// Fetch image using Pexels API
-const fetchImage = async (query: string): Promise<string | null> => {
-  try {
-    const response = await axios.get('https://api.pexels.com/v1/search', {
-      headers: {
-        Authorization: import.meta.env.VITE_PIXEL_API_KEY,
-      },
-      params: {
-        query,
-        per_page: 1,
-      },
-    });
-
-    return response.data.photos?.[0]?.src.large || null;
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    return null;
-  }
-};
-
-// YouTube API keys
-const YOUTUBE_API_KEYS = [
-  import.meta.env.VITE_YOUTUBE_API_KEY_1,
-  import.meta.env.VITE_YOUTUBE_API_KEY_2,
-  import.meta.env.VITE_YOUTUBE_API_KEY_3,
-];
-
-// Fetch YouTube videos
-const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => {
-  const searchPrompt = await generateYouTubeSearchPrompt(location);
-  if (!searchPrompt) return [];
-
-  for (const apiKey of YOUTUBE_API_KEYS) {
-    if (!apiKey) continue;
-
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
-      );
-
-      if (!response.ok) continue;
-
-      const data = await response.json();
-      if (data.items?.length > 0) {
-        return data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium.url,
-        }));
-      }
-    } catch (error) {
-      console.error(`Error fetching YouTube videos:`, error);
-    }
-  }
-
-  return [];
-};
-
-// Generate YouTube search prompt
-const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 5000,
-    });
-
-    return completion.choices?.[0]?.message?.content?.trim() || null;
-  } catch (error) {
-    console.error('Error generating YouTube search prompt:', error);
-    return null;
-  }
-};
-
-// Generate news content
-const generateNewsWithAI = async (location: string): Promise<string> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a brief news summary about ${location}.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    return completion.choices?.[0]?.message?.content?.trim() || 'No news available.';
-  } catch (error) {
-    console.error('Error generating news:', error);
-    return 'Failed to generate news.';
-  }
-};
-
-// Generate Earth image
-const generateEarthImage = async (location: string): Promise<string | null> => {
-  try {
-    const imageUrl = await fetchImage(location);
-    return imageUrl || 'https://via.placeholder.com/600x400';
-  } catch (error) {
-    console.error('Error generating Earth image:', error);
-    return null;
-  }
-};
-
-// Fetch historical disasters
-const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
-  try {
-    const response = await fetch(
-      `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
-    );
-    const data = await response.json();
-    return data.data?.map((disaster: any) => ({
-      id: disaster.id,
-      type: disaster.type[0],
-      year: new Date(disaster.date.created).getFullYear(),
-      severity: disaster.severity,
-      description: disaster.description
-    })) || [];
-  } catch (error) {
-    console.error('Error fetching historical disasters:', error);
-    return [];
-  }
-};
-
 // Disaster Widget Component
 const DisasterWidget: React.FC<DisasterWidgetProps> = ({ 
   data, 
@@ -410,48 +264,6 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
   );
 };
 
-// Add this function near your other utility functions (around line 300)
-const generateDynamicThemes = async (location: string): Promise<DynamicTheme[]> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
-        },
-      ],
-      model: 'llama-3.2-90b-vision-preview',
-      temperature: 0.95,
-      max_tokens: 5000,
-    });
-
-    if (completion.choices?.[0]?.message?.content) {
-      return JSON.parse(completion.choices[0].message.content);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error generating dynamic themes:', error);
-    return [];
-  }
-};
-
-// Then modify the refresh button in your JSX (around line 1036) to use this function:
-<button
-  className="analysis-button refresh-button"
-  onClick={async () => {
-    const themes = await generateDynamicThemes(currentLocation);
-    setDynamicThemes(themes);
-  }}
-  disabled={translating}
->
-  Refresh Themes
-</button>
-
 // Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -483,6 +295,162 @@ function App() {
   const lastAnalysisRef = useRef<HTMLDivElement>(null);
   const buttonPanelRef = useRef<HTMLDivElement>(null);
 
+  // Utility functions
+  const fetchImage = async (query: string): Promise<string | null> => {
+    try {
+      const response = await axios.get('https://api.pexels.com/v1/search', {
+        headers: {
+          Authorization: import.meta.env.VITE_PIXEL_API_KEY,
+        },
+        params: {
+          query,
+          per_page: 1,
+        },
+      });
+      return response.data.photos?.[0]?.src.large || null;
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      return null;
+    }
+  };
+
+  const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => {
+    const searchPrompt = await generateYouTubeSearchPrompt(location);
+    if (!searchPrompt) return [];
+
+    for (const apiKey of [
+      import.meta.env.VITE_YOUTUBE_API_KEY_1,
+      import.meta.env.VITE_YOUTUBE_API_KEY_2,
+      import.meta.env.VITE_YOUTUBE_API_KEY_3
+    ]) {
+      if (!apiKey) continue;
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+            searchPrompt
+          )}&type=video&maxResults=5&key=${apiKey}`
+        );
+        if (!response.ok) continue;
+        const data = await response.json();
+        if (data.items?.length > 0) {
+          return data.items.map((item: any) => ({
+            id: item.id.videoId,
+            title: item.snippet.title,
+            description: item.snippet.description,
+            thumbnail: item.snippet.thumbnails.medium.url,
+          }));
+        }
+      } catch (error) {
+        console.error(`Error fetching YouTube videos:`, error);
+      }
+    }
+    return [];
+  };
+
+  const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a YouTube search prompt for travel videos about ${location}.`,
+          },
+        ],
+        model: 'deepseek-r1-distill-llama-70b',
+        temperature: 0.7,
+        max_tokens: 5000,
+      });
+      return completion.choices?.[0]?.message?.content?.trim() || null;
+    } catch (error) {
+      console.error('Error generating YouTube search prompt:', error);
+      return null;
+    }
+  };
+
+  const generateNewsWithAI = async (location: string): Promise<string> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a brief news summary about ${location}.`,
+          },
+        ],
+        model: 'deepseek-r1-distill-llama-70b',
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+      return completion.choices?.[0]?.message?.content?.trim() || 'No news available.';
+    } catch (error) {
+      console.error('Error generating news:', error);
+      return 'Failed to generate news.';
+    }
+  };
+
+  const generateEarthImage = async (location: string): Promise<string | null> => {
+    try {
+      const imageUrl = await fetchImage(location);
+      return imageUrl || 'https://via.placeholder.com/600x400';
+    } catch (error) {
+      console.error('Error generating Earth image:', error);
+      return null;
+    }
+  };
+
+  const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
+    try {
+      const response = await fetch(
+        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
+      );
+      const data = await response.json();
+      return data.data?.map((disaster: any) => ({
+        id: disaster.id,
+        type: disaster.type[0],
+        year: new Date(disaster.date.created).getFullYear(),
+        severity: disaster.severity,
+        description: disaster.description
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching historical disasters:', error);
+      return [];
+    }
+  };
+
+  const generateDynamicThemes = async (location: string): Promise<DynamicTheme[]> => {
+    try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
+          },
+        ],
+        model: 'llama-3.2-90b-vision-preview',
+        temperature: 0.95,
+        max_tokens: 5000,
+      });
+      if (completion.choices?.[0]?.message?.content) {
+        return JSON.parse(completion.choices[0].message.content);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error generating dynamic themes:', error);
+      return [];
+    }
+  };
+
   const debouncedHandleSearch = useCallback(
     debounce((lng: number, lat: number) => {
       handleSearch(lng, lat);
@@ -502,14 +470,12 @@ function App() {
 
   const fetchHistoricalInsights = async () => {
     if (!currentLocation) return;
-
     setLoading(true);
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
-
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -521,12 +487,10 @@ function App() {
         temperature: 0.7,
         max_tokens: 1000,
       });
-
       if (completion.choices?.[0]?.message?.content) {
         const response = completion.choices[0].message.content;
         const insights = response.split('JSON format like this:')[0].trim();
         setHistoricalInsights(insights);
-
         const eventsJson = response.match(/\[.*\]/s)?.[0];
         if (eventsJson) {
           const events = JSON.parse(eventsJson) as HistoricalEvent[];
@@ -537,11 +501,9 @@ function App() {
             }))
           );
           setHistoricalEvents(eventsWithImages);
-
           if (language !== 'en') {
             const translatedInsights = await rateLimitedTranslateText(insights, language);
             setHistoricalInsights(translatedInsights);
-
             const translatedEvents = await Promise.all(
               eventsWithImages.map(async (event) => ({
                 ...event,
@@ -563,7 +525,6 @@ function App() {
 
   const handleSearch = async (lng: number, lat: number) => {
     earthRef.current?.handleSearch(lng, lat);
-
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
     );
@@ -593,7 +554,6 @@ function App() {
       apiKey: import.meta.env.VITE_GROQ_API_KEY,
       dangerouslyAllowBrowser: true,
     });
-
     try {
       const completion = await groq.chat.completions.create({
         messages: [
@@ -617,7 +577,6 @@ function App() {
         temperature: 0.95,
         max_tokens: 8000,
       });
-
       return completion.choices?.[0]?.message?.content || 'No analysis available.';
     } catch (error) {
       console.error('Error analyzing with Groq:', error);
@@ -628,24 +587,17 @@ function App() {
   const analyzeDisasters = async (location: string, lat: number, lng: number) => {
     setDisasterLoading(true);
     setShowDisasterWidget(true);
-    
     try {
-      // Get current disaster alerts
       const response = await fetch(
         `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
       );
       const currentDisasters = await response.json();
-      
-      // Get historical disaster data
       const history = await fetchHistoricalDisasters(lat, lng);
       setDisasterHistory(history);
-      
-      // Analyze with AI
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
-
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -675,7 +627,6 @@ function App() {
         temperature: 0.7,
         max_tokens: 2000,
       });
-
       if (completion.choices?.[0]?.message?.content) {
         const analysis = JSON.parse(completion.choices[0].message.content);
         setDisasterData(analysis);
@@ -690,75 +641,40 @@ function App() {
 
   const captureView = async () => {
     if (!earthContainerRef.current || !earthRef.current) return;
-
     setShowWeatherWidget(false);
     setLoading(true);
     setDynamicThemes([]);
     setHistoricalInsights('');
     setHistoricalEvents([]);
-
     const timeout = setTimeout(() => {
       setFacts('Error: Analyzing view is taking too long.');
       setLoading(false);
     }, 60000);
-
     try {
       const map = earthRef.current.getMap();
       if (!map) throw new Error('Map instance not found.');
-
       await new Promise((resolve) => {
         map.once('idle', resolve);
       });
-
       const canvas = map.getCanvas();
       if (!canvas) throw new Error('Canvas not found.');
-
       const dataUrl = canvas.toDataURL('image/png', 0.5);
       setCapturedImage(dataUrl);
-
       const center = map.getCenter();
       const lng = center.lng;
       const lat = center.lat;
-
       const locationName = await fetchLocationName(lng, lat);
       setCurrentLocation(locationName);
-
       const analysis = await analyzeWithGroq(dataUrl, locationName);
       setFacts(analysis);
-
       if (language !== 'en') {
         const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
         setTranslatedFacts(translatedAnalysis);
       } else {
         setTranslatedFacts(analysis);
       }
-
-      // Generate dynamic themes
-      try {
-        const groq = new Groq({
-          apiKey: import.meta.env.VITE_GROQ_API_KEY,
-          dangerouslyAllowBrowser: true,
-        });
-
-        const completion = await groq.chat.completions.create({
-          messages: [
-            {
-              role: 'user',
-              content: `Based on the location "${locationName}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
-            },
-          ],
-          model: 'llama-3.2-90b-vision-preview',
-          temperature: 0.95,
-          max_tokens: 5000,
-        });
-
-        if (completion.choices?.[0]?.message?.content) {
-          setDynamicThemes(JSON.parse(completion.choices[0].message.content));
-        }
-      } catch (error) {
-        console.error('Error generating dynamic themes:', error);
-      }
-
+      const themes = await generateDynamicThemes(locationName);
+      setDynamicThemes(themes);
       setYoutubeVideos(await fetchYouTubeVideos(locationName));
       setEarthImage(await generateEarthImage(locationName));
     } catch (error) {
@@ -773,25 +689,20 @@ function App() {
   const analyzeWithPerspective = async (perspective: string, customPrompt?: string) => {
     if (!currentLocation || !facts) return;
     setAnalysisLoading(true);
-
     const currentLang = language;
     setLanguage('en');
     setTranslatedFacts('');
-
     try {
       const groq = new Groq({
         apiKey: import.meta.env.VITE_GROQ_API_KEY,
         dangerouslyAllowBrowser: true,
       });
-
       const defaultPromptMap: { [key: string]: string } = {
         'Environmental Factors': `Analyze environmental aspects of ${currentLocation}.`,
         'Economic Areas': `Analyze economic significance of ${currentLocation}.`,
         'Travel Destinations': `Analyze travel destinations in ${currentLocation}.`,
       };
-
       const prompt = customPrompt || defaultPromptMap[perspective];
-
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -803,11 +714,9 @@ function App() {
         temperature: 0.7,
         max_tokens: 5000,
       });
-
       if (completion.choices?.[0]?.message?.content) {
         const newAnalysis = completion.choices[0].message.content;
         setFacts(prev => `${prev}\n\n## ${perspective} Analysis\n${newAnalysis}`);
-
         if (currentLang !== 'en') {
           const translatedText = await rateLimitedTranslateText(newAnalysis, currentLang);
           setTranslatedFacts(prev => `${prev}\n\n## ${perspective} Analysis\n${translatedText}`);
@@ -828,7 +737,6 @@ function App() {
       `Location: ${currentLocation}\n\n` +
       `=== English Analysis ===\n${facts}\n\n` +
       `=== Translated Analysis (${language}) ===\n${translatedFacts}`;
-
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -841,16 +749,13 @@ function App() {
   const handleLanguageChange = async (newLanguage: 'en' | 'my' | 'th') => {
     setTranslating(true);
     setLanguage(newLanguage);
-
     const translateAllContent = async () => {
       if (facts) {
         setTranslatedFacts(await rateLimitedTranslateText(facts, newLanguage));
       }
-
       if (historicalInsights) {
         setHistoricalInsights(await rateLimitedTranslateText(historicalInsights, newLanguage));
       }
-
       if (historicalEvents.length > 0) {
         setHistoricalEvents(await Promise.all(
           historicalEvents.map(async (event) => ({
@@ -861,7 +766,6 @@ function App() {
           }))
         ));
       }
-
       if (newsArticles.length > 0) {
         setNewsArticles(await Promise.all(
           newsArticles.map(async (article) => ({
@@ -871,7 +775,6 @@ function App() {
           }))
         ));
       }
-
       if (dynamicThemes.length > 0) {
         setDynamicThemes(await Promise.all(
           dynamicThemes.map(async (theme) => ({
@@ -881,7 +784,6 @@ function App() {
           }))
         ));
       }
-
       if (disasterData) {
         const translatedSummary = await rateLimitedTranslateText(disasterData.summary, newLanguage);
         const translatedTypes = await Promise.all(
@@ -901,7 +803,6 @@ function App() {
         });
       }
     };
-
     await translateAllContent();
     setTranslating(false);
   };
@@ -911,12 +812,10 @@ function App() {
   useEffect(() => {
     const handleTouchMove = (event: TouchEvent) => {};
     const handleTouchEnd = (event: TouchEvent) => {};
-
     if (earthContainerRef.current) {
       earthContainerRef.current.addEventListener('touchmove', handleTouchMove);
       earthContainerRef.current.addEventListener('touchend', handleTouchEnd);
     }
-
     return () => {
       if (earthContainerRef.current) {
         earthContainerRef.current.removeEventListener('touchmove', handleTouchMove);
@@ -1072,15 +971,18 @@ function App() {
                 
                 {memoizedDynamicThemes.length > 0 && (
                   <div className="analysis-buttons dynamic-buttons">
-                    {currentLocation && (
-                      <button
-                        className="analysis-button refresh-button"
-                        onClick={() => generateDynamicThemes(currentLocation)}
-                        disabled={translating}
-                      >
-                        Refresh Themes
-                      </button>
-                    )}
+                    <button
+                      className="analysis-button refresh-button"
+                      onClick={async () => {
+                        const themes = await generateDynamicThemes(currentLocation);
+                        setDynamicThemes(themes);
+                      }}
+                      disabled={translating || !currentLocation}
+                    >
+                      {language === 'en' ? 'Refresh Themes' : 
+                       language === 'my' ? 'အကြောင်းအရာအသစ်များရယူရန်' : 
+                       'รีเฟรชธีม'}
+                    </button>
                     {memoizedDynamicThemes.map((theme, index) => (
                       <button
                         key={theme.name}
