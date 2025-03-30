@@ -8,10 +8,17 @@ export const defaultHotspotData = [
   },
   {
     id: 'hotspot-2',
-    name: 'Hotspot 2',
-    description: 'Description of Hotspot 2',
-    coordinates: [55.006647,-6.159099] as [number, number],
-    iframeUrl: 'https://example.com/hotspot2',
+    name: 'Hollywood Sign',
+    description: 'Erected in 1923, this symbolic landmark on Mount Lee is often viewed from Griffith Park Observatory.',
+    coordinates: [-118.321176,34.134100] as [number, number],
+    iframeUrl: 'https://captures-three.vercel.app/hollywood.html',
   },
   // Add more hotspots as needed
+  {
+    id: 'hotspot-3',
+    name: 'Arosa Hörnli',
+    description: 'The Hörnli flow trail is one of the highlights of the routes in the Arosa Lenzerheide region. It is suitable for riders of all abilities – but it also packs a punch. The trail starts at the Hörnli Express upper station at 2,482 metres above sea level.',
+    coordinates: [9.646037,46.752044] as [number, number],
+    iframeUrl: 'https://captures-three.vercel.app/swis.html',
+  },
 ];
