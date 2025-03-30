@@ -41,6 +41,39 @@ html, body, #root {
 }
 
 
+.disaster-widget, .info-panel {
+  color: #ffffff; /* Ensure text is white */
+  background-color: #333333; /* Ensure background is dark */
+}
+
+.disaster-widget .widget-header,
+.disaster-widget .widget-tabs,
+.disaster-widget .widget-content,
+.info-panel .facts,
+.info-panel .analysis-buttons,
+.info-panel .historical-insights,
+.info-panel .youtube-videos {
+  color: #ffffff; /* Ensure text is white */
+}
+
+.disaster-widget .close-button,
+.info-panel .menu-button,
+.info-panel .button-panel button,
+.info-panel .language-buttons button {
+  color: #ffffff; /* Ensure button text is white */
+  background-color: #555555; /* Ensure button background is dark */
+  border: 1px solid #777777; /* Ensure button border is visible */
+}
+
+.disaster-widget .close-button:hover,
+.info-panel .menu-button:hover,
+.info-panel .button-panel button:hover,
+.info-panel .language-buttons button:hover {
+  background-color: #777777; /* Change background on hover */
+}
+
+
+
 /* Ensure the image container is responsive */
 .earth-image-container {
   width: 100%;
