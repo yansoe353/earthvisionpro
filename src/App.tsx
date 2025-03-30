@@ -146,8 +146,8 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
               description: await onTranslate(type.description, language),
               recommendations: await Promise.all(
                 type.recommendations.map((rec) => onTranslate(rec, language))
-            )
-          }))
+              )
+            }))
           );
           setTranslatedData({
             ...data,
@@ -476,6 +476,25 @@ function App() {
     }
   };
 
+  const fetchCurrentDisasters = async (location: string): Promise<DisasterType[]> => {
+    try {
+      const response = await fetch(
+        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
+      );
+      const data = await response.json();
+      return data.data?.map((disaster: any) => ({
+        id: disaster.id,
+        type: disaster.type[0],
+        year: new Date(disaster.date.created).getFullYear(),
+        severity: disaster.severity,
+        description: disaster.description
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching current disasters:', error);
+      return [];
+    }
+  };
+
   const generateDynamicThemes = async (location: string): Promise<DynamicTheme[]> => {
     try {
       const groq = new Groq({
@@ -640,10 +659,7 @@ function App() {
     setDisasterLoading(true);
     setShowDisasterWidget(true);
     try {
-      const response = await fetch(
-        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
-      );
-      const currentDisasters = await response.json();
+      const currentDisasters = await fetchCurrentDisasters(location);
       const history = await fetchHistoricalDisasters(lat, lng);
       setDisasterHistory(history);
       const groq = new Groq({
@@ -655,7 +671,7 @@ function App() {
           {
             role: 'user',
             content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
-            Current alerts: ${JSON.stringify(currentDisasters.data)}.
+            Current alerts: ${JSON.stringify(currentDisasters)}.
             Historical data: ${JSON.stringify(history)}.
             Provide a detailed risk assessment with:
             1. Overall risk score (1-10)
