@@ -410,6 +410,48 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
   );
 };
 
+// Add this function near your other utility functions (around line 300)
+const generateDynamicThemes = async (location: string): Promise<DynamicTheme[]> => {
+  try {
+    const groq = new Groq({
+      apiKey: import.meta.env.VITE_GROQ_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
+        },
+      ],
+      model: 'llama-3.2-90b-vision-preview',
+      temperature: 0.95,
+      max_tokens: 5000,
+    });
+
+    if (completion.choices?.[0]?.message?.content) {
+      return JSON.parse(completion.choices[0].message.content);
+    }
+    return [];
+  } catch (error) {
+    console.error('Error generating dynamic themes:', error);
+    return [];
+  }
+};
+
+// Then modify the refresh button in your JSX (around line 1036) to use this function:
+<button
+  className="analysis-button refresh-button"
+  onClick={async () => {
+    const themes = await generateDynamicThemes(currentLocation);
+    setDynamicThemes(themes);
+  }}
+  disabled={translating}
+>
+  Refresh Themes
+</button>
+
 // Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
