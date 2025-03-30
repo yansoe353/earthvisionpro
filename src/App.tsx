@@ -121,6 +121,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
 };
 
 // Disaster Widget Component
+// Update the DisasterWidget component with these styles and structure
 const DisasterWidget: React.FC<DisasterWidgetProps> = ({ 
   data, 
   loading,
@@ -131,6 +132,7 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
 }) => {
   const [translatedData, setTranslatedData] = useState<DisasterData | null>(null);
   const [translating, setTranslating] = useState(false);
+  const [activeTab, setActiveTab] = useState<'summary' | 'types' | 'history'>('summary');
 
   useEffect(() => {
     if (language !== 'en' && data) {
@@ -145,7 +147,6 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
               description: await onTranslate(type.description, language),
               recommendations: await Promise.all(
                 type.recommendations.map((rec) => onTranslate(rec, language))
-              )
             }))
           );
           setTranslatedData({
@@ -166,13 +167,20 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
   }, [data, language, onTranslate]);
 
   const getRiskColor = (risk: number): string => {
-    if (risk <= 3) return '#4CAF50';
-    if (risk <= 6) return '#FFC107';
-    return '#F44336';
+    if (risk <= 3) return '#4CAF50'; // Green
+    if (risk <= 6) return '#FFC107'; // Yellow
+    return '#F44336'; // Red
+  };
+
+  const getRiskLabel = (risk: number): string => {
+    if (risk <= 3) return language === 'en' ? 'Low' : language === 'my' ? 'နိမ့်' : 'ต่ำ';
+    if (risk <= 6) return language === 'en' ? 'Medium' : language === 'my' ? 'အလယ်အလတ်' : 'ปานกลาง';
+    return language === 'en' ? 'High' : language === 'my' ? 'မြင့်' : 'สูง';
   };
 
   if (loading) return (
     <div className="disaster-widget loading">
+      <div className="spinner"></div>
       {language === 'en' ? 'Analyzing disaster risks...' : 
        language === 'my' ? 'သဘာဝဘေးအန္တရာယ်များကို ဆန်းစစ်နေသည်...' : 
        'กำลังวิเคราะห์ความเสี่ยงภัยธรรมชาติ...'}
@@ -187,79 +195,123 @@ const DisasterWidget: React.FC<DisasterWidgetProps> = ({
         <h3>🌍 {language === 'en' ? 'Disaster Risk Assessment' : 
             language === 'my' ? 'သဘာဝဘေးအန္တရာယ် အကဲဖြတ်ချက်' : 
             'การประเมินความเสี่ยงภัยธรรมชาติ'}</h3>
-        <button className="close-button" onClick={onClose}>&times;</button>
+        <button className="close-button" onClick={onClose} aria-label="Close">
+          &times;
+        </button>
       </div>
       
-      <div className="risk-level" style={{ backgroundColor: getRiskColor(translatedData.overallRisk) }}>
-        {language === 'en' ? 'Overall Risk' : 
-         language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' : 
-         'ความเสี่ยงโดยรวม'}: {translatedData.overallRisk}/10
-      </div>
-      
-      <div className="risk-summary">
-        <h4>{language === 'en' ? 'Summary' : language === 'my' ? 'အကျဉ်းချုပ်' : 'สรุป'}</h4>
-        <p>{translatedData.summary}</p>
-      </div>
-      
-      <div className="disaster-types">
-        <h4>{language === 'en' ? 'Risk by Disaster Type' : 
-             language === 'my' ? 'ဘေးအန္တရာယ်အမျိုးအစားအလိုက် အန္တရာယ်' : 
-             'ความเสี่ยงตามประเภทภัยพิบัติ'}</h4>
-        {translatedData.types.map((type) => (
-          <div key={type.name} className="disaster-type">
-            <div className="type-header">
-              <h5>{type.name}</h5>
-              <span className="type-risk" style={{ color: getRiskColor(type.risk) }}>
-                {type.risk}/10
-              </span>
-            </div>
-            <div className="risk-meter">
-              <div 
-                className="risk-fill" 
-                style={{
-                  width: `${type.risk * 10}%`,
-                  backgroundColor: getRiskColor(type.risk)
-                }}
-              />
-            </div>
-            <p>{type.description}</p>
-            {type.recommendations.length > 0 && (
-              <div className="recommendations">
-                <h6>{language === 'en' ? 'Recommendations' : 
-                     language === 'my' ? 'အကြံပြုချက်များ' : 
-                     'คำแนะนำ'}:</h6>
-                <ul>
-                  {type.recommendations.map((rec, i) => (
-                    <li key={i}>{rec}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      <div className="risk-indicator">
+        <div className="risk-level" style={{ backgroundColor: getRiskColor(translatedData.overallRisk) }}>
+          <div className="risk-score">{translatedData.overallRisk}/10</div>
+          <div className="risk-label">
+            {language === 'en' ? 'Overall Risk' : 
+             language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' : 
+             'ความเสี่ยงโดยรวม'} - {getRiskLabel(translatedData.overallRisk)}
           </div>
-        ))}
+        </div>
       </div>
       
-      {history.length > 0 && (
-        <div className="historical-data">
-          <h4>{language === 'en' ? 'Historical Events' : 
-               language === 'my' ? 'သမိုင်းကြောင်းဆိုင်ရာ ဖြစ်ရပ်များ' : 
-               'เหตุการณ์ในอดีต'}</h4>
-          <div className="history-scroll">
-            {history.map((event) => (
-              <div key={event.id} className="history-event">
-                <div className="event-year">{event.year}</div>
-                <div className="event-details">
-                  <strong>{event.type}</strong> - {event.severity}
-                  {event.description && <p>{event.description}</p>}
+      <div className="widget-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'summary' ? 'active' : ''}`}
+          onClick={() => setActiveTab('summary')}
+        >
+          {language === 'en' ? 'Summary' : language === 'my' ? 'အကျဉ်းချုပ်' : 'สรุป'}
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'types' ? 'active' : ''}`}
+          onClick={() => setActiveTab('types')}
+        >
+          {language === 'en' ? 'Risk Types' : language === 'my' ? 'အန္တရာယ်အမျိုးအစားများ' : 'ประเภทความเสี่ยง'}
+        </button>
+        {history.length > 0 && (
+          <button 
+            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            {language === 'en' ? 'History' : language === 'my' ? 'မှတ်တမ်း' : 'ประวัติ'}
+          </button>
+        )}
+      </div>
+      
+      <div className="widget-content">
+        {activeTab === 'summary' && (
+          <div className="risk-summary">
+            <p>{translatedData.summary}</p>
+          </div>
+        )}
+        
+        {activeTab === 'types' && (
+          <div className="disaster-types">
+            {translatedData.types.map((type) => (
+              <div key={type.name} className="disaster-type">
+                <div className="type-header">
+                  <h4>{type.name}</h4>
+                  <div className="type-risk-indicator">
+                    <span className="risk-score">{type.risk}/10</span>
+                    <span className="risk-label">{getRiskLabel(type.risk)}</span>
+                  </div>
                 </div>
+                <div className="risk-meter">
+                  <div 
+                    className="risk-fill" 
+                    style={{
+                      width: `${type.risk * 10}%`,
+                      backgroundColor: getRiskColor(type.risk)
+                    }}
+                  />
+                </div>
+                <div className="type-description">
+                  <p>{type.description}</p>
+                </div>
+                {type.recommendations.length > 0 && (
+                  <div className="recommendations">
+                    <h5>{language === 'en' ? 'Recommendations' : 
+                         language === 'my' ? 'အကြံပြုချက်များ' : 
+                         'คำแนะนำ'}:</h5>
+                    <ul>
+                      {type.recommendations.map((rec, i) => (
+                        <li key={i}>
+                          <span className="recommendation-bullet">•</span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
           </div>
+        )}
+        
+        {activeTab === 'history' && history.length > 0 && (
+          <div className="historical-data">
+            <div className="history-scroll">
+              {history.map((event) => (
+                <div key={event.id} className="history-event">
+                  <div className="event-year">{event.year}</div>
+                  <div className="event-details">
+                    <div className="event-type-severity">
+                      <strong>{event.type}</strong> - {event.severity}
+                    </div>
+                    {event.description && <p className="event-description">{event.description}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {translating && (
+        <div className="translating-overlay">
+          <div className="translating-message">
+            {language === 'en' ? 'Translating...' : 
+             language === 'my' ? 'ဘာသာပြန်နေသည်...' : 
+             'กำลังแปล...'}
+          </div>
         </div>
       )}
-      {translating && <div className="translating">{language === 'en' ? 'Translating...' : 
-                          language === 'my' ? 'ဘာသာပြန်နေသည်...' : 
-                          'กำลังแปล...'}</div>}
     </div>
   );
 };
