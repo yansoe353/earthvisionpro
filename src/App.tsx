@@ -74,189 +74,6 @@ interface DisasterData {
   }[];
 }
 
-// Rate-limited translation function
-const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-
-  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
-  }
-
-  lastRequestTime = Date.now();
-
-  const cacheKey = `${text}-${targetLanguage}`;
-  if (translationCache.has(cacheKey)) {
-    return translationCache.get(cacheKey)!;
-  }
-
-  const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
-
-  try {
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-
-    if (responseText.includes('Here are a few options')) {
-      const options = responseText.split('Here are a few options')[1].trim().split('\n');
-      const translatedText = options[0].trim();
-      translationCache.set(cacheKey, translatedText);
-      return translatedText;
-    }
-
-    translationCache.set(cacheKey, responseText);
-    return responseText;
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text;
-  }
-};
-
-// Fetch image using Pexels API
-const fetchImage = async (query: string): Promise<string | null> => {
-  try {
-    const response = await axios.get('https://api.pexels.com/v1/search', {
-      headers: {
-        Authorization: import.meta.env.VITE_PIXEL_API_KEY,
-      },
-      params: {
-        query,
-        per_page: 1,
-      },
-    });
-
-    return response.data.photos?.[0]?.src.large || null;
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    return null;
-  }
-};
-
-// YouTube API keys
-const YOUTUBE_API_KEYS = [
-  import.meta.env.VITE_YOUTUBE_API_KEY_1,
-  import.meta.env.VITE_YOUTUBE_API_KEY_2,
-  import.meta.env.VITE_YOUTUBE_API_KEY_3,
-];
-
-// Fetch YouTube videos
-const fetchYouTubeVideos = async (location: string): Promise<YouTubeVideo[]> => {
-  const searchPrompt = await generateYouTubeSearchPrompt(location);
-  if (!searchPrompt) return [];
-
-  for (const apiKey of YOUTUBE_API_KEYS) {
-    if (!apiKey) continue;
-
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchPrompt
-        )}&type=video&maxResults=5&key=${apiKey}`
-      );
-
-      if (!response.ok) continue;
-
-      const data = await response.json();
-      if (data.items?.length > 0) {
-        return data.items.map((item: any) => ({
-          id: item.id.videoId,
-          title: item.snippet.title,
-          description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium.url,
-        }));
-      }
-    } catch (error) {
-      console.error(`Error fetching YouTube videos:`, error);
-    }
-  }
-
-  return [];
-};
-
-// Generate YouTube search prompt
-const generateYouTubeSearchPrompt = async (location: string): Promise<string | null> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a YouTube search prompt for travel videos about ${location}.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 5000,
-    });
-
-    return completion.choices?.[0]?.message?.content?.trim() || null;
-  } catch (error) {
-    console.error('Error generating YouTube search prompt:', error);
-    return null;
-  }
-};
-
-// Generate news content
-const generateNewsWithAI = async (location: string): Promise<string> => {
-  try {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a brief news summary about ${location}.`,
-        },
-      ],
-      model: 'deepseek-r1-distill-llama-70b',
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    return completion.choices?.[0]?.message?.content?.trim() || 'No news available.';
-  } catch (error) {
-    console.error('Error generating news:', error);
-    return 'Failed to generate news.';
-  }
-};
-
-// Generate Earth image
-const generateEarthImage = async (location: string): Promise<string | null> => {
-  try {
-    const imageUrl = await fetchImage(location);
-    return imageUrl || 'https://via.placeholder.com/600x400';
-  } catch (error) {
-    console.error('Error generating Earth image:', error);
-    return null;
-  }
-};
-
-// Fetch historical disasters
-const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
-  try {
-    const response = await fetch(
-      `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
-    );
-    const data = await response.json();
-    return data.data?.map((disaster: any) => ({
-      id: disaster.id,
-      type: disaster.type[0],
-      year: new Date(disaster.date.created).getFullYear(),
-      severity: disaster.severity,
-      description: disaster.description
-    })) || [];
-  } catch (error) {
-    console.error('Error fetching historical disasters:', error);
-    return [];
-  }
-};
-
 // Disaster Widget Component
 const DisasterWidget = ({ 
   data, 
@@ -288,8 +105,7 @@ const DisasterWidget = ({
               name: await onTranslate(type.name, language),
               description: await onTranslate(type.description, language),
               recommendations: await Promise.all(
-                type.recommendations.map(rec => onTranslate(rec, language))
-              )
+                type.recommendations.map((rec) => onTranslate(rec, language))
             }))
           );
           setTranslatedData({
@@ -846,7 +662,7 @@ function App() {
             name: await rateLimitedTranslateText(type.name, newLanguage),
             description: await rateLimitedTranslateText(type.description, newLanguage),
             recommendations: await Promise.all(
-              type.recommendations.map(rec => rateLimitedTranslateText(rec, newLanguage))
+              type.recommendations.map((rec) => rateLimitedTranslateText(rec, newLanguage))
           }))
         );
         setDisasterData({
