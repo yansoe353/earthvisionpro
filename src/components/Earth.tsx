@@ -1,4 +1,3 @@
-// Earth.tsx
 import React, { useState, useRef, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
 import Map, { MapRef, Marker, Popup, MapLayerMouseEvent, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -94,7 +93,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   ];
 
   // Custom hooks
-  const { earthquakes } = useEarthquakes(showDisasterAlerts);
+  const { earthquakes, loading: earthquakesLoading, error: earthquakesError } = useEarthquakes(showDisasterAlerts);
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { userMarkers, addUserMarker, removeAllMarkers, deleteUserMarker, updateMarkerNote } = useUserMarkers();
 
@@ -116,7 +115,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Load earthquake data into supercluster
   useEffect(() => {
-    if (earthquakes.length > 0) {
+    if (showDisasterAlerts && earthquakes.length > 0) {
       const points = earthquakes.map((eq) => ({
         type: "Feature" as const,
         properties: { id: eq.id, mag: eq.properties.mag, time: eq.properties.time },
@@ -133,8 +132,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       if (bounds && zoom) {
         setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
       }
+    } else {
+      setClusters([]);
     }
-  }, [earthquakes, supercluster, mapRef]);
+  }, [earthquakes, showDisasterAlerts, supercluster, mapRef]);
 
   // Load hotspot data into supercluster
   useEffect(() => {
@@ -165,10 +166,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     const zoom = mapRef.current?.getZoom();
 
     if (bounds && zoom) {
-      setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      if (showDisasterAlerts) {
+        setClusters(supercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
+      }
       setHotspotClusters(hotspotSupercluster.getClusters([bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()], Math.floor(zoom)));
     }
-  }, [supercluster, hotspotSupercluster, mapRef]);
+  }, [supercluster, hotspotSupercluster, mapRef, showDisasterAlerts]);
 
   // Handle click on the map
   const handleClick = useCallback(
@@ -208,7 +211,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   // Toggle Natural Disaster Alerts
   const toggleDisasterAlerts = useCallback(() => {
     setShowDisasterAlerts((prev) => !prev);
-  }, []);
+    // Force map refresh when toggling alerts
+    if (mapRef.current) {
+      mapRef.current.triggerRepaint();
+    }
+  }, [mapRef]);
 
   // Toggle dark theme
   const toggleDarkTheme = useCallback(() => {
@@ -249,6 +256,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
 
   // Render clusters
   const renderClusters = useMemo(() => {
+    if (!showDisasterAlerts) return null;
+
     return clusters.map((cluster) => {
       const [longitude, latitude] = cluster.geometry.coordinates;
 
@@ -320,7 +329,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         );
       }
     });
-  }, [clusters, supercluster, mapRef]);
+  }, [clusters, showDisasterAlerts, supercluster, mapRef]);
 
   // Render hotspot clusters
   const renderHotspotClusters = useMemo(() => {
@@ -489,6 +498,18 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         </div>
       )}
 
+      {/* Earthquake Data Loading/Error States */}
+      {earthquakesLoading && showDisasterAlerts && (
+        <div className="loading-message">
+          Loading earthquake data...
+        </div>
+      )}
+      {earthquakesError && (
+        <div className="error-message">
+          Error loading earthquake data: {earthquakesError}
+        </div>
+      )}
+
       {/* Permission Denied Message */}
       {!isLocationPermissionGranted && (
         <div className="permission-denied-message">
@@ -496,33 +517,33 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         </div>
       )}
 
-  // In Earth.tsx, update the MapControls component call to:
-<MapControls
-  toggleFeaturePanel={toggleFeaturePanel}
-  isDarkTheme={isDarkTheme}
-  showHeatmap={showHeatmap}
-  setShowHeatmap={setShowHeatmap}
-  showTraffic={showTraffic}
-  setShowTraffic={setShowTraffic}
-  showSatellite={showSatellite}
-  setShowSatellite={setShowSatellite}
-  show3DTerrain={show3DTerrain}
-  setShow3DTerrain={setShow3DTerrain}
-  showChoropleth={showChoropleth}
-  setShowChoropleth={setShowChoropleth}
-  show3DBuildings={show3DBuildings}
-  setShow3DBuildings={setShow3DBuildings}
-  showContour={showContour}
-  setShowContour={setShowContour}
-  showPointsOfInterest={showPointsOfInterest}
-  setShowPointsOfInterest={setShowPointsOfInterest}
-  showWeather={showWeather}
-  setShowWeather={setShowWeather}
-  showTransit={showTransit}
-  setShowTransit={setShowTransit}
-  showDisasterAlerts={showDisasterAlerts}
-  setShowDisasterAlerts={setShowDisasterAlerts}
-/>
+      {/* Map Controls */}
+      <MapControls
+        toggleFeaturePanel={toggleFeaturePanel}
+        isDarkTheme={isDarkTheme}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        showTraffic={showTraffic}
+        setShowTraffic={setShowTraffic}
+        showSatellite={showSatellite}
+        setShowSatellite={setShowSatellite}
+        show3DTerrain={show3DTerrain}
+        setShow3DTerrain={setShow3DTerrain}
+        showChoropleth={showChoropleth}
+        setShowChoropleth={setShowChoropleth}
+        show3DBuildings={show3DBuildings}
+        setShow3DBuildings={setShow3DBuildings}
+        showContour={showContour}
+        setShowContour={setShowContour}
+        showPointsOfInterest={showPointsOfInterest}
+        setShowPointsOfInterest={setShowPointsOfInterest}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
+        showDisasterAlerts={showDisasterAlerts}
+        setShowDisasterAlerts={toggleDisasterAlerts}
+      />
 
       {/* Feature Panel */}
       {showFeaturePanel && (
@@ -723,7 +744,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         )}
 
         {/* Heatmap Layer */}
-        {showHeatmap && (
+        {showDisasterAlerts && showHeatmap && earthquakes.length > 0 && (
           <Source
             id="earthquake-data"
             type="geojson"
