@@ -815,7 +815,7 @@ function App() {
             cardSubtitle: await rateLimitedTranslateText(event.cardSubtitle, newLanguage),
             cardDetailedText: await rateLimitedTranslateText(event.cardDetailedText, newLanguage),
           }))
-        ));
+        );
       }
 
       if (newsArticles.length > 0) {
@@ -825,7 +825,7 @@ function App() {
             title: await rateLimitedTranslateText(article.title, newLanguage),
             description: await rateLimitedTranslateText(article.description, newLanguage),
           }))
-        ));
+        );
       }
 
       if (dynamicThemes.length > 0) {
@@ -835,7 +835,7 @@ function App() {
             name: await rateLimitedTranslateText(theme.name, newLanguage),
             prompt: await rateLimitedTranslateText(theme.prompt, newLanguage),
           }))
-        ));
+        );
       }
 
       if (disasterData) {
