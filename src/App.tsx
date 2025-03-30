@@ -84,7 +84,7 @@ interface DisasterWidgetProps {
 }
 
 // Rate-limited translation function
-const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th') => {
+const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th'): Promise<string> => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
 
