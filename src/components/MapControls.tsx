@@ -90,7 +90,7 @@ const MapControls = ({
     // Force a map refresh when toggling disaster alerts
     refreshMap();
     
-    // You might also need to clear any existing alerts from the map
+    // You might also need to clear any existing alerts from the maps
     // This would depend on how your map implementation works
     if (!newValue) {
       // Add code here to clear disaster alerts from the map if needed
