@@ -36,7 +36,7 @@ const useEarthquakes = (showDisasterAlerts: boolean) => {
           setEarthquakes(data.features || []);
         }
       } catch (err) {
-        if (err.name !== 'AbortError' && isMounted) {
+        if (err instanceof Error && err.name !== 'AbortError' && isMounted) {
           console.error('Error fetching earthquake data:', err);
           setError('Failed to load earthquake data');
         }
