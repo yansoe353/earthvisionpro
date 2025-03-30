@@ -58,6 +58,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [isLocationPermissionGranted, setIsLocationPermissionGranted] = useState(false);
   const [customHotspots, setCustomHotspots] = useState<Hotspot[]>([]);
+  const [showPermissionDeniedMessage, setShowPermissionDeniedMessage] = useState(false);
 
   // Layer visibility states
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -246,11 +247,13 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         (error) => {
           console.error('Error getting user location:', error);
           setIsLoadingLocation(false);
+          setShowPermissionDeniedMessage(true);
         }
       );
     } else {
       console.error('Geolocation is not supported by this browser.');
       setIsLoadingLocation(false);
+      setShowPermissionDeniedMessage(true);
     }
   }, []);
 
@@ -511,9 +514,10 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       )}
 
       {/* Permission Denied Message */}
-      {!isLocationPermissionGranted && (
+      {showPermissionDeniedMessage && (
         <div className="permission-denied-message">
           <p>Location access is required to use this feature. Please enable it in your browser settings.</p>
+          <button onClick={() => setShowPermissionDeniedMessage(false)}>Close</button>
         </div>
       )}
 
