@@ -69,8 +69,8 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [show3DBuildings, setShow3DBuildings] = useState(false);
   const [showContour, setShowContour] = useState(false);
   const [showPointsOfInterest, setShowPointsOfInterest] = useState(false);
-  const [showTransit, setShowTransit] = useState(false);
   const [showWeather, setShowWeather] = useState(true);
+  const [showTransit, setShowTransit] = useState(false);
 
   // Weather layer states
   const [selectedWeatherLayer, setSelectedWeatherLayer] = useState<string | null>('clouds_new');
@@ -516,10 +516,12 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         setShowContour={setShowContour}
         showPointsOfInterest={showPointsOfInterest}
         setShowPointsOfInterest={setShowPointsOfInterest}
-        showTransit={showTransit}
-        setShowTransit={setShowTransit}
         showWeather={showWeather}
         setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
+        showDisasterAlerts={showDisasterAlerts}
+        setShowDisasterAlerts={setShowDisasterAlerts}
       />
 
       {/* Feature Panel */}
