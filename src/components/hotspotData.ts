@@ -26,6 +26,6 @@ export const defaultHotspotData = [
     name: 'HOA LU Ancient Capital – A Journey Back in Time',
     description: 'The Hörnlpi flow trail is one of the highlights of the routes in the Arosa Lenzerheide region. It is suitable for riders of all abilities – but it also packs a punch. The trail starts at the Hörnli Express upper station at 2,482 metres above sea level.',
     coordinates: [105.905847, 20.284479] as [number, number],
-    iframeUrl: 'https://earthvision.world/hoi-lu-ancient-capital/',
+    iframeUrl: 'https://captures-three.vercel.app/hoilu.html',
   },
 ];
