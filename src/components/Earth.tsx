@@ -854,11 +854,11 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
               id={`effect-zone-layer-${index}`}
               type="circle"
               paint={{
-                'circle-radius': zone.properties.radius,
-                'circle-color': zone.properties.color,
+                'circle-radius': zone.properties?.radius ?? 0,
+                'circle-color': zone.properties?.color ?? 'red',
                 'circle-opacity': 0.5,
                 'circle-stroke-width': 2,
-                'circle-stroke-color': zone.properties.color,
+                'circle-stroke-color': zone.properties?.color ?? 'red',
               }}
             />
           </Source>
