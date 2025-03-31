@@ -406,6 +406,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
         onClick={(e) => {
           e.originalEvent.stopPropagation();
           setSelectedDisasterPOI(poi);
+          visualizeEffectZones(poi.effectZones);
         }}
       >
         <div className="disaster-poi-marker" style={{ backgroundColor: 'red', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
@@ -414,6 +415,26 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       </Marker>
     ));
   }, [disasterPOIs]);
+
+  // Visualize earthquake effect zones
+  const visualizeEffectZones = (effectZones: { epicenter: [number, number]; zones: { radius: number; color: string }[] }) => {
+    const { epicenter, zones } = effectZones;
+    const circles: Feature<Point>[] = zones.map((zone, index) => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: epicenter,
+      },
+      properties: {
+        radius: zone.radius,
+        color: zone.color,
+      },
+    }));
+
+    setEffectZones(circles);
+  };
+
+  const [effectZones, setEffectZones] = useState<Feature<Point>[]>([]);
 
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
@@ -791,9 +812,21 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             <div className="disaster-poi-popup">
               <h3>{selectedDisasterPOI.title}</h3>
               <img src={selectedDisasterPOI.image} alt={selectedDisasterPOI.title} style={{ width: '100%', height: 'auto', borderRadius: '8px' }} />
-              <a href={selectedDisasterPOI.link} target="_blank" rel="noopener noreferrer">
-                Learn More
-              </a>
+              <p>
+                <a href={selectedDisasterPOI.link} target="_blank" rel="noopener noreferrer">
+                  Learn More
+                </a>
+              </p>
+              <p>
+                <a href={selectedDisasterPOI.helpLink} target="_blank" rel="noopener noreferrer">
+                  Get Help
+                </a>
+              </p>
+              <p>
+                <a href={selectedDisasterPOI.supportLink} target="_blank" rel="noopener noreferrer">
+                  Support
+                </a>
+              </p>
               <div className="disaster-poi-popup-buttons">
                 <button
                   onClick={() => setSelectedDisasterPOI(null)}
@@ -805,6 +838,31 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
             </div>
           </Popup>
         )}
+
+        {/* Earthquake Effect Zones */}
+        {effectZones.map((zone, index) => (
+          <Source
+            key={`effect-zone-${index}`}
+            id={`effect-zone-${index}`}
+            type="geojson"
+            data={{
+              type: 'FeatureCollection',
+              features: [zone],
+            }}
+          >
+            <Layer
+              id={`effect-zone-layer-${index}`}
+              type="circle"
+              paint={{
+                'circle-radius': zone.properties.radius,
+                'circle-color': zone.properties.color,
+                'circle-opacity': 0.5,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': zone.properties.color,
+              }}
+            />
+          </Source>
+        ))}
 
         {/* Heatmap Layer */}
         {showDisasterAlerts && showHeatmap && earthquakes.length > 0 && (
