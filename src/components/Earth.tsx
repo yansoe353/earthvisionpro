@@ -15,6 +15,7 @@ import Supercluster from 'supercluster';
 import { debounce } from 'lodash';
 import { Feature, Point } from 'geojson';
 import { defaultHotspotData } from './hotspotData';
+import disasterPOIs, { DisasterPOI } from './disasterPOIs'; // Import the disaster POI data
 
 type Cluster = Feature<Point, {
   cluster?: boolean;
@@ -44,6 +45,7 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
   const [clickedLocation, setClickedLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<Earthquake | UserMarker | null>(null);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+  const [selectedDisasterPOI, setSelectedDisasterPOI] = useState<DisasterPOI | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [showFeaturePanel, setShowFeaturePanel] = useState(false);
   const [showDisasterAlerts, setShowDisasterAlerts] = useState(true);
@@ -394,6 +396,25 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
     });
   }, [hotspotClusters, hotspotSupercluster, mapRef, customHotspots, defaultHotspotData]);
 
+  // Render disaster POI markers
+  const renderDisasterPOIs = useMemo(() => {
+    return disasterPOIs.map((poi) => (
+      <Marker
+        key={poi.id}
+        longitude={poi.coordinates[0]}
+        latitude={poi.coordinates[1]}
+        onClick={(e) => {
+          e.originalEvent.stopPropagation();
+          setSelectedDisasterPOI(poi);
+        }}
+      >
+        <div className="disaster-poi-marker" style={{ backgroundColor: 'red', color: 'white', borderRadius: '50%', padding: '10px', fontSize: '14px' }}>
+          ⚠️
+        </div>
+      </Marker>
+    ));
+  }, [disasterPOIs]);
+
   // Type guard to check if a marker is a UserMarker
   const isUserMarker = (marker: Earthquake | UserMarker): marker is UserMarker => {
     return 'label' in marker && 'id' in marker;
@@ -522,39 +543,38 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
       )}
 
       {/* Map Controls */}
-    // In Earth.tsx, update the MapControls component call to:
-<MapControls
-  toggleFeaturePanel={toggleFeaturePanel}
-  isDarkTheme={isDarkTheme}
-  showHeatmap={showHeatmap}
-  setShowHeatmap={setShowHeatmap}
-  showTraffic={showTraffic}
-  setShowTraffic={setShowTraffic}
-  showSatellite={showSatellite}
-  setShowSatellite={setShowSatellite}
-  show3DTerrain={show3DTerrain}
-  setShow3DTerrain={setShow3DTerrain}
-  showChoropleth={showChoropleth}
-  setShowChoropleth={setShowChoropleth}
-  show3DBuildings={show3DBuildings}
-  setShow3DBuildings={setShow3DBuildings}
-  showContour={showContour}
-  setShowContour={setShowContour}
-  showPointsOfInterest={showPointsOfInterest}
-  setShowPointsOfInterest={setShowPointsOfInterest}
-  showWeather={showWeather}
-  setShowWeather={setShowWeather}
-  showTransit={showTransit}
-  setShowTransit={setShowTransit}
-  showDisasterAlerts={showDisasterAlerts}
-  setShowDisasterAlerts={(value) => {
-    setShowDisasterAlerts(value);
-    if (mapRef.current) {
-      mapRef.current.triggerRepaint();
-    }
-  }}
-  refreshMap={() => mapRef.current?.triggerRepaint()}
-/>
+      <MapControls
+        toggleFeaturePanel={toggleFeaturePanel}
+        isDarkTheme={isDarkTheme}
+        showHeatmap={showHeatmap}
+        setShowHeatmap={setShowHeatmap}
+        showTraffic={showTraffic}
+        setShowTraffic={setShowTraffic}
+        showSatellite={showSatellite}
+        setShowSatellite={setShowSatellite}
+        show3DTerrain={show3DTerrain}
+        setShow3DTerrain={setShow3DTerrain}
+        showChoropleth={showChoropleth}
+        setShowChoropleth={setShowChoropleth}
+        show3DBuildings={show3DBuildings}
+        setShow3DBuildings={setShow3DBuildings}
+        showContour={showContour}
+        setShowContour={setShowContour}
+        showPointsOfInterest={showPointsOfInterest}
+        setShowPointsOfInterest={setShowPointsOfInterest}
+        showWeather={showWeather}
+        setShowWeather={setShowWeather}
+        showTransit={showTransit}
+        setShowTransit={setShowTransit}
+        showDisasterAlerts={showDisasterAlerts}
+        setShowDisasterAlerts={(value) => {
+          setShowDisasterAlerts(value);
+          if (mapRef.current) {
+            mapRef.current.triggerRepaint();
+          }
+        }}
+        refreshMap={() => mapRef.current?.triggerRepaint()}
+      />
 
       {/* Feature Panel */}
       {showFeaturePanel && (
@@ -664,6 +684,9 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
           </Marker>
         ))}
 
+        {/* Disaster POI Markers */}
+        {renderDisasterPOIs}
+
         {/* Popup for Selected Feature */}
         {selectedFeature && (
           <Popup
@@ -748,6 +771,35 @@ const Earth = forwardRef<EarthRef, EarthProps>(({ onCaptureView, showWeatherWidg
                   className="zoom-button"
                 >
                   Zoom to Location
+                </button>
+              </div>
+            </div>
+          </Popup>
+        )}
+
+        {/* Popup for Selected Disaster POI */}
+        {selectedDisasterPOI && (
+          <Popup
+            longitude={selectedDisasterPOI.coordinates[0]}
+            latitude={selectedDisasterPOI.coordinates[1]}
+            onClose={() => setSelectedDisasterPOI(null)}
+            closeButton={false}
+            anchor="bottom"
+            maxWidth="400px"
+            className="disaster-poi-popup-container"
+          >
+            <div className="disaster-poi-popup">
+              <h3>{selectedDisasterPOI.title}</h3>
+              <img src={selectedDisasterPOI.image} alt={selectedDisasterPOI.title} style={{ width: '100%', height: 'auto', borderRadius: '8px' }} />
+              <a href={selectedDisasterPOI.link} target="_blank" rel="noopener noreferrer">
+                Learn More
+              </a>
+              <div className="disaster-poi-popup-buttons">
+                <button
+                  onClick={() => setSelectedDisasterPOI(null)}
+                  className="close-button"
+                >
+                  Close
                 </button>
               </div>
             </div>
