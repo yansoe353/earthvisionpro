@@ -14,7 +14,7 @@ const disasterPOIs: DisasterPOI[] = [
     title: 'Devastating 7.7-Magnitude Earthquake Strikes Myanmar',
     image: 'https://earthvision.world/wp-content/uploads/2025/03/487205691_1161177069136995_3227935157759261818_n.jpg',
     link: 'https://earthvision.world/events/devastating-7-7-magnitude-earthquake-strikes-myanmar-over-1700-dead-as-rescue-efforts-continue/',
-    coordinates: [10.0, 20.0],
+    coordinates: [95.923703, 21.995095],
   },
  
   // Add more disaster POIs as needed
