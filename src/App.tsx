@@ -484,6 +484,10 @@ function App() {
       const response = await fetch(
         `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
       );
+      if (!response.ok) {
+        console.error('Error fetching historical disasters:', response.statusText);
+        return [];
+      }
       const data = await response.json();
       return data.data?.map((disaster: any) => ({
         id: disaster.id,
@@ -503,6 +507,10 @@ function App() {
       const response = await fetch(
         `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
       );
+      if (!response.ok) {
+        console.error('Error fetching current disasters:', response.statusText);
+        return [];
+      }
       const data = await response.json();
       return data.data?.map((disaster: any) => ({
         id: disaster.id,
@@ -535,7 +543,12 @@ function App() {
         max_tokens: 5000,
       });
       if (completion.choices?.[0]?.message?.content) {
-        return JSON.parse(completion.choices[0].message.content);
+        try {
+          return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+          console.error('Error parsing dynamic themes:', error);
+          return [];
+        }
       }
       return [];
     } catch (error) {
@@ -917,9 +930,13 @@ function App() {
         max_tokens: 2000,
       });
       if (completion.choices?.[0]?.message?.content) {
-        const analysis = JSON.parse(completion.choices[0].message.content);
-        setDisasterData(analysis);
-        setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
+        try {
+          const analysis = JSON.parse(completion.choices[0].message.content);
+          setDisasterData(analysis);
+          setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
+        } catch (error) {
+          console.error('Error parsing disaster analysis:', error);
+        }
       }
     } catch (error) {
       console.error('Disaster analysis error:', error);
