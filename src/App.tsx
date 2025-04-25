@@ -104,8 +104,7 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   try {
     const result = await model.generateContent([
       {
-        role: 'user',
-        parts: [{ text: prompt }],
+        text: prompt,
       },
     ]);
     const responseText = result.response.text();
@@ -413,7 +412,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: `Generate a YouTube search prompt for travel videos about ${location}.`,
           },
         ],
@@ -437,7 +435,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: `Generate a brief news summary about ${location}.`,
           },
         ],
@@ -458,8 +455,7 @@ function App() {
       const prompt = `Generate a brief news summary about ${location}.`;
       const result = await model.generateContent([
         {
-          role: 'user',
-          parts: [{ text: prompt }],
+          text: prompt,
         },
       ]);
       return result.response.text() || 'No news available.';
@@ -526,7 +522,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
@@ -572,7 +567,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also provide a list of historical events in JSON format.`,
           },
         ],
@@ -651,19 +645,13 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl,
-                },
-              },
-            ],
+            content: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
+          },
+          {
+            inlineData: {
+              mimeType: 'image/png',
+              data: imageUrl,
+            },
           },
         ],
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -683,16 +671,13 @@ function App() {
       const prompt = `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`;
       const result = await model.generateContent([
         {
-          role: 'user',
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType: 'image/png',
-                data: imageUrl,
-              },
-            },
-          ],
+          text: prompt,
+        },
+        {
+          inlineData: {
+            mimeType: 'image/png',
+            data: imageUrl,
+          },
         },
       ]);
       return result.response.text() || 'No analysis available.';
@@ -769,7 +754,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: prompt,
           },
         ],
@@ -901,7 +885,6 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
-            role: 'user',
             content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
             Current alerts: ${JSON.stringify(currentDisasters)}.
             Historical data: ${JSON.stringify(history)}.
