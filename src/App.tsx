@@ -12,7 +12,7 @@ import './index.css';
 
 // Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
 // Language mapping
 const languageMapping = {
@@ -417,7 +417,7 @@ function App() {
             content: `Generate a YouTube search prompt for travel videos about ${location}.`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 5000,
       });
@@ -441,7 +441,7 @@ function App() {
             content: `Generate a brief news summary about ${location}.`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -530,7 +530,7 @@ function App() {
             content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.95,
         max_tokens: 5000,
       });
@@ -576,7 +576,7 @@ function App() {
             content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also provide a list of historical events in JSON format.`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -655,7 +655,7 @@ function App() {
             content: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.95,
         max_tokens: 8000,
       });
@@ -762,7 +762,7 @@ function App() {
             content: prompt,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 5000,
       });
@@ -912,7 +912,7 @@ function App() {
             }`,
           },
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 2000,
       });
