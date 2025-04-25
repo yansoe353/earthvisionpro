@@ -46,7 +46,7 @@ const rewriteContentWithAI = async (content: string): Promise<string> => {
           content: `Rewrite the following text to make it more polished, concise, and user-friendly:\n\n${content}`,
         },
       ],
-      model: 'llama-3.2-90b-vision-preview',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       temperature: 0.95,
       max_tokens: 7000,
     });
