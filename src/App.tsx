@@ -12,17 +12,17 @@ import './index.css';
 
 // Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
 // Language mapping
-const languageMapping: { [key: string]: string } = {
+const languageMapping = {
   en: 'English',
   my: 'Myanmar (Burmese)',
   th: 'Thai'
 };
 
 // Translation cache
-const translationCache = new Map<string, string>();
+const translationCache = new Map();
 
 // Rate limit delay
 const RATE_LIMIT_DELAY = 1000;
@@ -102,7 +102,12 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent([
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ]);
     const responseText = result.response.text();
 
     if (responseText.includes('Here are a few options')) {
@@ -442,7 +447,24 @@ function App() {
       });
       return completion.choices?.[0]?.message?.content?.trim() || 'No news available.';
     } catch (error) {
-      console.error('Error generating news:', error);
+      console.error('Error generating news with Groq:', error);
+      // Fallback to Gemini API
+      return generateNewsWithGemini(location);
+    }
+  };
+
+  const generateNewsWithGemini = async (location: string): Promise<string> => {
+    try {
+      const prompt = `Generate a brief news summary about ${location}.`;
+      const result = await model.generateContent([
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ]);
+      return result.response.text() || 'No news available.';
+    } catch (error) {
+      console.error('Error generating news with Gemini:', error);
       return 'Failed to generate news.';
     }
   };
@@ -620,12 +642,12 @@ function App() {
     }
   };
 
-  const analyzeWithGroq = async (imageUrl: string, locationName: string): Promise<string> => {
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
+  const analyzeWithGroqOrGemini = async (imageUrl: string, locationName: string) => {
     try {
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -651,59 +673,32 @@ function App() {
       return completion.choices?.[0]?.message?.content || 'No analysis available.';
     } catch (error) {
       console.error('Error analyzing with Groq:', error);
-      return 'Error analyzing the image.';
+      // Fallback to Gemini API
+      return analyzeWithGemini(imageUrl, locationName);
     }
   };
 
-  const analyzeDisasters = async (location: string, lat: number, lng: number) => {
-    setDisasterLoading(true);
-    setShowDisasterWidget(true);
+  const analyzeWithGemini = async (imageUrl: string, locationName: string) => {
     try {
-      const currentDisasters = await fetchCurrentDisasters(location);
-      const history = await fetchHistoricalDisasters(lat, lng);
-      setDisasterHistory(history);
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
-            Current alerts: ${JSON.stringify(currentDisasters)}.
-            Historical data: ${JSON.stringify(history)}.
-            Provide a detailed risk assessment with:
-            1. Overall risk score (1-10)
-            2. Risk breakdown by disaster type
-            3. Summary of findings
-            4. Recommendations
-            Format as JSON with this structure:
+      const prompt = `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`;
+      const result = await model.generateContent([
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
             {
-              "overallRisk": number,
-              "summary": string,
-              "types": [{
-                "name": string,
-                "risk": number,
-                "description": string,
-                "recommendations": string[]
-              }]
-            }`,
-          },
-        ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
-      if (completion.choices?.[0]?.message?.content) {
-        const analysis = JSON.parse(completion.choices[0].message.content);
-        setDisasterData(analysis);
-        setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
-      }
+              inlineData: {
+                mimeType: 'image/png',
+                data: imageUrl,
+              },
+            },
+          ],
+        },
+      ]);
+      return result.response.text() || 'No analysis available.';
     } catch (error) {
-      console.error('Disaster analysis error:', error);
-    } finally {
-      setDisasterLoading(false);
+      console.error('Error analyzing with Gemini:', error);
+      return 'Error analyzing the image.';
     }
   };
 
@@ -733,7 +728,7 @@ function App() {
       const lat = center.lat;
       const locationName = await fetchLocationName(lng, lat);
       setCurrentLocation(locationName);
-      const analysis = await analyzeWithGroq(dataUrl, locationName);
+      const analysis = await analyzeWithGroqOrGemini(dataUrl, locationName);
       setFacts(analysis);
       if (language !== 'en') {
         const translatedAnalysis = await rateLimitedTranslateText(analysis, language);
@@ -891,6 +886,58 @@ function App() {
       }
     };
   }, []);
+
+  const analyzeDisasters = async (location: string, lat: number, lng: number) => {
+    setDisasterLoading(true);
+    setShowDisasterWidget(true);
+    try {
+      const currentDisasters = await fetchCurrentDisasters(location);
+      const history = await fetchHistoricalDisasters(lat, lng);
+      setDisasterHistory(history);
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
+            Current alerts: ${JSON.stringify(currentDisasters)}.
+            Historical data: ${JSON.stringify(history)}.
+            Provide a detailed risk assessment with:
+            1. Overall risk score (1-10)
+            2. Risk breakdown by disaster type
+            3. Summary of findings
+            4. Recommendations
+            Format as JSON with this structure:
+            {
+              "overallRisk": number,
+              "summary": string,
+              "types": [{
+                "name": string,
+                "risk": number,
+                "description": string,
+                "recommendations": string[]
+              }]
+            }`,
+          },
+        ],
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        temperature: 0.7,
+        max_tokens: 2000,
+      });
+      if (completion.choices?.[0]?.message?.content) {
+        const analysis = JSON.parse(completion.choices[0].message.content);
+        setDisasterData(analysis);
+        setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
+      }
+    } catch (error) {
+      console.error('Disaster analysis error:', error);
+    } finally {
+      setDisasterLoading(false);
+    }
+  };
 
   return (
     <div className="app">
