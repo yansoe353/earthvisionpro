@@ -508,7 +508,7 @@ function App() {
             content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
-        model: 'llama-3.2-90b-vision-preview',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.95,
         max_tokens: 5000,
       });
@@ -554,7 +554,7 @@ function App() {
             content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also provide a list of historical events in JSON format.`,
           },
         ],
-        model: 'llama-3.2-90b-vision-preview',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -644,7 +644,7 @@ function App() {
             ],
           },
         ],
-        model: 'llama-3.2-11b-vision-preview',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.95,
         max_tokens: 8000,
       });
@@ -691,7 +691,7 @@ function App() {
             }`,
           },
         ],
-        model: 'llama-3.2-90b-vision-preview',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         temperature: 0.7,
         max_tokens: 2000,
       });
