@@ -21,13 +21,15 @@ const MarkdownContent = ({ content, language, onRewrite }: MarkdownContentProps)
   return (
     <div className={`translated-content ${language}`}>
       <ReactMarkdown>{content}</ReactMarkdown>
-      <button
-        onClick={handleRewrite}
-        className="rewrite-button"
-        disabled={isRewriting}
-      >
-        {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
-      </button>
+      {content && (
+        <button
+          onClick={handleRewrite}
+          className="rewrite-button"
+          disabled={isRewriting}
+        >
+          {isRewriting ? 'Rewriting...' : 'Rewrite with AI'}
+        </button>
+      )}
     </div>
   );
 };
