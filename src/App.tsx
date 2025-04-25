@@ -12,7 +12,7 @@ import './index.css';
 
 // Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 // Language mapping
 const languageMapping = {
@@ -102,12 +102,13 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   const prompt = `Translate the following text to ${languageMapping[targetLanguage]}: "${text}"`;
 
   try {
-    const result = await model.generateContent([
-      {
-        parts: [{ text: prompt }],
-      },
-    ]);
-    const responseText = result.response.text();
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }]
+    });
+    const responseText = (await result.response).text();
 
     if (responseText.includes('Here are a few options')) {
       const options = responseText.split('Here are a few options')[1].trim().split('\n');
@@ -412,10 +413,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Generate a YouTube search prompt for travel videos about ${location}.`,
           },
         ],
-        model: 'deepseek-r1-distill-llama-70b',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 5000,
       });
@@ -435,10 +437,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Generate a brief news summary about ${location}.`,
           },
         ],
-        model: 'deepseek-r1-distill-llama-70b',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -453,12 +456,13 @@ function App() {
   const generateNewsWithGemini = async (location: string): Promise<string> => {
     try {
       const prompt = `Generate a brief news summary about ${location}.`;
-      const result = await model.generateContent([
-        {
-          parts: [{ text: prompt }],
-        },
-      ]);
-      return result.response.text() || 'No news available.';
+      const result = await model.generateContent({
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }]
+        }]
+      });
+      return (await result.response).text() || 'No news available.';
     } catch (error) {
       console.error('Error generating news with Gemini:', error);
       return 'Failed to generate news.';
@@ -522,10 +526,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Based on the location "${location}", suggest 3 unique analysis themes. Return as JSON array of objects with "name" and "prompt" properties.`,
           },
         ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.95,
         max_tokens: 5000,
       });
@@ -567,10 +572,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Provide a detailed historical summary of ${currentLocation}. Include key events, cultural developments, and environmental changes. Also provide a list of historical events in JSON format.`,
           },
         ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -645,16 +651,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`,
           },
-          {
-            content: {
-              mimeType: 'image/png',
-              data: imageUrl,
-            },
-          },
         ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.95,
         max_tokens: 8000,
       });
@@ -669,20 +670,21 @@ function App() {
   const analyzeWithGemini = async (imageUrl: string, locationName: string) => {
     try {
       const prompt = `Examine the image and provide a detailed analysis of the region. The location is ${locationName}. Include geographical, cultural, and environmental insights.`;
-      const result = await model.generateContent([
-        {
-          parts: [{ text: prompt }],
-        },
-        {
-          parts: [{
-            inlineData: {
-              mimeType: 'image/png',
-              data: imageUrl,
-            },
-          }],
-        },
-      ]);
-      return result.response.text() || 'No analysis available.';
+      const result = await model.generateContent({
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: 'image/png',
+                data: imageUrl.split(',')[1] // Remove the data URL prefix
+              }
+            }
+          ]
+        }]
+      });
+      return (await result.response).text() || 'No analysis available.';
     } catch (error) {
       console.error('Error analyzing with Gemini:', error);
       return 'Error analyzing the image.';
@@ -756,10 +758,11 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: prompt,
           },
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 5000,
       });
@@ -887,6 +890,7 @@ function App() {
       const completion = await groq.chat.completions.create({
         messages: [
           {
+            role: 'user',
             content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
             Current alerts: ${JSON.stringify(currentDisasters)}.
             Historical data: ${JSON.stringify(history)}.
@@ -908,7 +912,7 @@ function App() {
             }`,
           },
         ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 2000,
       });
