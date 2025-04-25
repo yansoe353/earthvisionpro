@@ -458,115 +458,62 @@ function App() {
   };
 
   const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
-  try {
-    const response = await fetch(
-      `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
-    );
+    try {
+      const response = await fetch(
+        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
+      );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch historical disasters: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch historical disasters: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.data) {
+        throw new Error('Unexpected response format');
+      }
+
+      return data.data.map((disaster: any) => ({
+        id: disaster.id,
+        type: disaster.fields.type[0],
+        year: new Date(disaster.fields.date.created).getFullYear(),
+        severity: disaster.fields.severity,
+        description: disaster.fields.description,
+      }));
+    } catch (error) {
+      console.error('Error fetching historical disasters:', error);
+      return [];
     }
+  };
 
-    const data = await response.json();
+  const fetchCurrentDisasters = async (location: string): Promise<DisasterType[]> => {
+    try {
+      const response = await fetch(
+        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${encodeURIComponent(location)}`
+      );
 
-    if (!data.data) {
-      throw new Error('Unexpected response format');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch current disasters: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.data) {
+        throw new Error('Unexpected response format');
+      }
+
+      return data.data.map((disaster: any) => ({
+        id: disaster.id,
+        type: disaster.fields.type[0],
+        year: new Date(disaster.fields.date.created).getFullYear(),
+        severity: disaster.fields.severity,
+        description: disaster.fields.description,
+      }));
+    } catch (error) {
+      console.error('Error fetching current disasters:', error);
+      return [];
     }
-
-    return data.data.map((disaster: any) => ({
-      id: disaster.id,
-      type: disaster.fields.type[0],
-      year: new Date(disaster.fields.date.created).getFullYear(),
-      severity: disaster.fields.severity,
-      description: disaster.fields.description,
-    }));
-  } catch (error) {
-    console.error('Error fetching historical disasters:', error);
-    return [];
-  }
-};
-
-const fetchCurrentDisasters = async (location: string): Promise<DisasterType[]> => {
-  try {
-    const response = await fetch(
-      `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${encodeURIComponent(location)}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch current disasters: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.data) {
-      throw new Error('Unexpected response format');
-    }
-
-    return data.data.map((disaster: any) => ({
-      id: disaster.id,
-      type: disaster.fields.type[0],
-      year: new Date(disaster.fields.date.created).getFullYear(),
-      severity: disaster.fields.severity,
-      description: disaster.fields.description,
-    }));
-  } catch (error) {
-    console.error('Error fetching current disasters:', error);
-    return [];
-  }
-};
-
-const analyzeDisasters = async (location: string, lat: number, lng: number) => {
-  setDisasterLoading(true);
-  setShowDisasterWidget(true);
-  try {
-    const currentDisasters = await fetchCurrentDisasters(location);
-    const history = await fetchHistoricalDisasters(lat, lng);
-    setDisasterHistory(history);
-    const groq = new Groq({
-      apiKey: import.meta.env.VITE_GROQ_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
-          Current alerts: ${JSON.stringify(currentDisasters)}.
-          Historical data: ${JSON.stringify(history)}.
-          Provide a detailed risk assessment with:
-          1. Overall risk score (1-10)
-          2. Risk breakdown by disaster type
-          3. Summary of findings
-          4. Recommendations
-          Format as JSON with this structure:
-          {
-            "overallRisk": number,
-            "summary": string,
-            "types": [{
-              "name": string,
-              "risk": number,
-              "description": string,
-              "recommendations": string[]
-            }]
-          }`,
-        },
-      ],
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      temperature: 0.7,
-      max_tokens: 2000,
-    });
-    if (completion.choices?.[0]?.message?.content) {
-      const analysis = JSON.parse(completion.choices[0].message.content);
-      setDisasterData(analysis);
-      setFacts((prev) => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
-    }
-  } catch (error) {
-    console.error('Disaster analysis error:', error);
-  } finally {
-    setDisasterLoading(false);
-  }
-};
-
+  };
 
   const generateDynamicThemes = async (location: string): Promise<DynamicTheme[]> => {
     try {
@@ -1020,8 +967,7 @@ const analyzeDisasters = async (location: string, lat: number, lng: number) => {
               const newsContent = await generateNewsWithAI(currentLocation);
               setNewsArticles([{ title: 'Latest News', description: newsContent, url: '' }]);
               setIsNewsLoading(false);
-            }
-            }
+            }}
             className="news-button"
             disabled={!currentLocation}
           >
