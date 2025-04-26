@@ -97,24 +97,6 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   }
 };
 
-// Function to generate images using the Gemini API
-const generateImageWithGemini = async (prompt: string): Promise<string | null> => {
-  try {
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{ text: prompt }]
-      }]
-    });
-    const responseText = (await result.response).text();
-    const imageUrl = responseText.match(/(http(s)?:\/\/[^\s]+(\.png|\.jpg|\.jpeg))/);
-    return imageUrl ? imageUrl[0] : null;
-  } catch (error) {
-    console.error('Error generating image with Gemini:', error);
-    return null;
-  }
-};
-
 // Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -134,9 +116,6 @@ function App() {
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
-  const [earthImage, setEarthImage] = useState<string | null>(null);
-  const [ancientImage, setAncientImage] = useState<string | null>(null); // State for ancient image
-  const [historicalEventImage, setHistoricalEventImage] = useState<string | null>(null); // State for historical event image
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -258,16 +237,6 @@ function App() {
     } catch (error) {
       console.error('Error generating news with Gemini:', error);
       return 'Failed to generate news.';
-    }
-  };
-
-  const generateEarthImage = async (location: string): Promise<string | null> => {
-    try {
-      const imageUrl = await fetchImage(location);
-      return imageUrl || 'https://via.placeholder.com/600x400';
-    } catch (error) {
-      console.error('Error generating Earth image:', error);
-      return null;
     }
   };
 
@@ -487,7 +456,6 @@ function App() {
       const themes = await generateDynamicThemes(locationName);
       setDynamicThemes(themes);
       setYoutubeVideos(await fetchYouTubeVideos(locationName));
-      setEarthImage(await generateEarthImage(locationName));
     } catch (error) {
       console.error('Error capturing view:', error);
       setFacts('Error getting facts about this region.');
@@ -617,34 +585,6 @@ function App() {
     };
   }, []);
 
-  const generateAncientImage = async () => {
-    if (!currentLocation) return;
-    setLoading(true);
-    try {
-      const prompt = `Generate an image of ${currentLocation} in ancient times, showcasing its historical significance and cultural heritage.`;
-      const imageUrl = await generateImageWithGemini(prompt);
-      setAncientImage(imageUrl);
-    } catch (error) {
-      console.error('Error generating ancient image:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateHistoricalEventImage = async (event: HistoricalEvent) => {
-    if (!event) return;
-    setLoading(true);
-    try {
-      const prompt = `Generate an image of the historical event: ${event.cardTitle}, showcasing its significance and context.`;
-      const imageUrl = await generateImageWithGemini(prompt);
-      setHistoricalEventImage(imageUrl);
-    } catch (error) {
-      console.error('Error generating historical event image:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -703,25 +643,6 @@ function App() {
           >
             🕰️ View Historical Insights
           </button>
-
-          <button
-            onClick={async () => {
-              const earthImage = await generateEarthImage(currentLocation);
-              setEarthImage(earthImage);
-            }}
-            className="generate-image-button"
-            disabled={!currentLocation || loading}
-          >
-            🌄 Generate Earth Image
-          </button>
-
-          <button
-            onClick={generateAncientImage}
-            className="generate-ancient-image-button"
-            disabled={!currentLocation || loading}
-          >
-            🏛️ Generate Ancient Image
-          </button>
         </div>
 
         {loading ? (
@@ -731,24 +652,6 @@ function App() {
             {capturedImage && (
               <div className="captured-image-container">
                 <img src={capturedImage} alt="Captured view" className="captured-image" loading="lazy" />
-              </div>
-            )}
-
-            {earthImage && (
-              <div className="earth-image-container">
-                <img src={earthImage} alt="Generated Earth view" className="earth-image" loading="lazy" />
-              </div>
-            )}
-
-            {ancientImage && (
-              <div className="ancient-image-container">
-                <img src={ancientImage} alt="Generated Ancient view" className="ancient-image" loading="lazy" />
-              </div>
-            )}
-
-            {historicalEventImage && (
-              <div className="historical-event-image-container">
-                <img src={historicalEventImage} alt="Generated Historical Event view" className="historical-event-image" loading="lazy" />
               </div>
             )}
 
