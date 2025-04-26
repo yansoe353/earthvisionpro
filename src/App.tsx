@@ -97,6 +97,24 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   }
 };
 
+// Function to generate images using the Gemini API
+const generateImageWithGemini = async (prompt: string): Promise<string | null> => {
+  try {
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }]
+    });
+    const responseText = (await result.response).text();
+    const imageUrl = responseText.match(/(http(s)?:\/\/[^\s]+(\.png|\.jpg|\.jpeg))/);
+    return imageUrl ? imageUrl[0] : null;
+  } catch (error) {
+    console.error('Error generating image with Gemini:', error);
+    return null;
+  }
+};
+
 // Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -117,6 +135,7 @@ function App() {
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
   const [earthImage, setEarthImage] = useState<string | null>(null);
+  const [ancientImage, setAncientImage] = useState<string | null>(null); // State for ancient image
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -597,6 +616,20 @@ function App() {
     };
   }, []);
 
+  const generateAncientImage = async () => {
+    if (!currentLocation) return;
+    setLoading(true);
+    try {
+      const prompt = `Generate an image of ${currentLocation} in ancient times, showcasing its historical significance and cultural heritage.`;
+      const imageUrl = await generateImageWithGemini(prompt);
+      setAncientImage(imageUrl);
+    } catch (error) {
+      console.error('Error generating ancient image:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -666,6 +699,14 @@ function App() {
           >
             🌄 Generate Earth Image
           </button>
+
+          <button
+            onClick={generateAncientImage}
+            className="generate-ancient-image-button"
+            disabled={!currentLocation || loading}
+          >
+            🏛️ Generate Ancient Image
+          </button>
         </div>
 
         {loading ? (
@@ -681,6 +722,12 @@ function App() {
             {earthImage && (
               <div className="earth-image-container">
                 <img src={earthImage} alt="Generated Earth view" className="earth-image" loading="lazy" />
+              </div>
+            )}
+
+            {ancientImage && (
+              <div className="ancient-image-container">
+                <img src={ancientImage} alt="Generated Ancient view" className="ancient-image" loading="lazy" />
               </div>
             )}
 
