@@ -136,6 +136,7 @@ function App() {
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
   const [earthImage, setEarthImage] = useState<string | null>(null);
   const [ancientImage, setAncientImage] = useState<string | null>(null); // State for ancient image
+  const [historicalEventImage, setHistoricalEventImage] = useState<string | null>(null); // State for historical event image
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -630,6 +631,20 @@ function App() {
     }
   };
 
+  const generateHistoricalEventImage = async (event: HistoricalEvent) => {
+    if (!event) return;
+    setLoading(true);
+    try {
+      const prompt = `Generate an image of the historical event: ${event.cardTitle}, showcasing its significance and context.`;
+      const imageUrl = await generateImageWithGemini(prompt);
+      setHistoricalEventImage(imageUrl);
+    } catch (error) {
+      console.error('Error generating historical event image:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -728,6 +743,12 @@ function App() {
             {ancientImage && (
               <div className="ancient-image-container">
                 <img src={ancientImage} alt="Generated Ancient view" className="ancient-image" loading="lazy" />
+              </div>
+            )}
+
+            {historicalEventImage && (
+              <div className="historical-event-image-container">
+                <img src={historicalEventImage} alt="Generated Historical Event view" className="historical-event-image" loading="lazy" />
               </div>
             )}
 
