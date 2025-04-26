@@ -55,34 +55,6 @@ interface YouTubeVideo {
   thumbnail: string;
 }
 
-interface DisasterType {
-  id: string;
-  type: string;
-  year: number;
-  severity: string;
-  description?: string;
-}
-
-interface DisasterData {
-  overallRisk: number;
-  summary: string;
-  types: {
-    name: string;
-    risk: number;
-    description: string;
-    recommendations: string[];
-  }[];
-}
-
-interface DisasterWidgetProps {
-  data: DisasterData | null;
-  loading: boolean;
-  history: DisasterType[];
-  onClose: () => void;
-  language: 'en' | 'my' | 'th';
-  onTranslate: (text: string, targetLanguage: 'en' | 'my' | 'th') => Promise<string>;
-}
-
 // Rate-limited translation function
 const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my' | 'th'): Promise<string> => {
   const now = Date.now();
@@ -125,202 +97,6 @@ const rateLimitedTranslateText = async (text: string, targetLanguage: 'en' | 'my
   }
 };
 
-// Disaster Widget Component
-const DisasterWidget: React.FC<DisasterWidgetProps> = ({
-  data,
-  loading,
-  history,
-  onClose,
-  language,
-  onTranslate
-}) => {
-  const [translatedData, setTranslatedData] = useState<DisasterData | null>(null);
-  const [translating, setTranslating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'summary' | 'types' | 'history'>('summary');
-
-  useEffect(() => {
-    if (language !== 'en' && data) {
-      const translateDisasterData = async () => {
-        setTranslating(true);
-        try {
-          const translatedSummary = await onTranslate(data.summary, language);
-          const translatedTypes = await Promise.all(
-            data.types.map(async (type) => ({
-              ...type,
-              name: await onTranslate(type.name, language),
-              description: await onTranslate(type.description, language),
-              recommendations: await Promise.all(
-                type.recommendations.map((rec) => onTranslate(rec, language))
-              )
-            }))
-          );
-          setTranslatedData({
-            ...data,
-            summary: translatedSummary,
-            types: translatedTypes
-          });
-        } catch (error) {
-          console.error('Translation error:', error);
-        } finally {
-          setTranslating(false);
-        }
-      };
-      translateDisasterData();
-    } else {
-      setTranslatedData(data);
-    }
-  }, [data, language, onTranslate]);
-
-  const getRiskColor = (risk: number): string => {
-    if (risk <= 3) return '#4CAF50'; // Green
-    if (risk <= 6) return '#FFC107'; // Yellow
-    return '#F44336'; // Red
-  };
-
-  const getRiskLabel = (risk: number): string => {
-    if (risk <= 3) return language === 'en' ? 'Low' : language === 'my' ? 'နိမ့်' : 'ต่ำ';
-    if (risk <= 6) return language === 'en' ? 'Medium' : language === 'my' ? 'အလယ်အလတ်' : 'ปานกลาง';
-    return language === 'en' ? 'High' : language === 'my' ? 'မြင့်' : 'สูง';
-  };
-
-  if (loading) return (
-    <div className="disaster-widget loading">
-      <div className="spinner"></div>
-      {language === 'en' ? 'Analyzing disaster risks...' :
-       language === 'my' ? 'သဘာဝဘေးအန္တရာယ်များကို ဆန်းစစ်နေသည်...' :
-       'กำลังวิเคราะห์ความเสี่ยงภัยธรรมชาติ...'}
-    </div>
-  );
-
-  if (!translatedData) return null;
-
-  return (
-    <div className="disaster-widget">
-      <div className="widget-header">
-        <h3>🌍 {language === 'en' ? 'Disaster Risk Assessment' :
-            language === 'my' ? 'သဘာဝဘေးအန္တရာယ် အကဲဖြတ်ချက်' :
-            'การประเมินความเสี่ยงภัยธรรมชาติ'}</h3>
-        <button className="close-button" onClick={onClose} aria-label="Close">
-          &times;
-        </button>
-      </div>
-
-      <div className="risk-indicator">
-        <div className="risk-level" style={{ backgroundColor: getRiskColor(translatedData.overallRisk) }}>
-          <div className="risk-score">{translatedData.overallRisk}/10</div>
-          <div className="risk-label">
-            {language === 'en' ? 'Overall Risk' :
-             language === 'my' ? 'စုစုပေါင်းအန္တရာယ်' :
-             'ความเสี่ยงโดยรวม'} - {getRiskLabel(translatedData.overallRisk)}
-          </div>
-        </div>
-      </div>
-
-      <div className="widget-tabs">
-        <button
-          className={`tab-button ${activeTab === 'summary' ? 'active' : ''}`}
-          onClick={() => setActiveTab('summary')}
-        >
-          {language === 'en' ? 'Summary' : language === 'my' ? 'အကျဉ်းချုပ်' : 'สรุป'}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'types' ? 'active' : ''}`}
-          onClick={() => setActiveTab('types')}
-        >
-          {language === 'en' ? 'Risk Types' : language === 'my' ? 'အန္တရာယ်အမျိုးအစားများ' : 'ประเภทความเสี่ยง'}
-        </button>
-        {history.length > 0 && (
-          <button
-            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            {language === 'en' ? 'History' : language === 'my' ? 'မှတ်တမ်း' : 'ประวัติ'}
-          </button>
-        )}
-      </div>
-
-      <div className="widget-content">
-        {activeTab === 'summary' && (
-          <div className="risk-summary">
-            <p>{translatedData.summary}</p>
-          </div>
-        )}
-
-        {activeTab === 'types' && (
-          <div className="disaster-types">
-            {translatedData.types.map((type) => (
-              <div key={type.name} className="disaster-type">
-                <div className="type-header">
-                  <h4>{type.name}</h4>
-                  <div className="type-risk-indicator">
-                    <span className="risk-score">{type.risk}/10</span>
-                    <span className="risk-label">{getRiskLabel(type.risk)}</span>
-                  </div>
-                </div>
-                <div className="risk-meter">
-                  <div
-                    className="risk-fill"
-                    style={{
-                      width: `${type.risk * 10}%`,
-                      backgroundColor: getRiskColor(type.risk)
-                    }}
-                  />
-                </div>
-                <div className="type-description">
-                  <p>{type.description}</p>
-                </div>
-                {type.recommendations.length > 0 && (
-                  <div className="recommendations">
-                    <h5>{language === 'en' ? 'Recommendations' :
-                         language === 'my' ? 'အကြံပြုချက်များ' :
-                         'คำแนะนำ'}:</h5>
-                    <ul>
-                      {type.recommendations.map((rec, i) => (
-                        <li key={i}>
-                          <span className="recommendation-bullet">•</span>
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'history' && history.length > 0 && (
-          <div className="historical-data">
-            <div className="history-scroll">
-              {history.map((event) => (
-                <div key={event.id} className="history-event">
-                  <div className="event-year">{event.year}</div>
-                  <div className="event-details">
-                    <div className="event-type-severity">
-                      <strong>{event.type}</strong> - {event.severity}
-                    </div>
-                    {event.description && <p className="event-description">{event.description}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {translating && (
-        <div className="translating-overlay">
-          <div className="translating-message">
-            {language === 'en' ? 'Translating...' :
-             language === 'my' ? 'ဘာသာပြန်နေသည်...' :
-             'กำลังแปล...'}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Main App Component
 function App() {
   const [facts, setFacts] = useState<string>('');
@@ -341,10 +117,6 @@ function App() {
   const [historicalInsights, setHistoricalInsights] = useState<string>('');
   const [historicalEvents, setHistoricalEvents] = useState<HistoricalEvent[]>([]);
   const [earthImage, setEarthImage] = useState<string | null>(null);
-  const [disasterData, setDisasterData] = useState<DisasterData | null>(null);
-  const [disasterLoading, setDisasterLoading] = useState(false);
-  const [disasterHistory, setDisasterHistory] = useState<DisasterType[]>([]);
-  const [showDisasterWidget, setShowDisasterWidget] = useState(false);
 
   const earthContainerRef = useRef<HTMLDivElement>(null);
   const earthRef = useRef<any>(null);
@@ -476,52 +248,6 @@ function App() {
     } catch (error) {
       console.error('Error generating Earth image:', error);
       return null;
-    }
-  };
-
-  const fetchHistoricalDisasters = async (lat: number, lng: number): Promise<DisasterType[]> => {
-    try {
-      const response = await fetch(
-        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[coordinates]=${lat},${lng}&filter[operator]=WITHIN&filter[distance]=100`
-      );
-      if (!response.ok) {
-        console.error('Error fetching historical disasters:', response.statusText);
-        return [];
-      }
-      const data = await response.json();
-      return data.data?.map((disaster: any) => ({
-        id: disaster.id,
-        type: disaster.type[0],
-        year: new Date(disaster.date.created).getFullYear(),
-        severity: disaster.severity,
-        description: disaster.description
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching historical disasters:', error);
-      return [];
-    }
-  };
-
-  const fetchCurrentDisasters = async (location: string): Promise<DisasterType[]> => {
-    try {
-      const response = await fetch(
-        `https://api.reliefweb.int/v1/disasters?appname=globe-app&filter[field]=location&filter[value]=${location}`
-      );
-      if (!response.ok) {
-        console.error('Error fetching current disasters:', response.statusText);
-        return [];
-      }
-      const data = await response.json();
-      return data.data?.map((disaster: any) => ({
-        id: disaster.id,
-        type: disaster.type[0],
-        year: new Date(disaster.date.created).getFullYear(),
-        severity: disaster.severity,
-        description: disaster.description
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching current disasters:', error);
-      return [];
     }
   };
 
@@ -849,24 +575,6 @@ function App() {
           }))
         ));
       }
-      if (disasterData) {
-        const translatedSummary = await rateLimitedTranslateText(disasterData.summary, newLanguage);
-        const translatedTypes = await Promise.all(
-          disasterData.types.map(async (type) => ({
-            ...type,
-            name: await rateLimitedTranslateText(type.name, newLanguage),
-            description: await rateLimitedTranslateText(type.description, newLanguage),
-            recommendations: await Promise.all(
-              type.recommendations.map((rec) => rateLimitedTranslateText(rec, newLanguage))
-            )
-          }))
-        );
-        setDisasterData({
-          ...disasterData,
-          summary: translatedSummary,
-          types: translatedTypes
-        });
-      }
     };
     await translateAllContent();
     setTranslating(false);
@@ -889,62 +597,6 @@ function App() {
     };
   }, []);
 
-  const analyzeDisasters = async (location: string, lat: number, lng: number) => {
-    setDisasterLoading(true);
-    setShowDisasterWidget(true);
-    try {
-      const currentDisasters = await fetchCurrentDisasters(location);
-      const history = await fetchHistoricalDisasters(lat, lng);
-      setDisasterHistory(history);
-      const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-      const completion = await groq.chat.completions.create({
-        messages: [
-          {
-            role: 'user',
-            content: `Analyze disaster risks for ${location} at coordinates ${lat},${lng}.
-            Current alerts: ${JSON.stringify(currentDisasters)}.
-            Historical data: ${JSON.stringify(history)}.
-            Provide a detailed risk assessment with:
-            1. Overall risk score (1-10)
-            2. Risk breakdown by disaster type
-            3. Summary of findings
-            4. Recommendations
-            Format as JSON with this structure:
-            {
-              "overallRisk": number,
-              "summary": string,
-              "types": [{
-                "name": string,
-                "risk": number,
-                "description": string,
-                "recommendations": string[]
-              }]
-            }`,
-          },
-        ],
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
-      if (completion.choices?.[0]?.message?.content) {
-        try {
-          const analysis = JSON.parse(completion.choices[0].message.content);
-          setDisasterData(analysis);
-          setFacts(prev => `${prev}\n\n## Disaster Risk Assessment\n${analysis.summary}`);
-        } catch (error) {
-          console.error('Error parsing disaster analysis:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Disaster analysis error:', error);
-    } finally {
-      setDisasterLoading(false);
-    }
-  };
-
   return (
     <div className="app">
       <div className="earth-container" ref={earthContainerRef}>
@@ -957,17 +609,6 @@ function App() {
           />
         </Suspense>
       </div>
-
-      {showDisasterWidget && (
-        <DisasterWidget
-          data={disasterData}
-          loading={disasterLoading}
-          history={disasterHistory}
-          onClose={() => setShowDisasterWidget(false)}
-          language={language}
-          onTranslate={rateLimitedTranslateText}
-        />
-      )}
 
       <div className="info-panel">
         <SearchBar onSearch={debouncedHandleSearch} />
@@ -1024,19 +665,6 @@ function App() {
             disabled={!currentLocation || loading}
           >
             🌄 Generate Earth Image
-          </button>
-
-          <button
-            onClick={async () => {
-              const center = earthRef.current?.getMap()?.getCenter();
-              if (center && currentLocation) {
-                await analyzeDisasters(currentLocation, center.lat, center.lng);
-              }
-            }}
-            className="disaster-button"
-            disabled={!currentLocation || loading}
-          >
-            🌋 Analyze Disaster Risks
           </button>
         </div>
 
